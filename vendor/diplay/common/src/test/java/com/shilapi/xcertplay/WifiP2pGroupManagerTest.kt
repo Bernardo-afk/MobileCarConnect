@@ -422,10 +422,10 @@ class WifiP2pGroupManagerTest {
         assertEquals(0, radio.removals)
     }
 
-    // CarLink: the stable Wi-Fi Direct identity (network/P2pStableIdentity.kt).
+    // MobileCarConnect: the stable Wi-Fi Direct identity (network/P2pStableIdentity.kt).
 
     private fun stable(logs: MutableList<String> = mutableListOf()) =
-        WifiP2pGroupManager(context, logs::add, stableIdentity = true, carName = "CarLink")
+        WifiP2pGroupManager(context, logs::add, stableIdentity = true, carName = "MobileCarConnect")
 
     private fun persistent(config: WifiP2pConfig?) =
         ReflectionHelpers.getField<Int>(config!!, "netId") == WifiP2pGroup.NETWORK_ID_PERSISTENT
@@ -436,7 +436,8 @@ class WifiP2pGroupManagerTest {
         val second = stable(logs).use { manager -> background { manager.start(5000) } }
         assertEquals(first.ssid, second.ssid)
         assertEquals(first.passphrase, second.passphrase)
-        assertTrue(first.ssid.matches(Regex("^DIRECT-dp[0-9a-f]{12}-CarLink$")))
+        // The car's name is cut to fit the 32-byte SSID after the 22-character namespace.
+        assertTrue(first.ssid.matches(Regex("^DIRECT-dp[0-9a-f]{12}-MobileCarC$")))
         assertEquals(2, radio.requests.size)
         assertTrue(radio.requests.all(::persistent))
         assertEquals(listOf(first.ssid, first.ssid), radio.requests.map { it!!.networkName })

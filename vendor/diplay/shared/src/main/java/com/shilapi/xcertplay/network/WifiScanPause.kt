@@ -60,7 +60,7 @@ internal class WifiScanPause(
 
         fun eligible(backend: WirelessHotspotBackend, sdk: Int = Build.VERSION.SDK_INT): Boolean =
             backend == WirelessHotspotBackend.WIFI_P2P && sdk >= Build.VERSION_CODES.N_MR1 &&
-                com.shilapi.xcertplay.hud.VehicleIntegrations.enabled // CarLink
+                com.shilapi.xcertplay.hud.VehicleIntegrations.enabled // MobileCarConnect
 
         fun restoreIfNeeded(context: Context) = ProcessWifiScanPause.recover(context.applicationContext)
 

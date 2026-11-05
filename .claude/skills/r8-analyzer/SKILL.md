@@ -16,11 +16,11 @@ metadata:
   - optimization
 ---
 
-> **CarLink note.** Path A's `scripts/convert_pb_to_json.py` and `scripts/analyze.py` are not
+> **MobileCarConnect note.** Path A's `scripts/convert_pb_to_json.py` and `scripts/analyze.py` are not
 > shipped upstream: use Path B's inline scripts from references/CONFIGURATION-ANALYZER.md with the
 > AGP task's `.pb` output, and write intermediates under `build/r8analysis/` (not a tracked `tmp/`).
-> CarLink's release rules are planned in design/RESEARCH_2026-10_R8_PLATFORM.md. Build through
-> `.claude/skills/carlink-dev/scripts/dev.sh` where it covers the task.
+> MobileCarConnect's release rules are planned in design/RESEARCH_2026-10_R8_PLATFORM.md. Build through
+> `.claude/skills/mobilecarconnect-dev/scripts/dev.sh` where it covers the task.
 
 ## Step 1. Setup and configuration check
 

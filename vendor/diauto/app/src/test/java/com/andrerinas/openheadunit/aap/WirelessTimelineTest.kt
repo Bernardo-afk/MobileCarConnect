@@ -5,7 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-// CarLink: the always-on Android Auto wireless timing line format.
+// MobileCarConnect: the always-on Android Auto wireless timing line format.
 class WirelessTimelineTest {
     private var now = 0L
     private val lines = mutableListOf<String>()

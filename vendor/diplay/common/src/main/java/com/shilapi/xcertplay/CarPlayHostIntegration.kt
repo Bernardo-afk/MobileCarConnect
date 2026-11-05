@@ -8,7 +8,7 @@ import com.shilapi.xcertplay.network.WirelessStartupFailure
 import com.shilapi.xcertplay.orchestration.CarPlayStatus
 
 /**
- * CarLink: lets an APK that embeds this engine replace DiPlay's own screens. The projection
+ * MobileCarConnect: lets an APK that embeds this engine replace DiPlay's own screens. The projection
  * (CarPlayHostActivity) opens [homeActivity] for its home button and when authentication cannot
  * load; standalone DiPlay keeps DiPlayActivity.
  */
@@ -27,7 +27,7 @@ object CarPlayHostIntegration {
     var mediaSessionTag: String = "DiPlay CarPlay"
 
     /**
-     * CarLink: the driver's learned steering-wheel keys, physical key code → the standard key code
+     * MobileCarConnect: the driver's learned steering-wheel keys, physical key code → the standard key code
      * the CarPlay screen already handles (VOICE_ASSIST, CALL, ENDCALL, MEDIA_*). Empty for standalone DiPlay.
      */
     @Volatile
@@ -64,7 +64,7 @@ object CarPlayHostIntegration {
         VEHICLE_IDENTITY, CAR_BUTTON_ICON, DRIVING_SIDE, DOCK, RESOLUTION, FRAME_RATE, PHYSICAL_SIZE_BASIS,
         PHYSICAL_LENGTH, HEVC, SAFE_AREA, SYSTEM_BARS, DEBUG_LOGS, EXIT_APPLICATION, LANGUAGE, GESTURE_FINGERS,
         HOME,
-        SETTINGS_SUMMARY, // CarLink: the Display page's read-only summary of the session settings
+        SETTINGS_SUMMARY, // MobileCarConnect: the Display page's read-only summary of the session settings
     }
 
     @Volatile
@@ -98,7 +98,7 @@ object CarPlayHostIntegration {
     fun authenticationError(context: Context): Throwable? =
         runCatching { DiPlayBootstrap.ensure(context, AirPlayPersistence.loadMfiTarget(context)) }.exceptionOrNull()
 
-    // ---------------------------------------------------------------- CarLink: session lifecycle
+    // ---------------------------------------------------------------- MobileCarConnect: session lifecycle
 
     /**
      * What the projection host does that [com.shilapi.xcertplay.orchestration.CarPlayStatus]
@@ -215,12 +215,12 @@ object CarPlayHostIntegration {
 
     internal fun publishHostState(state: HostState) {
         runCatching { onHostState?.invoke(state) }
-            .onFailure { android.util.Log.w("CarLink-CarPlayHost", "host state listener failed", it) }
+            .onFailure { android.util.Log.w("MobileCarConnect-CarPlayHost", "host state listener failed", it) }
     }
 }
 
 /**
- * CarLink: which projection hosts are open and which teardowns are still running, so
+ * MobileCarConnect: which projection hosts are open and which teardowns are still running, so
  * [CarPlayHostIntegration.hasSession] and [CarPlayHostIntegration.stopSession] cover the whole
  * session, not only the time a controller exists. Main thread only.
  */
@@ -289,7 +289,7 @@ internal object HostSessions {
     /** One teardown at a time: the controller's owner, then any host without one, then waits. */
     private fun step() {
         if (++rounds > MAX_ROUNDS) {
-            android.util.Log.w("CarLink-CarPlayHost", "stopSession gave up after $MAX_ROUNDS rounds; " +
+            android.util.Log.w("MobileCarConnect-CarPlayHost", "stopSession gave up after $MAX_ROUNDS rounds; " +
                 "background=${CarPlayBackgroundSession.hasSession()} hosts=${liveHosts().size} teardowns=$teardowns")
         } else if (CarPlayBackgroundSession.hasSession()) {
             CarPlayBackgroundSession.stop { main.post(::step) }

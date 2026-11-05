@@ -1,6 +1,6 @@
-// CarLink: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0),
+// MobileCarConnect: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0),
 // connection/wifi/modes/nativeaa/ExternalBtTransportPolicy.kt (see docs/VENDOR_CHANGES.md).
-// Upstream's inputs are its own settings toggles and a daemon measurement; here the host (CarLink)
+// Upstream's inputs are its own settings toggles and a daemon measurement; here the host (MobileCarConnect)
 // names the route per session, after its own probe and the driver's opt-in, so only route() is kept.
 package com.andrerinas.openheadunit.connection
 
@@ -33,9 +33,9 @@ object ExternalBtTransportPolicy {
 
     /**
      * Key in DiAuto's settings file where the host names the module route for the next session:
-     * "ZBT", "BLINK", or empty for none. Written by CarLink's AaSessionSettings before every start.
+     * "ZBT", "BLINK", or empty for none. Written by MobileCarConnect's AaSessionSettings before every start.
      */
-    const val HOST_ROUTE_KEY = "carlink-external-bt-route"
+    const val HOST_ROUTE_KEY = "mobilecarconnect-external-bt-route"
 
     /**
      * @param externalBtEvidence what ExternalBtPolicy found (BluetoothHelper.externalBtEvidence), or null

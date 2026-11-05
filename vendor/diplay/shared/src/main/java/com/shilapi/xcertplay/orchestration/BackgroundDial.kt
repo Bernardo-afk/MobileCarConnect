@@ -4,7 +4,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-// CarLink: new file (see docs/VENDOR_CHANGES.md).
+// MobileCarConnect: new file (see docs/VENDOR_CHANGES.md).
 
 /**
  * Runs a blocking connect on its own daemon thread from construction, so the caller can do other

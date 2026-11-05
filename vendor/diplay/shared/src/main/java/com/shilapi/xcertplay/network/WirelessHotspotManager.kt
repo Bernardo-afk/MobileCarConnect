@@ -28,7 +28,7 @@ class WirelessHotspotInfo(
     /** Wi-Fi AP hint for 0x5703; independent of the receiver's AirPlay identity in [bssid]. */
     val accessPointBssid: ByteArray? = null,
     /**
-     * CarLink: how a Wi-Fi Direct group's identity was chosen, as `WIRELESS_TIMING` detail
+     * MobileCarConnect: how a Wi-Fi Direct group's identity was chosen, as `WIRELESS_TIMING` detail
      * (`identity=kept|new|off|system known=yes|no group=created|read`); null for other backends.
      */
     val identityDetail: String? = null,
@@ -58,7 +58,7 @@ interface WirelessHotspotManager : Closeable {
     fun connectionDiagnosticSnapshot(): String = "association=not_exposed"
 
     /**
-     * CarLink: calls [listener] with the framework's client count each time it changes, on a
+     * MobileCarConnect: calls [listener] with the framework's client count each time it changes, on a
      * background thread, until [close]; a no-op where the backend cannot observe associations.
      */
     fun observeClients(listener: (Int) -> Unit) {}

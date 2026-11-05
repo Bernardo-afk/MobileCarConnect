@@ -23,7 +23,7 @@ import org.robolectric.annotation.RealObject
 import org.robolectric.util.ReflectionHelpers
 import org.robolectric.util.ReflectionHelpers.ClassParameter
 
-/** CarLink: in-session recovery of USBMUX and NCM transfers, through the real pipes. */
+/** MobileCarConnect: in-session recovery of USBMUX and NCM transfers, through the real pipes. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], manifest = Config.NONE,
     shadows = [RecoveryUsbConnectionShadow::class, RecoveryUsbRequestShadow::class])

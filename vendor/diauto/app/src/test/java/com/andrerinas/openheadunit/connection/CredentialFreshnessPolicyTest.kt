@@ -5,7 +5,7 @@ import com.andrerinas.openheadunit.connection.CredentialFreshnessPolicy.Network
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-// CarLink: open-headunit cc195e12 / 2192c2e0 / 7e126682.
+// MobileCarConnect: open-headunit cc195e12 / 2192c2e0 / 7e126682.
 class CredentialFreshnessPolicyTest {
     private val captured = Network("DIRECT-ab-Car", "secret12", "192.168.49.1", "AA:BB:CC:DD:EE:FF")
 

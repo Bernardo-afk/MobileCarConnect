@@ -12,7 +12,7 @@ internal class FirstTcpWatchdog(
     timeoutMillis: Long = WirelessStartupPolicy.FIRST_TCP_MILLIS,
     private val log: (String) -> Unit = {},
 ) {
-    // CarLink: settable until StartSession, once the published address family is known.
+    // MobileCarConnect: settable until StartSession, once the published address family is known.
     @Volatile var timeoutMillis: Long = timeoutMillis
     @Volatile var terminated = false
         private set

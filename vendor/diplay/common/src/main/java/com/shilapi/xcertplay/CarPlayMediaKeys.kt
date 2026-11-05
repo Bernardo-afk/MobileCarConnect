@@ -322,7 +322,7 @@ internal object CarPlayMediaKeys {
                 if (it) forwardGrantedFocusLocked()
             }
         }
-        session = MediaSession(context, CarPlayHostIntegration.mediaSessionTag).apply { // CarLink
+        session = MediaSession(context, CarPlayHostIntegration.mediaSessionTag).apply { // MobileCarConnect
             setCallback(callback, mainHandler)
             setMetadata(androidMetadata(nowPlaying, shownArtworkLocked()))
             isActive = true

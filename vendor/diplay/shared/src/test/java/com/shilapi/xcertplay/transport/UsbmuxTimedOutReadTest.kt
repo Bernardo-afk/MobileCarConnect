@@ -18,7 +18,7 @@ import org.robolectric.util.ReflectionHelpers.ClassParameter
 /**
  * A USBMUX read that completes between its timeout and the cancel ended the whole session every
  * few minutes on a Telechips head unit (#610). Upstream drains the cancelled read and keeps its
- * bytes. CarLink: the USBMUX read request is persistent (IphoneUsbHost.kt, docs/VENDOR_CHANGES.md),
+ * bytes. MobileCarConnect: the USBMUX read request is persistent (IphoneUsbHost.kt, docs/VENDOR_CHANGES.md),
  * so a timed-out read is never cancelled; it stays queued and its bytes arrive with the next read.
  */
 @RunWith(RobolectricTestRunner::class)

@@ -4,7 +4,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// CarLink: the bounded budget for null reaps.
+// MobileCarConnect: the bounded budget for null reaps.
 class UsbTransientFailureBudgetTest {
     private var now = 0L
 

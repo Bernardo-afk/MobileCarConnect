@@ -79,7 +79,7 @@ class BluetoothWakePolicyTest {
         assertEquals(listOf(BluetoothWakePolicy.HandsFreeLink.CONNECTED), suppressed)
     }
 
-    // --- CarLink: a gateway-role link counts only when it is to the poked phone ---
+    // --- MobileCarConnect: a gateway-role link counts only when it is to the poked phone ---
 
     private val PHONE = "AA:BB:CC:DD:EE:01"
     private val EARBUDS = "AA:BB:CC:DD:EE:02"
@@ -159,7 +159,7 @@ class BluetoothWakePolicyTest {
         }
     }
 
-    // CarLink: ported from open-headunit c86332be.
+    // MobileCarConnect: ported from open-headunit c86332be.
     @Test
     fun `only the hands-free record can carry a service level connection`() {
         // Headset speaks AT+CKPD, not BRSF or CIND, so walking it would error its way to a false
@@ -173,7 +173,7 @@ class BluetoothWakePolicyTest {
         )
     }
 
-    // CarLink: an iPhone is CarPlay's; Android Auto neither pokes it nor takes its hands-free link.
+    // MobileCarConnect: an iPhone is CarPlay's; Android Auto neither pokes it nor takes its hands-free link.
     @Test
     fun `an iPhone is known by its iAP2 record or its name`() {
         assertTrue(BluetoothWakePolicy.looksLikeApple(listOf(BluetoothWakePolicy.IAP2_UUID), "Car phone"))

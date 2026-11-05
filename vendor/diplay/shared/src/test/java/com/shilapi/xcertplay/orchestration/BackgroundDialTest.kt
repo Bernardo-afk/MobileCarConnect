@@ -10,7 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 
-// CarLink: the wireless RFCOMM dial runs while the access point and listener start.
+// MobileCarConnect: the wireless RFCOMM dial runs while the access point and listener start.
 class BackgroundDialTest {
     @Test fun theDialRunsWhileTheCallerDoesOtherWork() {
         val dialing = CountDownLatch(1)

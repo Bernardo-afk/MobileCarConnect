@@ -1,6 +1,6 @@
-# Contributing to CarLink
+# Contributing to MobileCarConnect
 
-How to build, test and submit a change to CarLink. Bug reports and ideas are welcome too: use the
+How to build, test and submit a change to MobileCarConnect. Bug reports and ideas are welcome too: use the
 [issue forms](https://github.com/F-e-n-y-x/CarLink/issues/new/choose).
 
 ## Before you start
@@ -9,9 +9,9 @@ How to build, test and submit a change to CarLink. Bug reports and ideas are wel
   [docs/BUILDING.md](docs/BUILDING.md) for the toolchain. The rules the code follows (one engine
   at a time, adapters that only start the session they are given, settings written per session,
   Android Auto in its own `:aa` process, no BYD behaviour outside the BYD profile) are in
-  [.claude/skills/carlink-dev/SKILL.md](.claude/skills/carlink-dev/SKILL.md).
+  [.claude/skills/mobilecarconnect-dev/SKILL.md](.claude/skills/mobilecarconnect-dev/SKILL.md).
 - For a larger change, open an issue first so the approach can be agreed.
-- CarLink ships in English only. UI text goes into string resources prefixed `carlink_`, never
+- MobileCarConnect ships in English only. UI text goes into string resources prefixed `mobilecarconnect_`, never
   hard-coded.
 
 ## Build and test
@@ -20,9 +20,9 @@ The project uses **no GitHub Actions or other CI**. Run the tests locally before
 request:
 
 ```sh
-S=.claude/skills/carlink-dev/scripts/dev.sh
-$S test     # resource-collision check + all five unit-test suites (app, carlink-core, engines)
-$S build    # debug APK (com.carlink.app.hudtest)
+S=.claude/skills/mobilecarconnect-dev/scripts/dev.sh
+$S test     # resource-collision check + all five unit-test suites (app, mobilecarconnect-core, engines)
+$S build    # debug APK (com.mobilecarconnect.app.hudtest)
 ```
 
 Without the helper script, the same commands are listed in
@@ -50,8 +50,8 @@ recorded upstream commit (`git fetch https://github.com/shihabal3amri/DiPlay mai
 details in [docs/VENDOR_CHANGES.md](docs/VENDOR_CHANGES.md)).
 
 - Prefer a host hook (`CarPlayHostIntegration`, DiAuto's `HostIntegration`) or a change in
-  `carlink-core` over editing engine logic.
-- When an engine edit is unavoidable, keep it small and mark it with a `// CarLink` comment (new
+  `mobilecarconnect-core` over editing engine logic.
+- When an engine edit is unavoidable, keep it small and mark it with a `// MobileCarConnect` comment (new
   files say so in their header).
 - Add a row to [docs/VENDOR_CHANGES.md](docs/VENDOR_CHANGES.md) for every edit: every edit needs
   a row, every row an edit. The audit commands are at the top of that file.
@@ -71,6 +71,6 @@ details in [docs/VENDOR_CHANGES.md](docs/VENDOR_CHANGES.md)).
 
 ## License
 
-CarLink is licensed under the [GNU AGPL v3.0](LICENSE). By contributing you agree that your
+MobileCarConnect is licensed under the [GNU AGPL v3.0](LICENSE). By contributing you agree that your
 contribution is distributed under the same license. The engines keep their own licenses (DiPlay
 GPL-3.0, DiAuto AGPL-3.0).

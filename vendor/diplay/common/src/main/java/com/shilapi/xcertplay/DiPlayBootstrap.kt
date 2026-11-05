@@ -37,7 +37,7 @@ internal object DiPlayBootstrap {
             }
         }
         LocalMfiAuthenticationClient.load(target)
-        // CarLink: a host that owns the debug-log setting keeps it (DIPLAY.md F6).
+        // MobileCarConnect: a host that owns the debug-log setting keeps it (DIPLAY.md F6).
         if (CarPlayHostIntegration.resetDebugLogsOnBootstrap) AirPlayPersistence.saveDebugLogsEnabled(context, false)
         ready = true
     }

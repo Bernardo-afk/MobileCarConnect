@@ -1,22 +1,22 @@
-# DiAuto dissection: the Android Auto engine under CarLink
+# DiAuto dissection: the Android Auto engine under MobileCarConnect
 
-> **Note (2026-10-09):** the CarLink v1 classes this document cites as they were when it was
+> **Note (2026-10-09):** the MobileCarConnect v1 classes this document cites as they were when it was
 > written (`EngineCoordinator`, `CarPlayEngine`, `engine/CarPlayPreflight`, `AndroidAutoEngine`,
 > `AndroidAutoCommandReceiver`, `AndroidAutoStateReporter`, `AndroidAutoWifiFallback`,
 > `EngineSettingsApplier`, `EngineMappings`/`WirelessPathSelector`) and the hooks
-> `EXTRA_CARLINK_CONNECT` and `onPhoneWifiJoinFailed` have been removed; the v2 replacements are in
-> `carlink-core/.../connection/` ([design/REBUILD_V2.md](../../design/REBUILD_V2.md)). Engine findings are
+> `EXTRA_MOBILECARCONNECT_CONNECT` and `onPhoneWifiJoinFailed` have been removed; the v2 replacements are in
+> `mobilecarconnect-core/.../connection/` ([design/REBUILD_V2.md](../../design/REBUILD_V2.md)). Engine findings are
 > unaffected.
 
-This is the engineering reference for DiAuto (DiAuto 0.3.11, vendored at `vendor/diauto`), the Android Auto receiver that CarLink runs in its `:aa` process. It covers how the engine actually works, what it needs, how it fails, and how CarLink drives it.
+This is the engineering reference for DiAuto (DiAuto 0.3.11, vendored at `vendor/diauto`), the Android Auto receiver that MobileCarConnect runs in its `:aa` process. It covers how the engine actually works, what it needs, how it fails, and how MobileCarConnect drives it.
 
 **How to read the evidence**
 
-- Paths are relative to `vendor/diauto/app/src/main/java/com/andrerinas/openheadunit/` unless they start with `app/`, `vendor/` or `docs/`. CarLink paths start with `app/src/main/java/com/carlink/app/`, shortened to `carlink/…`.
-- Line numbers refer to the tree as of this writing (engine 0.3.11 plus the CarLink edits listed in `docs/VENDOR_CHANGES.md`).
+- Paths are relative to `vendor/diauto/app/src/main/java/com/andrerinas/openheadunit/` unless they start with `app/`, `vendor/` or `docs/`. MobileCarConnect paths start with `app/src/main/java/com/mobilecarconnect/app/`, shortened to `mobilecarconnect/…`.
+- Line numbers refer to the tree as of this writing (engine 0.3.11 plus the MobileCarConnect edits listed in `docs/VENDOR_CHANGES.md`).
 - **Verified** means read in code, or stated with a measurement in DiAuto's own docs.
 - **Inference** means reasoned from code, platform behaviour or field reports, but not proven on the user's hardware.
-- "HU" means the head unit, which here is the Android device running CarLink: a car stereo or a tablet.
+- "HU" means the head unit, which here is the Android device running MobileCarConnect: a car stereo or a tablet.
 
 ---
 
@@ -34,12 +34,12 @@ This is the engineering reference for DiAuto (DiAuto 0.3.11, vendored at `vendor
    - Its BSSID is recovered automatically from the IPv6 EUI-64 link-local address.
    - It hit 40–50 fps on the user's tablet.
    - The car-hotspot and "Same Wi-Fi" routes need correct credentials and the exact BSSID.
-7. **CarLink's integration works but has sharp edges:**
+7. **MobileCarConnect's integration works but has sharp edges:**
    - The global `static-bssid` override.
    - Same Wi-Fi pushes the phone onto mobile data.
    - The engine is restarted on every wireless start.
-   - Engine defaults CarLink never overrides: `auto-start-on-boot=true` brings Home to the front on every tablet wake, and `auto-connect-last-session=true` switches any allowed USB phone into accessory mode during a wireless start.
-   - `START_STICKY` and `onTaskRemoved` resurrect a "phantom" engine that CarLink does not observe.
+   - Engine defaults MobileCarConnect never overrides: `auto-start-on-boot=true` brings Home to the front on every tablet wake, and `auto-connect-last-session=true` switches any allowed USB phone into accessory mode during a wireless start.
+   - `START_STICKY` and `onTaskRemoved` resurrect a "phantom" engine that MobileCarConnect does not observe.
    - Actionable engine toasts (Wi-Fi off, P2P in use) are silently dropped.
    - The system Location toggle is not checked.
    - Upstream Open Headunit has since fixed two things DiAuto still does. DiAuto drops the Bluetooth channel after the handoff, which causes AA 17.8 re-dial stutter. It also makes a new Wi-Fi Direct name for every group, giving 9 s connects instead of 1 s (§9.6, §10.11).
@@ -52,23 +52,23 @@ This is the engineering reference for DiAuto (DiAuto 0.3.11, vendored at `vendor
 
 ### 1.1 Components (from `app/src/main/AndroidManifest.xml`, plus the `github` and `debug` flavor manifests)
 
-| Component | Kind | What it does | Engine core or standalone UI? | In CarLink |
+| Component | Kind | What it does | Engine core or standalone UI? | In MobileCarConnect |
 |---|---|---|---|---|
-| `aap.AapService` | Foreground service (`connectedDevice\|mediaPlayback`, `stopWithTask=false`) | Owns the session. Runs the USB receiver and the wireless server on TCP 5288, plus Native AA (Bluetooth handshake, Wi-Fi Direct and hotspot credential providers), NSD discovery, Nearby, MediaSession, car mode, night mode, wake detection, the boot-loop guard and the notification. Starts the projection activity. | **Core** | `:aa`. Driven by `carlink/engine/AndroidAutoCommandReceiver.kt`. |
+| `aap.AapService` | Foreground service (`connectedDevice\|mediaPlayback`, `stopWithTask=false`) | Owns the session. Runs the USB receiver and the wireless server on TCP 5288, plus Native AA (Bluetooth handshake, Wi-Fi Direct and hotspot credential providers), NSD discovery, Nearby, MediaSession, car mode, night mode, wake detection, the boot-loop guard and the notification. Starts the projection activity. | **Core** | `:aa`. Driven by `mobilecarconnect/engine/AndroidAutoCommandReceiver.kt`. |
 | `aap.AapProjectionActivity` | Activity, `singleTask`, exported | The video surface, touch and keys, the loading/reconnecting overlay, the exit menu and PiP. **Required for any session** (see §1.3). | **Core** (UI that cannot be avoided) | `:aa`. Chrome restyled through `HostIntegration.chromeStyler`. |
 | `location.GpsLocationService` | Service | Feeds HU GPS to the phone (`gps-navigation`). Started in `onConnected` (`aap/AapService.kt:1024`). | Core (optional feature) | `:aa` |
 | `aap.DummyVpnService` (github flavor) | VpnService | Legacy Self Mode on AA < 17.4. `VpnControl.startVpn` is **never called** in current code; only `stopVpn` is (`aap/AapService.kt:2701`). | Legacy, unused | `:aa`. No VPN prompt ever shows. |
 | `app.UsbAttachedActivity` | Translucent activity, `USB_DEVICE_ATTACHED` filter matching all devices | Switches a normal-mode Android device to AOA. Handles re-enumerated accessories (`app/UsbAttachedActivity.kt:72-167`). | Entry point | Filter removed; `UsbRouterActivity` replaces it. |
-| `main.MainActivity` | Launcher, maps/navigation/geo handler, `headunit://selfmode` | DiAuto's home. Starts `AapService` on create (`main/MainActivity.kt:161-162`). Clears the boot-loop guard. Shows the onboarding wizard. Runs the "auto-connect" pill/overlay. Recovers the BYD HUD journal (`:122`). | Standalone UI | Not exported, no filters, never opened by CarLink |
+| `main.MainActivity` | Launcher, maps/navigation/geo handler, `headunit://selfmode` | DiAuto's home. Starts `AapService` on create (`main/MainActivity.kt:161-162`). Clears the boot-loop guard. Shows the onboarding wizard. Runs the "auto-connect" pill/overlay. Recovers the BYD HUD journal (`:122`). | Standalone UI | Not exported, no filters, never opened by MobileCarConnect |
 | `main.SettingsActivity`, `main.OnboardingActivity` | Activities | Settings and the setup wizard (welcome, safety, permissions, ready) | Standalone UI | Present but unused |
-| `main.AutomationActivity` | Translucent, **exported** | `ACTION_CONNECT`/`DISCONNECT`/`START_SELF_MODE`/`STOP_SERVICE`/`SET_NIGHT_MODE`, plus `headunit://connect\|disconnect\|nightmode\|exit` (`main/AutomationActivity.kt:43-133`) | Automation entry | **Still exported in CarLink** (merged, not neutered). See §10.9. |
+| `main.AutomationActivity` | Translucent, **exported** | `ACTION_CONNECT`/`DISCONNECT`/`START_SELF_MODE`/`STOP_SERVICE`/`SET_NIGHT_MODE`, plus `headunit://connect\|disconnect\|nightmode\|exit` (`main/AutomationActivity.kt:43-133`) | Automation entry | **Still exported in MobileCarConnect** (merged, not neutered). See §10.9. |
 | `app.BootCompleteReceiver` | Receiver (boot, QUICKBOOT, MTK IPO, FYT/GLSX/Microntek ACC) | Starts `AapService` (boot, screen-on, USB or Wi-Fi variant). Counts boot-loop strikes (`app/BootCompleteReceiver.kt:30-71`). | Entry | Removed; `SystemEventReceiver` replaces it |
 | `app.AutoStartReceiver` | Receiver `ACL_CONNECTED` | If the device is in `auto-start-bt-macs`, sends `ACTION_BT_AUTO_START` and tries to start `MainActivity` or a full-screen notification (`app/AutoStartReceiver.kt:21-82`) | Entry | Removed |
 | `app.WifiAutoStartReceiver` | Receiver `STATE_CHANGE`, **also registered dynamically by AapService** | Starts the service when joined to `auto-start-wifi-ssid` (`app/WifiAutoStartReceiver.kt:40-112`) | Entry | Manifest copy removed. **The dynamic copy still runs** (`aap/AapService.kt:1414-1419`). It is inert while `auto-start-on-wifi=false`. |
-| `app.RemoteControlReceiver`, `connection.CarKeyReceiver`, `androidx…MediaButtonReceiver` | Receivers (priority 1000, proprietary key broadcasts) | Steering-wheel keys, OEM key intents (Microntek, FYT, NWD and others) | Core (input) | Shipped disabled. Enabled only while Android Auto is engaged (`carlink/engine/EngineCoordinator.kt:272-305`). |
+| `app.RemoteControlReceiver`, `connection.CarKeyReceiver`, `androidx…MediaButtonReceiver` | Receivers (priority 1000, proprietary key broadcasts) | Steering-wheel keys, OEM key intents (Microntek, FYT, NWD and others) | Core (input) | Shipped disabled. Enabled only while Android Auto is engaged (`mobilecarconnect/engine/EngineCoordinator.kt:272-305`). |
 | `FileProvider`, `rikka.shizuku.ShizukuProvider` | Providers | Log export; Shizuku root/ADB helper for `SUExecutor` | Support | `:aa` |
 
-CarLink additions in `:aa`:
+MobileCarConnect additions in `:aa`:
 
 - `AndroidAutoCommandReceiver`: commands.
 - `AndroidAutoSettingsProvider`: the single writer of DiAuto's `settings` prefs.
@@ -79,7 +79,7 @@ CarLink additions in `:aa`:
 
 - **Core:** `App`/`AppComponent` (one `Settings`, `VideoDecoder`, `AudioDecoder`, `CommManager` per process; `AppComponent.kt:14-30`), `AapService`, `CommManager`, `aap/*` (protocol, transport, policies), `connection/*`, `decoder/*`, `AapProjectionActivity`, `view/*`.
 - **Standalone UI:** `main/*` (MainActivity, HomeFragment, ConnectionSetupFragment, SettingsFragment, OnboardingActivity, diagnostics fragments), `UsbAttachedActivity`, `AutomationActivity`.
-- **The engine casts the application context to `App`** (`App.provide()` in about 100 places). That is why `CarLinkApplication` extends `App`, and why engine startup is scoped to `:aa` through `initializesAndroidAutoEngine()` (`App.kt:38,109`; `carlink/CarLinkApplication.kt:22-28`).
+- **The engine casts the application context to `App`** (`App.provide()` in about 100 places). That is why `MobileCarConnectApplication` extends `App`, and why engine startup is scoped to `:aa` through `initializesAndroidAutoEngine()` (`App.kt:38,109`; `mobilecarconnect/MobileCarConnectApplication.kt:22-28`).
 
 ### 1.3 UI that a session strictly requires, and why
 
@@ -123,7 +123,7 @@ CarLink additions in `:aa`:
 | `ACTION_CONNECT_SOCKET` | No-op marker |
 | `EXTRA_BOOT_START` | Boot wakelock, then launches `homeActivity` (`:1905-1914`) |
 
-The service returns `START_STICKY` (`:2034`). `onTaskRemoved` restarts it with a null intent (`:1773-1783`). Both matter for CarLink (§10.6).
+The service returns `START_STICKY` (`:2034`). `onTaskRemoved` restarts it with a null intent (`:1773-1783`). Both matter for MobileCarConnect (§10.6).
 
 ### 2.3 `onCreate` (`aap/AapService.kt:712-804`), which runs on every service start
 
@@ -152,9 +152,9 @@ The service returns `START_STICKY` (`:2034`). `onTaskRemoved` restarts it with a
 
 ### 2.5 Triggers, end to end
 
-| Trigger | Standalone DiAuto path | CarLink path |
+| Trigger | Standalone DiAuto path | MobileCarConnect path |
 |---|---|---|
-| USB attach (normal-mode phone) | `UsbAttachedActivity` → AOA switch → re-enumerates as `18D1:2D00/01` → `AapService.onUsbAttach` (accessory) → `checkAlreadyConnectedUsb(force)` → permission → `connectUsbWithRetry` (4 tries, 1.5 s apart; `:2339-2355`). Service-side fallback 2 s after a normal attach (`:2041-2068`). | `UsbRouterActivity` → `EngineCoordinator.onUsbPhone` → `COMMAND_START_USB` → adds the device to `allow-devices` → `ACTION_CHECK_USB`, or switches it directly when last-session is off (`carlink/engine/AndroidAutoCommandReceiver.kt:54-75`) |
+| USB attach (normal-mode phone) | `UsbAttachedActivity` → AOA switch → re-enumerates as `18D1:2D00/01` → `AapService.onUsbAttach` (accessory) → `checkAlreadyConnectedUsb(force)` → permission → `connectUsbWithRetry` (4 tries, 1.5 s apart; `:2339-2355`). Service-side fallback 2 s after a normal attach (`:2041-2068`). | `UsbRouterActivity` → `EngineCoordinator.onUsbPhone` → `COMMAND_START_USB` → adds the device to `allow-devices` → `ACTION_CHECK_USB`, or switches it directly when last-session is off (`mobilecarconnect/engine/AndroidAutoCommandReceiver.kt:54-75`) |
 | USB detach | `onUsbDetach` → `disconnect(sendByeBye=false, isUserExit=false)` (`:2070-2077`). Accessory detach → re-check after 1.5 s (`:2079-2092`). USB reconnect is retried 3 s after an unexpected disconnect (`:1351-1367`). | Plus `EngineCoordinator.usbGoneCheck`: 6 s grace, then stop (`EngineCoordinator.kt:81-88,129-134`) |
 | Bluetooth ACL from a phone in `auto-start-bt-macs` | `AutoStartReceiver` → `ACTION_BT_AUTO_START` (re-arms mode 3) + MainActivity launch or notification | `SystemEventReceiver` classifies the phone → `HomeLauncher.open` → Home → `connectPhone` → `COMMAND_START_WIRELESS` |
 | Manual (DiAuto Home "Connect phone") | `HomeFragment.selectPhone()` → sets `wifiConnectionMode=3` → `ACTION_NATIVE_AA_POKE(mac)` (`main/HomeFragment.kt:85-111`) | Home → `COMMAND_START_WIRELESS(address)` → **stop service, remove P2P group, clear `p2p_ownership`**, add the MAC to the poke targets, `ACTION_NATIVE_AA_POKE` (`AndroidAutoCommandReceiver.kt:91-116`) |
@@ -231,7 +231,7 @@ The service returns `START_STICKY` (`:2034`). `onTaskRemoved` restarts it with a
 
 - Targets are each bonded MAC in `auto-start-bt-macs`. If the list is empty, **every bonded device** is poked (`:708-732`).
 - For each target it calls `createRfcommSocketToServiceRecord(HFP_AG 0000111f)` and then `HSP_AG 00001112`, connects, and **holds for 15 s** (`:597-652`; `aap/BluetoothWakePolicy.kt:18-35`).
-- It skips a phone that is not bonded (that would cause a pairing prompt), and skips when the HU already holds a hands-free link to that phone (`BluetoothWakePolicy.kt:97,123`; CarLink patch in §4).
+- It skips a phone that is not bonded (that would cause a pairing prompt), and skips when the HU already holds a hands-free link to that phone (`BluetoothWakePolicy.kt:97,123`; MobileCarConnect patch in §4).
 
 **Phone connects back** to the AA UUID. `handleHandshake` (`:876-1291`) then:
 
@@ -340,7 +340,7 @@ The wait loop prefers the group's own interface over fallbacks for 3 s (`docs/PR
 
 | Failure | Detection / recovery |
 |---|---|
-| Phone refuses (`Type 6/7 status≠0`) | `Fail(wifiJoinFailed)` → `refreshHotspotCredentialsAfterJoinFailure()` (re-resolve only; `aap/AapService.kt:2558-2566`) → `ResumePoke`. CarLink's hook counts the refusals (§10). |
+| Phone refuses (`Type 6/7 status≠0`) | `Fail(wifiJoinFailed)` → `refreshHotspotCredentialsAfterJoinFailure()` (re-resolve only; `aap/AapService.kt:2558-2566`) → `ResumePoke`. MobileCarConnect's hook counts the refusals (§10). |
 | No AP after 30 s | Logged once. Polling continues. |
 | Config unreadable | Forced toast asking for manual name and password. |
 | 2.4 GHz at 1080p/60 → sessions with no video | `VideoStarvationPolicy`: after 3 sessions in a row that reach the handshake but render no frame, log advice to switch to 5 GHz or lower resolution (`aap/VideoStarvationPolicy.kt:6-13,28,38-51`; `connection/CommManager.kt:915-930`). Advice only; nothing is changed automatically. |
@@ -351,11 +351,11 @@ The wait loop prefers the group's own interface over fallbacks for 3 s (`docs/PR
 - It rejects 2.4 GHz results and reads the frequency through a native WEXT ioctl on older Android (`docs/LOCAL_HOTSPOT_TEST.md:17-23`).
 - **Proven** once on DiLink 5.1 / Android 13 with a OnePlus 15 at 5745 MHz (`docs/LOCAL_HOTSPOT_TEST.md:13-15`).
 - **Removed from the UI**, and value 2 migrates to 1.
-- **Relevance to CarLink (inference):** this is the only transport that needs no password typing *and* no P2P. On an Android 16 tablet the public `startLocalOnlyHotspotWithConfiguration` exists. It deserves an experiment (§11).
+- **Relevance to MobileCarConnect (inference):** this is the only transport that needs no password typing *and* no P2P. On an Android 16 tablet the public `startLocalOnlyHotspotWithConfiguration` exists. It deserves an experiment (§11).
 
-#### 3.3.4 "Same Wi-Fi" (shared router), a CarLink construct on top of HOTSPOT
+#### 3.3.4 "Same Wi-Fi" (shared router), a MobileCarConnect construct on top of HOTSPOT
 
-DiAuto has no shared-router mode. CarLink reuses the HOTSPOT transport with every value written by hand (`carlink/settings/EngineMappings.kt:182-190`):
+DiAuto has no shared-router mode. MobileCarConnect reuses the HOTSPOT transport with every value written by hand (`mobilecarconnect/settings/EngineMappings.kt:182-190`):
 
 - `hotspot-interface` = the car's station interface (e.g. `wlan0`)
 - `hotspot-ssid` / `hotspot-password` = the router's
@@ -370,7 +370,7 @@ Because the interface is named by hand, the publish guard is bypassed (`NativeCr
 - **BSSID must match exactly** (full-mask specifier). The car's station BSSID is the AP and band the *car* is on:
   - On a dual-band router with distinct BSSIDs, the phone is forced onto that band's BSSID.
   - On a mesh, the car's node.
-  - When CarLink sent the *other* band's BSSID, the session stalled with "AapRead: WiFi read timeout (15000ms)" (`aap/AapReadSingleMessage.kt:38-40`).
+  - When MobileCarConnect sent the *other* band's BSSID, the session stalled with "AapRead: WiFi read timeout (15000ms)" (`aap/AapReadSingleMessage.kt:38-40`).
 
     That message means the TCP/AAP session existed and then received nothing for 15 s. The phone therefore did join and dial, and the link then starved. Two possible causes, neither verified: a 2.4 GHz throughput ceiling (the same shape as `VideoStarvationPolicy`), or the phone roaming off a specifier pinned to a BSSID it was not on.
 - **Routers with client isolation** (guest networks, many public/hotel Wi-Fi) block phone → car TCP. This route needs no multicast, since the IP is handed over explicitly.
@@ -392,7 +392,7 @@ Because the interface is named by hand, the publish guard is bypassed (`NativeCr
 | Wi-Fi Direct | BYD DiLink 5.1 (A13) + OnePlus 15; Redmi Pad Pro (A16) + S25 Ultra (40–50 fps, field) | Needs BSSID recovery (automatic via EUI-64) |
 | Car hotspot | BYD DiLink 5.1 (owner confirmation, 0.3.11) | Needs exact credentials and BSSID; 5 GHz |
 | Local-only hotspot | DiLink 5.1 / A13 + OnePlus 15, one session | Disabled in the UI |
-| Same Wi-Fi | Redmi Pad Pro + S25 Ultra (field, CarLink) | Phone on mobile data; exact BSSID required |
+| Same Wi-Fi | Redmi Pad Pro + S25 Ultra (field, MobileCarConnect) | Phone on mobile data; exact BSSID required |
 | Self Mode, Helper, Headunit Server, Nearby | Upstream Open Headunit era | Not exposed |
 
 ### 3.6 Helper modes (mode 2), legacy
@@ -460,11 +460,11 @@ That is why "wireless only started after the user connected Bluetooth by hand" o
 - RFCOMM `connect()` to the phone's **HFP-AG (`0000111f`)**, else **HSP-AG (`00001112`)**, held for 15 s. Order and UUIDs are matched to WirelessAndroidAutoDongle and openautolink (`BluetoothWakePolicy.kt:17-35`).
 - Rules:
   - `mayPoke` only for a confirmed bond.
-  - `shouldPoke` false when the HU already holds a hands-free link. Upstream counted *any* `HEADSET` (gateway) link. **CarLink patch:** a gateway-role link stands the poke down only if its peer is the poked phone (`BluetoothWakePolicy.kt:44-59`; `utils/BluetoothHelper.kt:118-174`), so a tablet's own earbuds no longer block every poke.
+  - `shouldPoke` false when the HU already holds a hands-free link. Upstream counted *any* `HEADSET` (gateway) link. **MobileCarConnect patch:** a gateway-role link stands the poke down only if its peer is the poked phone (`BluetoothWakePolicy.kt:44-59`; `utils/BluetoothHelper.kt:118-174`), so a tablet's own earbuds no longer block every poke.
   - Skipped while a handshake or handoff is settling, or while a session is up (`NativeHandoffPolicy.kt:69-70`).
 - Measured side effect on a real HU (`BluetoothWakePolicy.kt:83-96`): the poke takes the phone's single hands-free slot, and the HU's own HFP client drops for minutes. Hence the skip when an HF link exists.
 - The HU also listens on HFP `0000111e` with a stub AT responder, because some phones need it. That responder cannot carry calls (`:469-483`).
-- **Android Auto 17.8 needs a *connected* hands-free profile** (measured 2026-10-20, Galaxy S25 Ultra and the tablet). The phone answers the poke, moves its hands-free state for the HU to "connecting" (`HeadsetStateMachine … state to 1`) and starts wireless setup (`WIRELESS_SETUP_SHARED_HFP_CONNECTING`, `HU_TRACKER_READY`), then waits about 4.5 s for the HU to be connected: `waitForHeadUnitConnected timeout` → `WIRELESS_SETUP_FAILED_TO_START_NO_HFP_FROM_HU_PRESENCE` → `WIRELESS_SETUP_CANCELLED_HU_NOT_CONNECTED`, and it never dials the AA record. Per HFP the hands-free side (here, the HU) opens the Service Level Connection, and the old poke held the channel silently. **CarLink port of open-headunit c86332be:** on an HFP-AG poke the HU now sends `AT+BRSF=0` (no optional features, so no `AT+BAC`, `AT+CHLD=?` or `AT+BIND`), `AT+CIND=?`, `AT+CIND?`, `AT+CMER=3,0,0,1`, each after the phone's `OK` (an `ERROR` also advances), then reads `AT+CIND?` every 2 s for the rest of the hold (`connection/HfpSlcInitiator.kt`, `HfpLink.kt`). The same walk runs when a phone dials the stand-in record. It runs only where the HU stands in for hands-free (no Hands-Free record of its own), with no live hands-free link, for the session's poke target and never an Apple device. `WIRELESS_TIMING hfp-slc-start` / `hfp-slc-done` / `hfp-slc-failed` show it. The price is upstream's: the phone treats the HU as its hands-free device while the hold lasts, and this app carries no call audio.
+- **Android Auto 17.8 needs a *connected* hands-free profile** (measured 2026-10-20, Galaxy S25 Ultra and the tablet). The phone answers the poke, moves its hands-free state for the HU to "connecting" (`HeadsetStateMachine … state to 1`) and starts wireless setup (`WIRELESS_SETUP_SHARED_HFP_CONNECTING`, `HU_TRACKER_READY`), then waits about 4.5 s for the HU to be connected: `waitForHeadUnitConnected timeout` → `WIRELESS_SETUP_FAILED_TO_START_NO_HFP_FROM_HU_PRESENCE` → `WIRELESS_SETUP_CANCELLED_HU_NOT_CONNECTED`, and it never dials the AA record. Per HFP the hands-free side (here, the HU) opens the Service Level Connection, and the old poke held the channel silently. **MobileCarConnect port of open-headunit c86332be:** on an HFP-AG poke the HU now sends `AT+BRSF=0` (no optional features, so no `AT+BAC`, `AT+CHLD=?` or `AT+BIND`), `AT+CIND=?`, `AT+CIND?`, `AT+CMER=3,0,0,1`, each after the phone's `OK` (an `ERROR` also advances), then reads `AT+CIND?` every 2 s for the rest of the hold (`connection/HfpSlcInitiator.kt`, `HfpLink.kt`). The same walk runs when a phone dials the stand-in record. It runs only where the HU stands in for hands-free (no Hands-Free record of its own), with no live hands-free link, for the session's poke target and never an Apple device. `WIRELESS_TIMING hfp-slc-start` / `hfp-slc-done` / `hfp-slc-failed` show it. The price is upstream's: the phone treats the HU as its hands-free device while the hold lasts, and this app carries no call audio.
 - **The poke cannot replace pairing.** Pairing is a user action on both devices.
 - **Inference:** the phone must have the HU's SDP record with the AA UUID. Pairing while the engine is listening makes that likely, but it is not proven.
 
@@ -478,16 +478,16 @@ That is why "wireless only started after the user connected Bluetooth by hand" o
 ### 4.4 Auto-start lists
 
 - `auto-start-bt-macs`, a string set mirrored to device-protected storage (`utils/Settings.kt:754-766, 1290-1313`). It is:
-  1. the allowlist for `AutoStartReceiver` (removed in CarLink);
+  1. the allowlist for `AutoStartReceiver` (removed in MobileCarConnect);
   2. the poke target list (`NativeAaHandshakeManager.kt:708-732`).
-- Filled automatically by every phone that opens the AA channel (`:941-948`). CarLink also adds the chosen phone (`AndroidAutoCommandReceiver.kt:125-134`).
+- Filled automatically by every phone that opens the AA channel (`:941-948`). MobileCarConnect also adds the chosen phone (`AndroidAutoCommandReceiver.kt:125-134`).
 - Pruned only on a confirmed NOT_BONDED or a malformed MAC, never when the adapter is unreadable (`BluetoothWakePolicy.kt:138-139`).
-- Each 15 s cycle pokes **every** listed bonded MAC in turn, with a 15 s hold on each one that answers. **CarLink inference:** with two or more phones listed, an absent phone costs about 2×5 s page timeouts per cycle, and a present-but-not-wanted phone gets woken too.
+- Each 15 s cycle pokes **every** listed bonded MAC in turn, with a 15 s hold on each one that answers. **MobileCarConnect inference:** with two or more phones listed, an absent phone costs about 2×5 s page timeouts per cycle, and a present-but-not-wanted phone gets woken too.
 
 ### 4.5 What fails on tablets (verified against code; field-confirmed where noted)
 
-1. **No automatic ACL** (field result 1). CarLink's `SystemEventReceiver` waits for an ACL that never comes on a tablet. Only an explicit start (Home tap → poke) or a manual Bluetooth connect works.
-2. **Upstream skipped every poke** when the tablet had earbuds connected. CarLink has fixed this (VENDOR_CHANGES).
+1. **No automatic ACL** (field result 1). MobileCarConnect's `SystemEventReceiver` waits for an ACL that never comes on a tablet. Only an explicit start (Home tap → poke) or a manual Bluetooth connect works.
+2. **Upstream skipped every poke** when the tablet had earbuds connected. MobileCarConnect has fixed this (VENDOR_CHANGES).
 3. `headsetPeers` returns null on the main thread, which falls back to "block" (`BluetoothHelper.kt:154`). The poke runs on IO, so this is fine.
 4. **Calls and media:** a tablet cannot be the phone's hands-free or A2DP sink. Calls and audio must go through Android Auto's own channels, so `music-via-bluetooth` must be **false** on a tablet. If it is true, the media sink is omitted (`docs/REVIEW.md:79-84`) and there is no music at all.
 
@@ -500,7 +500,7 @@ That is why "wireless only started after the user connected Bluetooth by hand" o
 - **Permissions:**
   - `requestPermission` with the broadcast `…ACTION_USB_DEVICE_PERMISSION` (`connection/UsbReceiver.kt:61-74`).
   - After the AOA switch the phone re-enumerates as a *new* device, so permission is checked again (`aap/AapService.kt:2208-2219`).
-  - If the app was launched by `USB_DEVICE_ATTACHED` for that device, Android grants it implicitly. CarLink's `UsbRouterActivity` (filter: all devices) is the handler, and the grant covers the whole package, so `:aa` too.
+  - If the app was launched by `USB_DEVICE_ATTACHED` for that device, Android grants it implicitly. MobileCarConnect's `UsbRouterActivity` (filter: all devices) is the handler, and the grant covers the whole package, so `:aa` too.
 - **Allowlists:**
   - `allow-devices` holds unique names "Manufacturer Product (VID: xxxx PID: yyyy)" (`Settings.kt:31-40`).
   - `UsbAttachedActivity` switches only Google-VID devices, allowed devices, or anything when `auto-start-on-usb` is on (`app/UsbAttachedActivity.kt:135-143`).
@@ -521,7 +521,7 @@ That is why "wireless only started after the user connected Bluetooth by hand" o
 
 ## 6. Settings (`utils/Settings.kt`): every persisted key
 
-"Connect?" marks whether the setting affects connecting: **Y** = yes, **(Y)** = only in a legacy or special path, **–** = no. "CL" = CarLink writes it.
+"Connect?" marks whether the setting affects connecting: **Y** = yes, **(Y)** = only in a legacy or special path, **–** = no. "CL" = MobileCarConnect writes it.
 
 ### 6.1 Connection and wireless
 
@@ -616,7 +616,7 @@ Only a bad resolution/codec/renderer choice can make a session look dead: no pic
 | `use-fixed-sun-location`, `fixed-sun-*` | — | |
 | `geofence-locations`, `location-outside-night` | — | |
 | `last-loc-*` | — | |
-| `vehicle-display-name` | "DiAuto" | CL sets "CarLink" |
+| `vehicle-display-name` | "DiAuto" | CL sets "MobileCarConnect" |
 | `vehicle-make/model/year/id`, `head-unit-make/model` | Google / Desktop Head Unit / 2025 / headlessunit-001 | Sent in service discovery |
 | `byd-navigation-enabled` | false | CL writes it from `bydDirections`, **default true** |
 | `show-navigation-notifications` | false | |
@@ -647,16 +647,16 @@ Everything a session needs runs headless in `AapService`, except the projection 
 
 | Need | Clean way | Notes |
 |---|---|---|
-| Configure | Write DiAuto's `settings` prefs **in the `:aa` process** (CarLink: `AndroidAutoSettingsProvider`). Also mirror the device-protected keys through `Settings.sync*ToDeviceStorage`. | SharedPreferences cache per process |
+| Configure | Write DiAuto's `settings` prefs **in the `:aa` process** (MobileCarConnect: `AndroidAutoSettingsProvider`). Also mirror the device-protected keys through `Settings.sync*ToDeviceStorage`. | SharedPreferences cache per process |
 | Arm wireless | `ACTION_START_WIRELESS` (clears the boot-loop pause; no-op if already armed), or `ACTION_BT_AUTO_START` (re-arm only when stopped) | |
 | Wake one phone now | `ACTION_NATIVE_AA_POKE` + `EXTRA_MAC` | Re-arms mode 3 if needed and clears the exit flags |
 | USB | `ACTION_CHECK_USB`, or `UsbAccessoryMode.connectAndSwitch` + `ACTION_CHECK_USB` | |
 | End the session but stay armed | `ACTION_DISCONNECT` (user exit: 5 s cooldown, listeners stopped in mode 3) | |
 | Stop everything | `ACTION_STOP_SERVICE` | Car mode off, P2P/AP released, MediaSession released |
-| Observe | `App.provide(ctx).commManager.connectionState` (StateFlow, in `:aa`) | CarLink mirrors it by broadcast |
-| Join failure | `HostIntegration.onPhoneWifiJoinFailed` (CarLink addition) | Hotspot transport only |
+| Observe | `App.provide(ctx).commManager.connectionState` (StateFlow, in `:aa`) | MobileCarConnect mirrors it by broadcast |
+| Join failure | `HostIntegration.onPhoneWifiJoinFailed` (MobileCarConnect addition) | Hotspot transport only |
 
-**Existing hooks** (`HostIntegration.kt`, all CarLink additions): `homeActivity`, `appName`, `serviceChannelName`, `mediaSessionTag`, `toastHandler(text, forced)`, `chromeStyler`, `exitMenuHomeLabel`, `onPhoneWifiJoinFailed`.
+**Existing hooks** (`HostIntegration.kt`, all MobileCarConnect additions): `homeActivity`, `appName`, `serviceChannelName`, `mediaSessionTag`, `toastHandler(text, forced)`, `chromeStyler`, `exitMenuHomeLabel`, `onPhoneWifiJoinFailed`.
 
 **What a host still cannot see without code changes:**
 
@@ -691,14 +691,14 @@ Everything a session needs runs headless in `AapService`, except the projection 
 | Onboarding | Welcome, safety (mandatory), permissions, ready (older display, DPI, GPS and vehicle steps hidden) | `main/OnboardingActivity.kt:43-48,155-156,744-753`; `docs/REVIEW.md:15` | Permissions: yes |
 | Permissions registry | Mic; Location (fine+coarse); Nearby (`BLUETOOTH_CONNECT`/`SCAN`/`ADVERTISE`, `NEARBY_WIFI_DEVICES`); notifications; **overlay**; optional `WRITE_SETTINGS` (hotspot auto-enable); legacy storage. "Enable all" button. AppOps fallback for HUs where `canDrawOverlays` lies. | `utils/AppPermissions.kt:61-174` | Yes, except storage and `WRITE_SETTINGS` (optional) |
 | Runtime check on each resume | Requests missing permissions (`MainActivity.checkSetupFlow`) | `main/MainActivity.kt:824-838,887-900` | Yes |
-| Battery optimisation | **No prompt in the app.** Only the ADB `scripts/install.sh` exempts it. The engine logs "Battery optimization exempt" on boot starts. | `docs/INSTALL.md:40-42`; `AapService.kt:1758-1762` | Yes (CarLink's Diagnostics has this) |
+| Battery optimisation | **No prompt in the app.** Only the ADB `scripts/install.sh` exempts it. The engine logs "Battery optimization exempt" on boot starts. | `docs/INSTALL.md:40-42`; `AapService.kt:1758-1762` | Yes (MobileCarConnect's Diagnostics has this) |
 | Overlay | Permission row: "Lets the app open the car screen on top of other apps, including auto start" | `strings.xml perm_overlay_help` | **Yes** (required for projection launch) |
 | Autostart | Boot / screen-on / USB / Wi-Fi / Bluetooth toggles (`AutoStartFragment`), with the device-protected mirror | `main/AutoStartFragment.kt`; `Settings.kt:1032-1313` | Host's own |
 | Home "Connect phone" | Checks the Bluetooth permission; **"Bluetooth off" / "no paired phones" dialogs with a link to Bluetooth settings**; list of bonded phones; sets mode 3; pokes the chosen phone; shows the auto-connect pill and overlay with a watchdog | `main/HomeFragment.kt:43-133`; `main/MainActivity.kt:256-457` | **Yes** |
 | Connection setup guide | 1. Choose: car hotspot or Wi-Fi Direct. 2. Hotspot: on/off status, "Open car hotspot settings" (`WIFI_TETHER_SETTINGS`), enter SSID/password (validated 1–32 bytes, 8–63 characters), auto-hotspot toggle plus a `WRITE_SETTINGS` grant. Wi-Fi Direct: "Turn the car's Wi-Fi switch on. Allow Location / Nearby… enable Location when Android asks." 3. "Pair with the car's Bluetooth… tap Connect phone… Accept the Android Auto prompts on the phone." | `main/ConnectionSetupFragment.kt:51-138`; `strings.xml setup_*` | **Yes**, condensed |
 | Toasts | Wi-Fi off; P2P in use; band/channel; config unreadable (forced); USB switching/permission; renderer fallback (forced) | §10.8 list | Replace with Home status |
-| Diagnostics | Diagnostics fragment, log export ("Save diagnostic report", redacted), journal | `main/DiagnosticsFragment.kt`; `utils/LogExporter.kt`; `docs/CONNECTION_SETUP.md:45-52` | Yes (CarLink has its own) |
-| Boot-loop notice | High-priority notification after 3 crash boots | `AapService.kt:2933-2966` | Yes, if CarLink ever counts boots |
+| Diagnostics | Diagnostics fragment, log export ("Save diagnostic report", redacted), journal | `main/DiagnosticsFragment.kt`; `utils/LogExporter.kt`; `docs/CONNECTION_SETUP.md:45-52` | Yes (MobileCarConnect has its own) |
+| Boot-loop notice | High-priority notification after 3 crash boots | `AapService.kt:2933-2966` | Yes, if MobileCarConnect ever counts boots |
 | Static BSSID guidance | "open any Wi-Fi scanner app on the phone, find the network named `DIRECT-…` … enter its BSSID as Static BSSID" | `docs/INSTALL.md:64-67` | Fallback only |
 
 ---
@@ -857,7 +857,7 @@ Everything a session needs runs headless in `AapService`, except the projection 
 - [M] "A USB Accessory has zero control over the USB bus … impossible on most devices to trigger the usb 'connect' again without a real unplug" (#615).
 - Host-controller stalls → libusb option (#613).
 - Do not `resetInterface()` on read errors (PR #205).
-- **Two permission prompts** are by design: the device re-enumerates as `18D1:2D00` (#421, #471). An invisible attach-handler activity is the fix (#640). CarLink's `UsbRouterActivity` is exactly that.
+- **Two permission prompts** are by design: the device re-enumerates as `18D1:2D00` (#421, #471). An invisible attach-handler activity is the fix (#640). MobileCarConnect's `UsbRouterActivity` is exactly that.
 - The phone must accept the Android Auto overlay on first USB use (#392).
 - Some HUs have no AOA-capable host stack (#935), and micro-USB tablets need OTG (#881).
 
@@ -866,26 +866,26 @@ Everything a session needs runs headless in `AapService`, except the projection 
 | Upstream fix | Reference | DiAuto 0.3.11 |
 |---|---|---|
 | Hold the BT RFCOMM channel for the whole session (AA 17.8 stutter) | PR #1029 | Releases it on success (§10.11) |
-| Reuse the same Wi-Fi Direct network name and passphrase across sessions | PR #1006, issue #976 | Random `DIRECT-XX-…` and passphrase per group (`WifiDirectManager.kt:1334-1346`); CarLink also removes the group on every start |
+| Reuse the same Wi-Fi Direct network name and passphrase across sessions | PR #1006, issue #976 | Random `DIRECT-XX-…` and passphrase per group (`WifiDirectManager.kt:1334-1346`); MobileCarConnect also removes the group on every start |
 | Cycle the HU's Bluetooth radio to produce a connection event (≤ 12L) | #992 | No |
 | "Leave this unit's Wi-Fi network while connecting" for single-radio units (≤ A14) | #1037 | No |
 | Stable hotspot IP handling | PR #1014 | Re-resolves on join failure only |
 | Offline VPN to keep projection off mobile data | wiki Settings | VPN code unused |
 | Lower video automatically on 2.4 GHz | wiki Settings; #964 | Advice only (`VideoStarvationPolicy`) |
 | Per-vendor external-Bluetooth transports | PR #1027 | Refuses the route |
-| Keep Android Auto's full layout: automatic DPI keeps a 748x450 dp canvas | PR #1108, issue #1101 | CarLink caps Automatic through `HostIntegration.automaticDensityDpi` (docs/VENDOR_CHANGES.md) |
+| Keep Android Auto's full layout: automatic DPI keeps a 748x450 dp canvas | PR #1108, issue #1101 | MobileCarConnect caps Automatic through `HostIntegration.automaticDensityDpi` (docs/VENDOR_CHANGES.md) |
 | Withhold the WPP-over-TCP endpoint until the group IP repeats across creates | PR #1096, issue #1085 | Does not apply: DiAuto advertises no TCP endpoint (`WifiVersionRequest` carries only the version); the IP goes out per session in `WifiStartRequest` over Bluetooth, read from the live group. Still sends `AccessPointType.STATIC` for every Wi-Fi Direct group without grading the BSSID (upstream `GroupIdentityStabilityPolicy`, before #1096) |
 
 ---
 
-## 10. Review of CarLink's integration
+## 10. Review of MobileCarConnect's integration
 
 Severity: **H** = breaks "just works" or causes wrong behaviour; **M** = degrades or risks; **L** = hygiene.
 
 ### 10.1 [H] `static-bssid` is a global override, and Same Wi-Fi pins the phone to the car's BSSID
 
 - `EngineMappings.kt:188` writes the router BSSID from `WifiManager.connectionInfo.bssid` (`EngineSettingsApplier.kt:316-320`). The engine uses `static-bssid` first in **both** credential chains (`WifiDirectManager.kt:513-519`; `SoftApBssidPolicy.choose` first argument).
-- CarLink resets it to `"0"` on the hotspot and Wi-Fi Direct paths (`EngineMappings.kt:196`) and in the fallback (`AndroidAutoWifiFallback.kt:43`), so cross-path leakage is avoided **only as long as every session goes through `applyForSession`**. A settings-only apply (`path=null`) leaves the previous session's value in place.
+- MobileCarConnect resets it to `"0"` on the hotspot and Wi-Fi Direct paths (`EngineMappings.kt:196`) and in the fallback (`AndroidAutoWifiFallback.kt:43`), so cross-path leakage is avoided **only as long as every session goes through `applyForSession`**. A settings-only apply (`path=null`) leaves the previous session's value in place.
 - The phone's specifier needs the exact BSSID. The car's current BSSID may be on a band or mesh node that is poor for the phone, and the other-band BSSID stalled in the field ("WiFi read timeout"; §3.3.4).
 - **Fix:**
   - Always rewrite `static-bssid`, `hotspot-interface`, `hotspot-ssid`/`password` and `native-ap-transport` together in one provider call per session (already true).
@@ -907,13 +907,13 @@ None of that helps the driver compared with Wi-Fi Direct, which works on the tab
 
 ### 10.3 [M] `native-ap-transport` and `hotspot-interface`
 
-- For CAR_HOTSPOT, CarLink writes `hotspot-interface=""` (heuristic). On tablets the tethering AP is typically `wlan1`, `ap0` or `swlan0` while `wlan0` is the station. The heuristic handles that because it excludes the station IPv4 (`SoftApNetworkPolicy.kt:107-110`).
-- The SSID and password of a tablet's own hotspot cannot be read (`HotspotConfigReader` reflection is refused). CarLink therefore needs them typed in, or falls back to Wi-Fi Direct (`EngineMappings.kt:51-52`). That is acceptable.
+- For CAR_HOTSPOT, MobileCarConnect writes `hotspot-interface=""` (heuristic). On tablets the tethering AP is typically `wlan1`, `ap0` or `swlan0` while `wlan0` is the station. The heuristic handles that because it excludes the station IPv4 (`SoftApNetworkPolicy.kt:107-110`).
+- The SSID and password of a tablet's own hotspot cannot be read (`HotspotConfigReader` reflection is refused). MobileCarConnect therefore needs them typed in, or falls back to Wi-Fi Direct (`EngineMappings.kt:51-52`). That is acceptable.
 - Value 2 (local-only hotspot) is impossible to select (§3.3). Raw prefs written through the provider are rewritten to 1 by the getter. Re-enabling it needs a vendor edit.
 
 ### 10.4 [M] `wifiConnectionMode` is never written
 
-- CarLink relies on the default 3 (`AndroidAutoCommandReceiver.kt:106` only reads it).
+- MobileCarConnect relies on the default 3 (`AndroidAutoCommandReceiver.kt:106` only reads it).
 - DiAuto's own Connect button writes `3` every time (`main/HomeFragment.kt:104`).
 - A user who reaches DiAuto's SettingsActivity (still in the APK) or an imported backup can leave mode 1 or 2. `startWireless` would then send `ACTION_BT_AUTO_START`, which does nothing outside mode 3.
 - **Fix:** write `wifi-connection-mode=3` in `applyForSession` for wireless.
@@ -929,51 +929,51 @@ None of that helps the driver compared with Wi-Fi Direct, which works on the tab
 - **Fix:**
   - Use `commManager.isBusy`, not `isConnected`.
   - Only stop the service when `NativeAaHandshakeManager` reports itself stuck (or simply skip the stop when the service was idle).
-  - Set the poke targets to exactly the chosen phone for the session (replace the set, keep the others in CarLink's KnownPhones).
+  - Set the poke targets to exactly the chosen phone for the session (replace the set, keep the others in MobileCarConnect's KnownPhones).
   - Prefer `ACTION_START_WIRELESS` followed by `ACTION_NATIVE_AA_POKE`.
 
 ### 10.6 [H] Process handling: phantom engines and side effects of engine defaults
 
-1. **`START_STICKY` and `onTaskRemoved`.** If `:aa` is killed (low memory) or the user swipes CarLink away, Android restarts `AapService` with a null intent (`AapService.kt:2034,1773-1783`).
+1. **`START_STICKY` and `onTaskRemoved`.** If `:aa` is killed (low memory) or the user swipes MobileCarConnect away, Android restarts `AapService` with a null intent (`AapService.kt:2034,1773-1783`).
    - `onCreate` then arms mode 3, creates a P2P group (or reads the AP) and **pokes phones on its own** (`onNativeCredentials` → `triggerPoke`, `:2434-2450`).
-   - CarLink's main process is not engaged, so it ignores the state broadcasts (`AndroidAutoEngine.publish` returns when `!engaged`, `:152-153`).
-   - Result: a wireless engine CarLink does not show, which can pull the phone into Android Auto and hold the P2P radio while CarPlay wants it.
+   - MobileCarConnect's main process is not engaged, so it ignores the state broadcasts (`AndroidAutoEngine.publish` returns when `!engaged`, `:152-153`).
+   - Result: a wireless engine MobileCarConnect does not show, which can pull the phone into Android Auto and hold the P2P radio while CarPlay wants it.
 
-   Fix (needs a vendor edit): make the start mode a host decision (`HostIntegration.stickyService=false`), and skip the `onTaskRemoved` restart when hosted. Alternatively, have `AndroidAutoCommandReceiver` stop a service whose start CarLink did not ask for.
-2. **`auto-start-on-boot` defaults to true.** While AapService runs, any screen-off longer than 60 s followed by screen-on, or any OEM ACC intent, launches `HostIntegration.homeActivity` through the overlay trampoline (`AapService.kt:607-628, 2781-2849`). On a tablet, waking it pops CarLink Home over whatever is on screen, even when CarLink's own `startOnBoot` is off.
+   Fix (needs a vendor edit): make the start mode a host decision (`HostIntegration.stickyService=false`), and skip the `onTaskRemoved` restart when hosted. Alternatively, have `AndroidAutoCommandReceiver` stop a service whose start MobileCarConnect did not ask for.
+2. **`auto-start-on-boot` defaults to true.** While AapService runs, any screen-off longer than 60 s followed by screen-on, or any OEM ACC intent, launches `HostIntegration.homeActivity` through the overlay trampoline (`AapService.kt:607-628, 2781-2849`). On a tablet, waking it pops MobileCarConnect Home over whatever is on screen, even when MobileCarConnect's own `startOnBoot` is off.
 
-   Fix: write `auto-start-on-boot=false` and `auto-start-on-screen-on=false`, and sync the device-protected copies, because CarLink owns boot behaviour.
-3. **`auto-connect-last-session` defaults to true, and CarLink grows `allow-devices`.** CarLink adds every USB-started phone (`AndroidAutoCommandReceiver.kt:58`). On every AapService start, including wireless ones, `checkAlreadyConnectedUsb()` switches any allowed Android phone currently plugged in (for example, charging) into accessory mode (`AapService.kt:802, 2232-2259`). The UsbReceiver fallback does the same 2 s after any attach (`:2041-2068`).
+   Fix: write `auto-start-on-boot=false` and `auto-start-on-screen-on=false`, and sync the device-protected copies, because MobileCarConnect owns boot behaviour.
+3. **`auto-connect-last-session` defaults to true, and MobileCarConnect grows `allow-devices`.** MobileCarConnect adds every USB-started phone (`AndroidAutoCommandReceiver.kt:58`). On every AapService start, including wireless ones, `checkAlreadyConnectedUsb()` switches any allowed Android phone currently plugged in (for example, charging) into accessory mode (`AapService.kt:802, 2232-2259`). The UsbReceiver fallback does the same 2 s after any attach (`:2041-2068`).
 
-   Fix: set `auto-connect-last-session=false`, and have CarLink perform the AOA switch itself (it already can, `:60-71`). Or clear `allow-devices` to the current device.
-4. **Car mode.** `enableCarMode(0)` holds for the service's whole life, including idle "waiting" (`AapService.kt:807-817`). On phone/tablet ROMs this changes uiMode and may show a car-mode notification or driving UI (inference). CarLink keeps the service running after sessions until `stop()`.
-5. **`kill-on-disconnect`.** If it were ever true, `appTasks.forEach { finishAndRemoveTask() }` would close **CarLink's Home task**, because tasks are per package, not per process (`CommManager.kt:562-565`).
+   Fix: set `auto-connect-last-session=false`, and have MobileCarConnect perform the AOA switch itself (it already can, `:60-71`). Or clear `allow-devices` to the current device.
+4. **Car mode.** `enableCarMode(0)` holds for the service's whole life, including idle "waiting" (`AapService.kt:807-817`). On phone/tablet ROMs this changes uiMode and may show a car-mode notification or driving UI (inference). MobileCarConnect keeps the service running after sessions until `stop()`.
+5. **`kill-on-disconnect`.** If it were ever true, `appTasks.forEach { finishAndRemoveTask() }` would close **MobileCarConnect's Home task**, because tasks are per package, not per process (`CommManager.kt:562-565`).
 
    Fix: write `kill-on-disconnect=false` explicitly.
-6. **Boot-loop guard.** CarLink removed `BootCompleteReceiver`, so strikes never accrue. Inherited pause state from a standalone DiAuto install cannot exist (different package). Low risk.
+6. **Boot-loop guard.** MobileCarConnect removed `BootCompleteReceiver`, so strikes never accrue. Inherited pause state from a standalone DiAuto install cannot exist (different package). Low risk.
 
-   Note that CarLink's paths never send `ACTION_START_WIRELESS`, so a pause would never be cleared.
+   Note that MobileCarConnect's paths never send `ACTION_START_WIRELESS`, so a pause would never be cleared.
 
 ### 10.7 [M] Auto-start lists
 
-`auto-start-bt-macs` only ever grows (DiAuto adds every phone that connected; CarLink adds every chosen phone). Each poke cycle walks all of them (§4.4).
+`auto-start-bt-macs` only ever grows (DiAuto adds every phone that connected; MobileCarConnect adds every chosen phone). Each poke cycle walks all of them (§4.4).
 
-Fix: replace the set with the chosen phone at session start (§10.5). Keep the full list in CarLink's `KnownPhones`.
+Fix: replace the set with the chosen phone at session start (§10.5). Keep the full list in MobileCarConnect's `KnownPhones`.
 
 ### 10.8 [H] Engine toasts are dropped, including the actionable ones
 
-`CarLinkApplication.kt:57-60` drops every non-forced toast. Dropped, with no other signal to the host:
+`MobileCarConnectApplication.kt:57-60` drops every non-forced toast. Dropped, with no other signal to the host:
 
 - "Native AA requires Wi-Fi. Please turn it on." On API ≥ 29 the P2P path **aborts** (`WifiDirectManager.kt:1161-1173`), so wireless silently never starts.
 - "Wi-Fi Direct is in use by another app…" (`:1674`).
 - "…most phones cannot join. Restart WiFi" (`:659`).
 - USB permission denied / failed (`AapService.kt:2130,2143`).
 
-**Fix:** before every wireless start CarLink should check, and show on Home:
+**Fix:** before every wireless start MobileCarConnect should check, and show on Home:
 
 - Wi-Fi radio on (offer the `Settings.Panel.ACTION_WIFI` panel);
 - Bluetooth on;
-- the **system Location switch on** (`LocationManager.isLocationEnabled`) — Diagnostics checks only the permission (`carlink/diagnostics/Checks.kt:116-118`);
+- the **system Location switch on** (`LocationManager.isLocationEnabled`) — Diagnostics checks only the permission (`mobilecarconnect/diagnostics/Checks.kt:116-118`);
 - `NEARBY_WIFI_DEVICES`;
 - overlay;
 - the phone bonded.
@@ -985,15 +985,15 @@ Also map known toast texts to Home statuses inside `toastHandler`, or add the ev
 - `AutomationActivity` is exported with `headunit://exit|connect|disconnect|nightmode` and actions.
 - `AapProjectionActivity` is exported.
 
-Any installed app can start, stop or switch the Android Auto engine. Mark both `exported=false` in CarLink's manifest. CarLink's own code reaches them through explicit intents in the same package.
+Any installed app can start, stop or switch the Android Auto engine. Mark both `exported=false` in MobileCarConnect's manifest. MobileCarConnect's own code reaches them through explicit intents in the same package.
 
 ### 10.10 [L] State mapping
 
 - `CONNECTION_ERROR` → `FAILED` is shown even though DiAuto immediately retries or re-arms. It is also rarely observed at all (conflated; `AapService.kt:855-862`).
-- After an unexpected wireless drop, the engine re-arms in 1.5 s and the poke resumes. CarLink shows WAITING, which is right.
+- After an unexpected wireless drop, the engine re-arms in 1.5 s and the poke resumes. MobileCarConnect shows WAITING, which is right.
 - The richer Native AA stages are invisible (§7.1).
 
-### 10.11 [H] The engine drops the Bluetooth channel after the handoff, and CarLink makes every group new
+### 10.11 [H] The engine drops the Bluetooth channel after the handoff, and MobileCarConnect makes every group new
 
 **The Bluetooth channel.** On `CompleteSuccess`, DiAuto closes the AA listeners, and the handshake coroutine then closes the RFCOMM socket (`NativeAaHandshakeManager.kt:1025-1035,1286-1289`). Upstream measured that Android Auto 17.8 then "restarts wireless setup and re-dials every 5 s … 1 to 13 fps … against 27 to 30 fps" (open-headunit PR #1029).
 
@@ -1003,7 +1003,7 @@ The field results are consistent with this, though not proven. If the phone runs
 
 **Fix:** a stable per-install group name and passphrase, and no removal on start unless another owner holds the group.
 
-### 10.12 What CarLink does right
+### 10.12 What MobileCarConnect does right
 
 - The engine is isolated in `:aa`.
 - A single settings writer.
@@ -1057,10 +1057,10 @@ Applies to both a head unit and a tablet.
 ### 11.3 Making Bluetooth initiation work, or guiding it
 
 - **Head unit** (has HF/A2DP-sink): the phone reconnects by itself. `SystemEventReceiver` → Home → start works. Keep the poke but respect the HF link (the engine already does).
-- **Tablet:** nothing reconnects by itself, so CarLink must initiate:
-  - **On Home open, screen wake or the Connect tap:** start the wireless engine for the last-used Android phone and poke it. The poke from a tablet is an RFCOMM connect to the phone's HFP-AG record. The phone accepts it as a bonded device, the ACL comes up, and Gearhead then dials the AA UUID. That the poke alone works on the Redmi/S25 is **not yet proven**: field result 1 predates or bypassed it. Test it with the CarLink gateway patch and logs (`NativeAA: Successfully poked … via HFP-AG`, then `Connection accepted from …`).
+- **Tablet:** nothing reconnects by itself, so MobileCarConnect must initiate:
+  - **On Home open, screen wake or the Connect tap:** start the wireless engine for the last-used Android phone and poke it. The poke from a tablet is an RFCOMM connect to the phone's HFP-AG record. The phone accepts it as a bonded device, the ACL comes up, and Gearhead then dials the AA UUID. That the poke alone works on the Redmi/S25 is **not yet proven**: field result 1 predates or bypassed it. Test it with the MobileCarConnect gateway patch and logs (`NativeAA: Successfully poked … via HFP-AG`, then `Connection accepted from …`).
   - **If the phone answers pokes but never connects back** (the engine logs this every 3 pokes): show "On your phone: Settings → Connected devices → <tablet> → Connect", plus "Make sure Android Auto → Wireless Android Auto is on".
-  - **Pair while CarLink's Android Auto listener is running**, so the phone's SDP cache contains the AA UUID (inference). If a phone was paired earlier, a "Forget and pair again" hint is a cheap recovery.
+  - **Pair while MobileCarConnect's Android Auto listener is running**, so the phone's SDP cache contains the AA UUID (inference). If a phone was paired earlier, a "Forget and pair again" hint is a cheap recovery.
 - After the first successful wireless session, the phone saves the HU as a wireless car. From then on, the phone's own Bluetooth connect starts Android Auto (open-headunit #860). The tablet still has to bring the ACL up through the poke. Upstream's radio-cycle trick (#992) works only up to Android 12L, so it is useless on an Android 16 tablet.
 - **Troubleshooting card on the phone side** (from §9.4): Wireless Android Auto on; Android Auto allowed to use mobile data; "Switch to mobile data" / "Network acceleration" / "Avoid poor connections" off if the session drops; re-pair if the phone answers pokes but never connects back.
 - **Do not** try to make a tablet an HFP-HF or A2DP sink. Those roles need system privileges or a system Bluetooth configuration that an app cannot change.
@@ -1113,15 +1113,15 @@ The car and stereo in this project are **not BYD**. This section lists everythin
 
 | # | Feature / code path | Gate today | Runs on a non-BYD HU or tablet? | Risk off-BYD | Generic behaviour |
 |---|---|---|---|---|---|
-| 1 | **Standalone windshield HUD** (`hud/BydStandaloneHudOutput.kt`): broadcast `byd.hud.NAVIGATION` to `com.byd.clusterdebug/.BroadcastReceiverCAN` | Package allowlist (includes `com.carlink.app`, `:49-52`), exact `Build.FINGERPRINT` `BYD-AUTO/IVI/IVI:13/TP1A.220624.014/eng.build20260722.221155…` (`:53`), receiver version 10601004, system flag and signer SHA-256 (`:54-65`) | No (fingerprint gate) | None; one `getPackageInfo` per check | Off |
+| 1 | **Standalone windshield HUD** (`hud/BydStandaloneHudOutput.kt`): broadcast `byd.hud.NAVIGATION` to `com.byd.clusterdebug/.BroadcastReceiverCAN` | Package allowlist (includes `com.mobilecarconnect.app`, `:49-52`), exact `Build.FINGERPRINT` `BYD-AUTO/IVI/IVI:13/TP1A.220624.014/eng.build20260722.221155…` (`:53`), receiver version 10601004, system flag and signer SHA-256 (`:54-65`) | No (fingerprint gate) | None; one `getPackageInfo` per check | Off |
 | 2 | **Cluster output** (`hud/BydClusterOutput.kt`): broadcast `AUTONAVI_STANDARD_BROADCAST_SEND` to `com.byd.amapservice` | `installed("com.byd.amapservice")` and `byd-navigation-enabled` (`hud/BydNavigationOutputs.kt:41-44,73`) | Only if that package exists | Low | Off |
 | 3 | **SOME/IP HUD bridge** (`hud/BydHudBridge.kt`): binds `com.ts.car.someip.service` | Package installed, nav enabled | Only if installed | Low | Off |
-| 4 | **CarServer navigation output** (`hud/BydCarServerNavigationOutput.kt`, `BydCarServerTransport.kt`, `com/byd/spi/ipc/cursor/BinderCursor.java`) | Package name ends `.bydhudtest`/`.hudtest` (`:20`); debug manifest asks for `BYDAUTO_INSTRUMENT_COMMON` and `com.byd.car.server.PROVIDER` (`app/src/debug/AndroidManifest.xml`) | No in release; yes for `com.carlink.app.hudtest` | Debug only | Off |
-| 5 | **`BydStarterBridge`** (`hud/BydStarterBridge.kt`): client of an ADB-started local socket bridge | Package ∈ {…bydhudtest, …hudtest, `com.carlink.app.hudtest`} (`:29,39`) | No in release | Debug only | Off |
+| 4 | **CarServer navigation output** (`hud/BydCarServerNavigationOutput.kt`, `BydCarServerTransport.kt`, `com/byd/spi/ipc/cursor/BinderCursor.java`) | Package name ends `.bydhudtest`/`.hudtest` (`:20`); debug manifest asks for `BYDAUTO_INSTRUMENT_COMMON` and `com.byd.car.server.PROVIDER` (`app/src/debug/AndroidManifest.xml`) | No in release; yes for `com.mobilecarconnect.app.hudtest` | Debug only | Off |
+| 5 | **`BydStarterBridge`** (`hud/BydStarterBridge.kt`): client of an ADB-started local socket bridge | Package ∈ {…bydhudtest, …hudtest, `com.mobilecarconnect.app.hudtest`} (`:29,39`) | No in release | Debug only | Off |
 | 6 | `BydNavigationOutputs.start()` on every connect, and from `AapNavigation` init | `available()` = API ≥ 28 and (#1 or #2 or #3) (`hud/BydNavigationOutputs.kt:20-29`; `aap/AapService.kt:997`; `aap/AapNavigation.kt:19`) | Called, returns early | Log line only | No-op |
-| 7 | `BydNavigationOutputs.onAppOpened` (journal cleanup after a force-stop) | Only from `MainActivity.onCreate` (`main/MainActivity.kt:122`) | n/a | **In CarLink it never runs** (MainActivity unused). On a BYD a force-stopped HUD arrow would stay until the next session. | Call it from the host when the profile is BYD |
+| 7 | `BydNavigationOutputs.onAppOpened` (journal cleanup after a force-stop) | Only from `MainActivity.onCreate` (`main/MainActivity.kt:122`) | n/a | **In MobileCarConnect it never runs** (MainActivity unused). On a BYD a force-stopped HUD arrow would stay until the next session. | Call it from the host when the profile is BYD |
 | 8 | **`BydFullscreen`**: forces the projection container to full window height, disables ancestor clipping, adds a touch-forwarding strip window over the "dead" bottom area | **Only API ≥ 30**; acts whenever the parent is ≥ 8 px shorter than `currentWindowMetrics` (`utils/BydFullscreen.kt:34-70`; called unconditionally at `aap/AapProjectionActivity.kt:885-887`) | **Yes, on every API 30+ device** | **Could misbehave on tablets and generic HUs** when system bars or cutouts are visible, i.e. `fullscreen-mode` NONE, STATUS_ONLY or IMMERSIVE_WITH_NOTCH, or OEM bars that cannot be hidden. The container is stretched under the nav bar and a strip window intercepts touches there (inference; not observed) | Only on DiLink ("byd-freeform" caption). Otherwise rely on insets. |
-| 9 | **`music-via-bluetooth` default** = `Build.MODEL == "DiLink5.1"` (`utils/Settings.kt:607-610`) | Model string | Default false elsewhere | None (CarLink overwrites it, default false) | false unless the HU is the A2DP sink |
+| 9 | **`music-via-bluetooth` default** = `Build.MODEL == "DiLink5.1"` (`utils/Settings.kt:607-610`) | Model string | Default false elsewhere | None (MobileCarConnect overwrites it, default false) | false unless the HU is the A2DP sink |
 | 10 | **Renderer default** = SurfaceView on DiLink5.1, else TextureView (`view/ProjectionRendererPolicy.kt`) | Model string | TextureView elsewhere | None | Keep |
 | 11 | **Soft-AP interface exclusions** `briotgw` (BYD bridge), `ethN`, modem names (`aap/SoftApNetworkPolicy.kt:56-60,112-116`) | Name match | Yes | Positive: generic protection. Could exclude a real AP named `eth_*`? No: only `eth[0-9]+` | Keep |
 | 12 | **IPv6 EUI-64 → BSSID** (`connection/P2pInterfaceBssid.kt`) | MAC masked | Yes | None; it rejects opaque identifiers. Proven also on HiBy R4 (Qualcomm A12) | Keep (generic) |
@@ -1130,19 +1130,19 @@ The car and stereo in this project are **not BYD**. This section lists everythin
 | 15 | `com.byd.carsettings` special-casing when opening Wi-Fi or hotspot settings (`main/ConnectionSetupFragment.kt:202`; `main/SettingsFragment.kt:2257`) | Resolved package | No | Standalone UI only | n/a |
 | 16 | Manifest `<queries>` for `com.byd.clusterdebug`, `com.byd.amapservice`, `com.ts.car.someip.service` | — | Harmless | None | Keep or drop |
 | 17 | Strings and About ("Android Auto receiver for BYD DiLink"), website, `README.md:5` support scope ("These projects focus on BYD cars… other brands are unsupported") | — | — | Expectation: upstream will not fix non-BYD issues | — |
-| 18 | **Car keys** (`connection/CarKeyReceiver.kt`, `connection/carkey/fyt/*`, manifest intent list): **not BYD**. Generic Chinese-HU broadcasts: Microntek, FYT (`com.syu`), NWD, Winca, `hy.`, Eryanet, QQMusic car and others. `CarKeyReceiver` **aborts ordered broadcasts** at priority 1000 | Enabled per session by CarLink | Yes | On generic FYT/MTCD stereos it is useful. On a tablet it is harmless. On a stereo it can steal keys from the OEM media app during Android Auto sessions (intended). | Keep, gated to Android Auto sessions |
+| 18 | **Car keys** (`connection/CarKeyReceiver.kt`, `connection/carkey/fyt/*`, manifest intent list): **not BYD**. Generic Chinese-HU broadcasts: Microntek, FYT (`com.syu`), NWD, Winca, `hy.`, Eryanet, QQMusic car and others. `CarKeyReceiver` **aborts ordered broadcasts** at priority 1000 | Enabled per session by MobileCarConnect | Yes | On generic FYT/MTCD stereos it is useful. On a tablet it is harmless. On a stereo it can steal keys from the OEM media app during Android Auto sessions (intended). | Keep, gated to Android Auto sessions |
 | 19 | **Boot/ACC and hibernate handling** (`BootCompleteReceiver` list; `AapService` wake receiver; `HIBERNATE_WAKE_THRESHOLD_MS=60s`): **not BYD**. MediaTek IPO, FYT/GLSX `ACCON`, Microntek `ACC_ON`, QUICKBOOT | `auto-start-on-boot` | Yes, while AapService runs | **Tablet:** pops Home on every wake (§10.6.2) | Host-owned; engine flags off |
 | 20 | DiLink "Music through car Bluetooth" focus rules (`PlaybackFocusPolicy` NEVER when `music-via-bluetooth`) | Setting | Only if set | — | Follows #9 |
-| 21 | Defaults chosen for DiLink: `native-ap-transport=1` (car hotspot; `Settings.kt:1454`), Connection Setup ordering, `docs/CONNECTION_SETUP.md` | — | Yes | **On a tablet or generic HU the hotspot default fails without typed credentials.** CarLink overrides it per session. | Wi-Fi Direct (0) |
+| 21 | Defaults chosen for DiLink: `native-ap-transport=1` (car hotspot; `Settings.kt:1454`), Connection Setup ordering, `docs/CONNECTION_SETUP.md` | — | Yes | **On a tablet or generic HU the hotspot default fails without typed credentials.** MobileCarConnect overrides it per session. | Wi-Fi Direct (0) |
 | 22 | `wifiDirectName` default "HeadUnit" in the P2P SSID (`WifiDirectManager.kt:1334-1341`) | — | Yes | Cosmetic | Set to the vehicle profile name |
 
 ### 12.2 A vehicle-profile setting: how to gate cleanly
 
-Add to CarLink's `UnifiedSettings` a `vehicleProfile` with values `GENERIC` (default), `BYD_DILINK`, and possibly `FYT`/`MTCD`. Auto-suggest it from `Build.MANUFACTURER`/`MODEL`/`FINGERPRINT` (BYD: `FINGERPRINT` starts `BYD-AUTO/`, `MODEL` `DiLink*`) and let the user override it. Map it in `EngineMappings.androidAuto`:
+Add to MobileCarConnect's `UnifiedSettings` a `vehicleProfile` with values `GENERIC` (default), `BYD_DILINK`, and possibly `FYT`/`MTCD`. Auto-suggest it from `Build.MANUFACTURER`/`MODEL`/`FINGERPRINT` (BYD: `FINGERPRINT` starts `BYD-AUTO/`, `MODEL` `DiLink*`) and let the user override it. Map it in `EngineMappings.androidAuto`:
 
 | Profile → | GENERIC (tablet / any HU) | BYD_DILINK |
 |---|---|---|
-| `byd-navigation-enabled` | **false** (today CarLink defaults `bydDirections=true`; harmless but wrong intent) | user choice, default true |
+| `byd-navigation-enabled` | **false** (today MobileCarConnect defaults `bydDirections=true`; harmless but wrong intent) | user choice, default true |
 | `music-via-bluetooth` | false | true (DiAuto's own DiLink default) |
 | `native-ap-transport` default for AUTOMATIC | 0 (Wi-Fi Direct) | 1 if hotspot credentials known, else 0 |
 | `view-mode` | leave unset (TextureView) | leave unset (Surface on DiLink5.1) |

@@ -11,7 +11,7 @@ import com.shilapi.xcertplay.host.R
  * start. Android counts an allowed ACTIVATE_VPN app op as that consent, and the car's own adb can
  * set it. Only an adb key the driver already approved is used; this never asks for approval.
  */
-object VpnPreConsent { // CarLink: public, for CarLink's pre-flight and setup (AdbVpnConsent)
+object VpnPreConsent { // MobileCarConnect: public, for MobileCarConnect's pre-flight and setup (AdbVpnConsent)
     fun grant(context: Context, adb: LocalAdb = LocalAdb(AdbKeys.load(context))): LocalAdb.Access = adb.use {
         val access = it.connect(mayAsk = false)
         if (access == LocalAdb.Access.READY) it.shell("appops set ${context.packageName} ACTIVATE_VPN allow")

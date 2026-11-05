@@ -68,8 +68,8 @@ internal class AapControlMedia(
                 }
 
                 if (focusRequest.mode == Media.VideoFocusMode.VIDEO_FOCUS_NATIVE) {
-                    val carScreen = com.andrerinas.openheadunit.HostIntegration.openCarScreen // CarLink
-                    if (carScreen != null) { // CarLink: keep the session, show the host's screen
+                    val carScreen = com.andrerinas.openheadunit.HostIntegration.openCarScreen // MobileCarConnect
+                    if (carScreen != null) { // MobileCarConnect: keep the session, show the host's screen
                         AppLog.i("Video Focus NATIVE received. Opening the host's car screen; the session stays.")
                         aapTransport.send(VideoFocusEvent(gain = false, unsolicited = false))
                         if (AapProjectionActivity.isForeground) carScreen()
@@ -120,7 +120,7 @@ internal class AapControlMedia(
 
         if (channel == Channel.ID_VID) {
             aapTransport.gainVideoFocus()
-            // CarLink: grant focus with the config, as openauto's VideoService does; the phone waited
+            // MobileCarConnect: grant focus with the config, as openauto's VideoService does; the phone waited
             // for the first-frame watchdog otherwise (~900 ms on every start). A surface made later
             // still asks again with an unsolicited gain.
             aapTransport.send(com.andrerinas.openheadunit.aap.protocol.messages.VideoFocusEvent(gain = true, unsolicited = false))
@@ -331,7 +331,7 @@ internal class AapControlService(
 
 
     private fun serviceDiscoveryRequest(request: Control.ServiceDiscoveryRequest): Int {
-        AppLog.i("Service Discovery Request: %s brand=%s", request.phoneName, request.phoneBrand) // CarLink: the phone's make and model for issue reports
+        AppLog.i("Service Discovery Request: %s brand=%s", request.phoneName, request.phoneBrand) // MobileCarConnect: the phone's make and model for issue reports
 
         val msg = ServiceDiscoveryResponse(context)
         aapTransport.send(msg)

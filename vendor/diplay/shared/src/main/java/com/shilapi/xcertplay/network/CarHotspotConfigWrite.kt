@@ -16,7 +16,7 @@ data class HotspotCredentials(
     val passphrase: String,
     val security: ManualHotspotSecurity,
     val band: ManualHotspotBand = ManualHotspotBand.AUTO,
-    /** CarLink: also replace the car's saved hotspot name (by default the car keeps its own). */
+    /** MobileCarConnect: also replace the car's saved hotspot name (by default the car keeps its own). */
     val rename: Boolean = false,
 )
 
@@ -82,7 +82,7 @@ object CarHotspotConfigWrite {
                 log("car hotspot config: an open hotspot does not overwrite the car's password")
                 return WriteOutcome(Result.OPEN_REJECTED)
             }
-            val effective = if (!credentials.rename && current?.SSID?.isNotBlank() == true) credentials.copy(ssid = current.SSID) else credentials // CarLink: rename
+            val effective = if (!credentials.rename && current?.SSID?.isNotBlank() == true) credentials.copy(ssid = current.SSID) else credentials // MobileCarConnect: rename
             val config = newConfig().apply {
                 applyTo(this, effective)
                 if (current != null) {

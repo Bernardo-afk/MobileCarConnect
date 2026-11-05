@@ -1,7 +1,7 @@
-# CarLink UI screenshots
+# MobileCarConnect UI screenshots
 
-An index of every CarLink screen state, rendered by
-`app/src/test/java/com/carlink/app/gallery/ScreenshotGallery.kt` (Robolectric, native graphics)
+An index of every MobileCarConnect screen state, rendered by
+`app/src/test/java/com/mobilecarconnect/app/gallery/ScreenshotGallery.kt` (Robolectric, native graphics)
 from each screen's stateless content (`HomeContent`, `SettingsContent`, `DiagnosticsContent`,
 `AboutContent`, `SetupContent`) with fake state. Nothing here comes from a real phone or head unit. Files are named
 `<area>/<area>_<state>_<config>_<theme>.png`; 853 images in total.
@@ -14,17 +14,17 @@ echo "sdk.dir=$HOME/android-sdk" > local.properties   # once, if not already the
 ```
 
 This runs only the gallery test (about 15 minutes), deletes the old images of every registered area
-and writes new ones (half-size WebP, to keep the public repository small). `-Pcarlink.only=<regex>` renders only the images whose file name matches
-(for example `-Pcarlink.only='^home_.*_tablet_'`) and deletes nothing; `-Pcarlink.gallery.areas=home`
+and writes new ones (half-size WebP, to keep the public repository small). `-Pmobilecarconnect.only=<regex>` renders only the images whose file name matches
+(for example `-Pmobilecarconnect.only='^home_.*_tablet_'`) and deletes nothing; `-Pmobilecarconnect.gallery.areas=home`
 re-records whole areas. Ordinary `testDebugUnitTest` runs skip the gallery (it needs
-`-Dcarlink.screenshots=true`, which the task sets; `-Pcarlink.screenshots=true` works too). No
-device or emulator is involved. The gallery renders with system animations off, so CarLink's
+`-Dmobilecarconnect.screenshots=true`, which the task sets; `-Pmobilecarconnect.screenshots=true` works too). No
+device or emulator is involved. The gallery renders with system animations off, so MobileCarConnect's
 "reduce motion" path is active: Home's link dial is drawn at rest (the step in progress shows
 half charged; nothing animates).
 
 ## Configs
 
-| Config | Profile | Panel | CarLink canvas | Themes |
+| Config | Profile | Panel | MobileCarConnect canvas | Themes |
 |---|---|---|---|---|
 | `tablet` | Phone/tablet | The user's Redmi Pad Pro: 2560×1600px at 280dpi (1463×914dp) | ≈1108×692dp (large-handheld scale 1.32×) | dark, light |
 | `car-landscape` | Car | 2160×1215px (1440×810dp at 240dpi) | 1440×810dp | dark, light |
@@ -147,7 +147,7 @@ The connection log card carries **Report on GitHub** next to Share log. The low-
 | `available` — Update popup: a newer stable release | [img](update/update_available_tablet_dark.webp) | [img](update/update_available_tablet_light.webp) | [img](update/update_available_car-landscape_dark.webp) | [img](update/update_available_car-landscape_light.webp) | — | [img](update/update_available_car-split-third_dark.webp) | [img](update/update_available_phone-portrait_dark.webp) | [img](update/update_available_phone-portrait_light.webp) | — | — |
 | `downloading` — Downloading, with progress and Cancel | [img](update/update_downloading_tablet_dark.webp) | [img](update/update_downloading_tablet_light.webp) | [img](update/update_downloading_car-landscape_dark.webp) | [img](update/update_downloading_car-landscape_light.webp) | — | [img](update/update_downloading_car-split-third_dark.webp) | [img](update/update_downloading_phone-portrait_dark.webp) | [img](update/update_downloading_phone-portrait_light.webp) | — | — |
 | `verify-failed` — The download failed a check and was deleted | [img](update/update_verify-failed_tablet_dark.webp) | [img](update/update_verify-failed_tablet_light.webp) | [img](update/update_verify-failed_car-landscape_dark.webp) | [img](update/update_verify-failed_car-landscape_light.webp) | — | [img](update/update_verify-failed_car-split-third_dark.webp) | [img](update/update_verify-failed_phone-portrait_dark.webp) | [img](update/update_verify-failed_phone-portrait_light.webp) | — | — |
-| `permission` — Asking to allow installs from CarLink | [img](update/update_permission_tablet_dark.webp) | [img](update/update_permission_tablet_light.webp) | [img](update/update_permission_car-landscape_dark.webp) | [img](update/update_permission_car-landscape_light.webp) | — | [img](update/update_permission_car-split-third_dark.webp) | [img](update/update_permission_phone-portrait_dark.webp) | [img](update/update_permission_phone-portrait_light.webp) | — | — |
+| `permission` — Asking to allow installs from MobileCarConnect | [img](update/update_permission_tablet_dark.webp) | [img](update/update_permission_tablet_light.webp) | [img](update/update_permission_car-landscape_dark.webp) | [img](update/update_permission_car-landscape_light.webp) | — | [img](update/update_permission_car-split-third_dark.webp) | [img](update/update_permission_phone-portrait_dark.webp) | [img](update/update_permission_phone-portrait_light.webp) | — | — |
 
 ### Switcher — `switcher/` (42 images)
 
@@ -163,9 +163,9 @@ The connection log card carries **Report on GitHub** next to Share log. The low-
 ## Add a screen or state
 
 Append `GalleryEntry(area, name) { YourScreenContent(fakeState, ...) }` to
-`app/src/test/java/com/carlink/app/gallery/GalleryEntries.kt`, using the same stateless
+`app/src/test/java/com/mobilecarconnect/app/gallery/GalleryEntries.kt`, using the same stateless
 composable and fakes as the screen's `@Preview`s (Home's fakes live in `HomeFakes.kt`). Do not
-wrap it in `CarLinkTheme`; the harness does that per config. Set `opensWindow = true` for states
+wrap it in `MobileCarConnectTheme`; the harness does that per config. Set `opensWindow = true` for states
 that show a dialog or bottom sheet. Then regenerate and add the new row to this index.
 
 ### Setup — `setup/` (142 images)

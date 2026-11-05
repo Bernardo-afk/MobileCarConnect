@@ -2,7 +2,7 @@ package com.shilapi.xcertplay.transport
 
 import java.util.ArrayDeque
 
-// CarLink: new file. Event-driven NCM link readiness (see docs/VENDOR_CHANGES.md).
+// MobileCarConnect: new file. Event-driven NCM link readiness (see docs/VENDOR_CHANGES.md).
 
 /** What the NCM bridge tells its owner about the phone's link and the bulk-out data path. */
 sealed class NcmLinkEvent {

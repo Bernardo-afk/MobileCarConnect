@@ -17,7 +17,7 @@ class ActivityLaunchStrategyTest {
         assertEquals(LaunchStrategy.OVERLAY, ActivityLaunchPolicy.chooseLaunchStrategy(apiLevel = 29, canDrawOverlays = true))
     }
 
-    @Test // CarLink
+    @Test // MobileCarConnect
     fun `direct launch on Android 10 plus while the app is on screen, overlay or not`() {
         assertEquals(LaunchStrategy.DIRECT, ActivityLaunchPolicy.chooseLaunchStrategy(apiLevel = 29, canDrawOverlays = false, appVisible = true))
         assertEquals(LaunchStrategy.DIRECT, ActivityLaunchPolicy.chooseLaunchStrategy(apiLevel = 37, canDrawOverlays = true, appVisible = true))

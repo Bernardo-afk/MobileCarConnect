@@ -3,7 +3,7 @@
 > **Status: current.** Research behind the October 2026 README rewrite and the `docs/` index.
 > Sources read on 2026-10-10 (default branch of each repository on that day).
 
-The goal: one README that tells a driver what CarLink is, whether it suits their stereo and how
+The goal: one README that tells a driver what MobileCarConnect is, whether it suits their stereo and how
 to install it, and a `docs/` folder that carries the developer detail.
 
 ## Sources
@@ -76,7 +76,7 @@ Car projects:
    (open-headunit) push the install steps off the screen.
 3. **Install names one official source and shows how to verify it**: the SHA-256 file and the
    signing certificate's fingerprint, with an `apksigner` command (Aegis, NewPipe). It also says
-   that builds signed with other keys cannot update the release (Termux), because CarLink is in
+   that builds signed with other keys cannot update the release (Termux), because MobileCarConnect is in
    no store and repackaged APKs are the main risk.
 4. **An honest tested / not-tested section** naming the exact setup (DiPlay, DiAuto,
    WirelessAndroidAutoDongle). It also says that the 1.0.0 release build has not yet been tested
@@ -93,6 +93,6 @@ Car projects:
 8. **Credits, license and trademarks at the end**, keeping the upstream notices both engines
    ask for.
 
-Not adopted: store badges (CarLink is only on GitHub Releases), donation and sponsor sections,
+Not adopted: store badges (MobileCarConnect is only on GitHub Releases), donation and sponsor sections,
 an anchor navigation bar (GitHub's outline button already gives one), and animated GIFs (the
 gallery is rendered without a device, so there is nothing real to record yet).

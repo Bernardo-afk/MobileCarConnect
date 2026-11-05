@@ -33,7 +33,7 @@ open class App : Application() {
         super.onCreate()
         instance = this
 
-        // CarLink: the Android Auto engine runs in its own process; other processes of the
+        // MobileCarConnect: the Android Auto engine runs in its own process; other processes of the
         // merged APK must not start its logging, theme, root helper or broadcast receiver.
         if (!initializesAndroidAutoEngine()) return
 
@@ -83,7 +83,7 @@ open class App : Application() {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(defaultChannel, HostIntegration.serviceChannelName, NotificationManager.IMPORTANCE_LOW) // CarLink
+            val serviceChannel = NotificationChannel(defaultChannel, HostIntegration.serviceChannelName, NotificationManager.IMPORTANCE_LOW) // MobileCarConnect
             serviceChannel.description = "Persistent service notification"
             serviceChannel.setShowBadge(false)
             component.notificationManager.createNotificationChannel(serviceChannel)
@@ -105,7 +105,7 @@ open class App : Application() {
         ContextCompat.registerReceiver(this, AapBroadcastReceiver(), AapBroadcastReceiver.filter, ContextCompat.RECEIVER_NOT_EXPORTED)
     }
 
-    /** CarLink: overridden by the merged APK's Application to scope engine startup. */
+    /** MobileCarConnect: overridden by the merged APK's Application to scope engine startup. */
     protected open fun initializesAndroidAutoEngine(): Boolean = true
 
     private fun isUserUnlocked(): Boolean {

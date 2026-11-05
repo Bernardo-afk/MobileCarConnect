@@ -17,11 +17,11 @@ metadata:
   - release-build
 ---
 
-> **CarLink note.** CarLink is more than Compose: two vendored engines with JNI, reflection into
+> **MobileCarConnect note.** MobileCarConnect is more than Compose: two vendored engines with JNI, reflection into
 > framework/BYD classes and full protobuf. Phase 1 deliberately uses `-dontobfuscate` (DiPlay's
 > diagnostics filter stack frames by package name); obfuscation comes in phase 2. See
 > design/RESEARCH_2026-10_R8_PLATFORM.md. Every R8 change is verified on the tablet with the
-> carlink-device skill (both engines, USB and wireless), not only by a successful build.
+> mobilecarconnect-device skill (both engines, USB and wireless), not only by a successful build.
 
 # Configuring R8 for Compose — Trust Consumer Rules, Avoid Blanket Keeps
 

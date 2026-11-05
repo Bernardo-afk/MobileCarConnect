@@ -1,6 +1,6 @@
 package com.shilapi.xcertplay.network
 
-// CarLink: new file. One Wi-Fi Direct name and passphrase per install for wireless CarPlay, asked
+// MobileCarConnect: new file. One Wi-Fi Direct name and passphrase per install for wireless CarPlay, asked
 // for as a persistent group, so the iPhone rejoins a network it already saved instead of being set
 // up for a new DIRECT-… network every session (upstream issue #464 shows the iPhone's list filling
 // with them). Modelled on DiAuto's P2pGroupIdentityPolicy (open-headunit PR #1006); see
@@ -29,9 +29,9 @@ enum class P2pIdentityOutcome(val label: String) {
  * Chooses the CarPlay Wi-Fi Direct group identity.
  *
  * The name stays inside DiPlay's reinstall-stable ownership namespace ([P2pOwnership.prefix],
- * `DIRECT-dp<12 hex>-`), so DiPlay's reclaim check and CarLink's leftover-group policy still
+ * `DIRECT-dp<12 hex>-`), so DiPlay's reclaim check and MobileCarConnect's leftover-group policy still
  * recognise it, and it ends with the car's name instead of four random characters:
- * `DIRECT-dp3fa91c0b2e7d-CarLink`. The namespace hash comes from the install, so two cars never
+ * `DIRECT-dp3fa91c0b2e7d-MobileCarConnect`. The namespace hash comes from the install, so two cars never
  * share a name. Name and passphrase are replaced together, never one without the other.
  *
  * CarPlay keeps its own identity, separate from Android Auto's (`DIRECT-<XY>-<car>` in DiAuto):

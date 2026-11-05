@@ -6,7 +6,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// CarLink: tests for the NCM outbound queue, write pacing and notification parser.
+// MobileCarConnect: tests for the NCM outbound queue, write pacing and notification parser.
 class NcmOutboundTest {
     private var now = 0L
     private fun advance(millis: Long) { now += millis * 1_000_000L }

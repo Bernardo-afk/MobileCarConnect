@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit c86332be (AGPL-3.0), NativeAaHandshakeManager.serveHfpSocket,
+// MobileCarConnect: ported from open-headunit c86332be (AGPL-3.0), NativeAaHandshakeManager.serveHfpSocket,
 // over plain streams so the AT exchange is unit-tested (see docs/VENDOR_CHANGES.md).
 package com.andrerinas.openheadunit.connection
 

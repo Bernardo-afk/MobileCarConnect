@@ -726,7 +726,7 @@ class AapService : Service(), UsbReceiver.Listener {
         AppLog.i("AapService creating...")
 
         try {
-            startForegroundWithTypes() // CarLink: + microphone
+            startForegroundWithTypes() // MobileCarConnect: + microphone
         } catch (e: Exception) {
             AppLog.e("ForegroundServiceStartNotAllowedException/Exception caught in onCreate: ${e.message}", e)
             stopSelf()
@@ -782,7 +782,7 @@ class AapService : Service(), UsbReceiver.Listener {
 
         // Decided here as well as inside initWifiMode() so a paused start skips the wait-for-WiFi
         // machinery entirely rather than setting it up and being turned away at the end of it.
-        WirelessTiming.begin("service-created") // CarLink
+        WirelessTiming.begin("service-created") // MobileCarConnect
         if (applyBootLoopGuard()) {
             AppLog.w("AapService: Wireless bring-up paused by the boot-loop guard. USB and the rest of the app are unaffected.")
         } else {
@@ -850,7 +850,7 @@ class AapService : Service(), UsbReceiver.Listener {
                 when (state) {
                     is CommManager.ConnectionState.Connected -> {
                         onConnected()
-                        // CarLink: open the projection while the handshake runs, so its surface is
+                        // MobileCarConnect: open the projection while the handshake runs, so its surface is
                         // ready when the phone sets up video (~170 ms on the S25); HandshakeComplete
                         // below only brings the same singleTask activity to the front.
                         launchAapProjectionActivity()
@@ -1053,11 +1053,11 @@ class AapService : Service(), UsbReceiver.Listener {
         }
 
         val canOverlay = AppPermissions.isOverlayGranted(this)
-        // CarLink: one of this app's processes has a resumed activity (CarLink's Home or the USB router).
+        // MobileCarConnect: one of this app's processes has a resumed activity (MobileCarConnect's Home or the USB router).
         val appVisible = (getSystemService(ACTIVITY_SERVICE) as android.app.ActivityManager).runningAppProcesses.orEmpty()
             .any { it.importance == android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND }
         val strategy = ActivityLaunchPolicy.chooseLaunchStrategy(Build.VERSION.SDK_INT, canOverlay, appVisible)
-        AppLog.i("Projection launch: strategy=$strategy overlay=$canOverlay appVisible=$appVisible") // CarLink
+        AppLog.i("Projection launch: strategy=$strategy overlay=$canOverlay appVisible=$appVisible") // MobileCarConnect
         when (strategy) {
             ActivityLaunchPolicy.LaunchStrategy.DIRECT -> {
                 try { startActivity(intent) }
@@ -1100,7 +1100,7 @@ class AapService : Service(), UsbReceiver.Listener {
 
     private fun setupMediaSession() {
         val mbr = ComponentName(this, MediaButtonReceiver::class.java)
-        mediaSession = MediaSessionCompat(this, HostIntegration.mediaSessionTag, mbr, null).apply { // CarLink
+        mediaSession = MediaSessionCompat(this, HostIntegration.mediaSessionTag, mbr, null).apply { // MobileCarConnect
             setFlags(
                 MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
                 MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
@@ -1175,7 +1175,7 @@ class AapService : Service(), UsbReceiver.Listener {
      * 4. Scheduling a reconnect attempt if applicable (see [scheduleReconnectIfNeeded])
      */
     private fun onDisconnected(state: CommManager.ConnectionState.Disconnected) {
-        // CarLink: user exit vs loss, for the host's status.
+        // MobileCarConnect: user exit vs loss, for the host's status.
         com.andrerinas.openheadunit.HostIntegration.engineEvent(this,
             com.andrerinas.openheadunit.HostIntegration.EngineEvent.SESSION_ENDED,
             "userExit=${state.isUserExit};clean=${state.isClean}")
@@ -1639,7 +1639,7 @@ class AapService : Service(), UsbReceiver.Listener {
 
     /** Starts [WirelessServer] if the user has configured server WiFi mode. */
     private fun initWifiMode(force: Boolean = false) {
-        // CarLink: a USB-only session arms no wireless route (no P2P group, no Bluetooth pokes), so
+        // MobileCarConnect: a USB-only session arms no wireless route (no P2P group, no Bluetooth pokes), so
         // the plugged-in phone is never pulled into the wireless flow (RELIABILITY_AUDIT K10).
         if (com.andrerinas.openheadunit.HostIntegration.usbOnlySession) {
             AppLog.i("AapService: USB-only session; wireless bring-up skipped.")
@@ -1651,7 +1651,7 @@ class AapService : Service(), UsbReceiver.Listener {
         // this only ever blocks a start nobody asked for.
         if (Settings.isWirelessPausedByBootLoop(this)) {
             AppLog.w("AapService: Wireless bring-up requested, but it is paused by the boot-loop guard. Open the app to re-enable it.")
-            com.andrerinas.openheadunit.HostIntegration.engineEvent(this, com.andrerinas.openheadunit.HostIntegration.EngineEvent.BOOT_LOOP_PAUSE) // CarLink
+            com.andrerinas.openheadunit.HostIntegration.engineEvent(this, com.andrerinas.openheadunit.HostIntegration.EngineEvent.BOOT_LOOP_PAUSE) // MobileCarConnect
             return
         }
 
@@ -1730,18 +1730,18 @@ class AapService : Service(), UsbReceiver.Listener {
                 // phone is bonded to isn't reachable from here: with no Bluetooth channel there is
                 // nobody to hand the credentials to, so hosting a P2P group or holding the hotspot
                 // open would only churn the WiFi stack for nothing.
-                // CarLink: the route decision (NORMAL / ZBT / BLINK / BLOCKED) replaces the blanket refusal.
+                // MobileCarConnect: the route decision (NORMAL / ZBT / BLINK / BLOCKED) replaces the blanket refusal.
                 val btRoute = com.andrerinas.openheadunit.connection.ExternalBtTransportPolicy.routeFor(this)
                 AppLog.i("AapService: Native AA Bluetooth route $btRoute")
                 val blockedByExternalBt = btRoute == com.andrerinas.openheadunit.connection.ExternalBtTransportPolicy.Route.BLOCKED
                 if (blockedByExternalBt) NativeAaHandshakeManager.externalBtDiagnostic()?.let { AppLog.e(it) }
-                if (blockedByExternalBt) { // CarLink: tell the host why wireless never starts here
+                if (blockedByExternalBt) { // MobileCarConnect: tell the host why wireless never starts here
                     com.andrerinas.openheadunit.HostIntegration.engineEvent(this,
                         com.andrerinas.openheadunit.HostIntegration.EngineEvent.EXTERNAL_BLUETOOTH,
                         "evidence=${com.andrerinas.openheadunit.utils.BluetoothHelper.externalBtEvidence}")
                 }
                 if (!blockedByExternalBt) {
-                    WirelessTiming.mark(WirelessTimeline.Phase.WIFI_INIT, "transport=${nativeTransport()}") // CarLink
+                    WirelessTiming.mark(WirelessTimeline.Phase.WIFI_INIT, "transport=${nativeTransport()}") // MobileCarConnect
                     if (nativeTransport() == NativeTransport.LOCAL_HOTSPOT) {
                         localHotspotCredentialsProvider?.start()
                     } else if (nativeTransport() == NativeTransport.HOTSPOT) {
@@ -1817,7 +1817,7 @@ class AapService : Service(), UsbReceiver.Listener {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         com.andrerinas.openheadunit.hud.BydNavigationOutputs.stop()
-        // CarLink: a host that starts the engine itself does not want it resurrected here.
+        // MobileCarConnect: a host that starts the engine itself does not want it resurrected here.
         if (!com.andrerinas.openheadunit.HostIntegration.restartOnTaskRemoved) {
             AppLog.i("AapService: onTaskRemoved — not restarting (the host owns the engine's lifecycle)")
             super.onTaskRemoved(rootIntent)
@@ -1916,7 +1916,7 @@ class AapService : Service(), UsbReceiver.Listener {
     }
 
     /**
-     * CarLink: microphone too, so the Assistant and calls keep the microphone while another app
+     * MobileCarConnect: microphone too, so the Assistant and calls keep the microphone while another app
      * covers the projection (Android 11+). Android 14+ refuses that type to a service started
      * without while-in-use (SecurityException); the session then runs without it, as before.
      */
@@ -1940,7 +1940,7 @@ class AapService : Service(), UsbReceiver.Listener {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         try {
-            startForegroundWithTypes() // CarLink: + microphone
+            startForegroundWithTypes() // MobileCarConnect: + microphone
         } catch (e: Exception) {
             AppLog.e("ForegroundServiceStartNotAllowedException/Exception caught in onStartCommand: ${e.message}", e)
             stopSelf()
@@ -1985,14 +1985,14 @@ class AapService : Service(), UsbReceiver.Listener {
         when (intent?.action) {
             ACTION_START_SELF_MODE       -> startSelfMode()
             ACTION_START_WIRELESS        -> {
-                WirelessTiming.begin("start-wireless", WirelessTiming.SAME_BRING_UP_MILLIS) // CarLink
+                WirelessTiming.begin("start-wireless", WirelessTiming.SAME_BRING_UP_MILLIS) // MobileCarConnect
                 // Asked for from the UI, so the user is present: release the boot-loop pause
                 // rather than silently ignoring them.
                 Settings.clearBootLoopState(this)
                 initWifiMode()
             }
             ACTION_START_WIRELESS_SCAN   -> {
-                WirelessTiming.begin("start-wireless-scan", WirelessTiming.SAME_BRING_UP_MILLIS) // CarLink
+                WirelessTiming.begin("start-wireless-scan", WirelessTiming.SAME_BRING_UP_MILLIS) // MobileCarConnect
                 val settings = App.provide(this).settings
                 val mode = settings.wifiConnectionMode
                 val strategy = settings.helperConnectionStrategy
@@ -2022,7 +2022,7 @@ class AapService : Service(), UsbReceiver.Listener {
             ACTION_NATIVE_AA_POKE        -> {
                 val mac = intent?.getStringExtra(EXTRA_MAC)
                 if (mac != null) {
-                    WirelessTiming.begin("poke", WirelessTiming.SAME_BRING_UP_MILLIS) // CarLink
+                    WirelessTiming.begin("poke", WirelessTiming.SAME_BRING_UP_MILLIS) // MobileCarConnect
                     AppLog.i("AapService: Received manual Native-AA poke request for $mac")
                     // [FIX] Reset exit flags so the subsequent connection is accepted
                     userExitedAA = false
@@ -2105,7 +2105,7 @@ class AapService : Service(), UsbReceiver.Listener {
                 }
             }
         }
-        // CarLink: sticky only when the engine owns its own lifecycle (standalone).
+        // MobileCarConnect: sticky only when the engine owns its own lifecycle (standalone).
         return if (com.andrerinas.openheadunit.HostIntegration.stickyService) START_STICKY else START_NOT_STICKY
     }
 
@@ -2124,7 +2124,7 @@ class AapService : Service(), UsbReceiver.Listener {
             AppLog.i("USB accessory device attached, connecting.")
             launchMainActivityIfNeeded("USB accessory attach")
             checkAlreadyConnectedUsb(force = true)
-        } else if (com.andrerinas.openheadunit.HostIntegration.hostOwnsUsbSwitch) { // CarLink
+        } else if (com.andrerinas.openheadunit.HostIntegration.hostOwnsUsbSwitch) { // MobileCarConnect
             AppLog.i("Normal USB device attached; the host performs the accessory switch.")
         } else {
             // UsbAttachedActivity normally handles normal-mode devices via a manifest intent
@@ -2204,7 +2204,7 @@ class AapService : Service(), UsbReceiver.Listener {
             }
         } else {
             AppLog.w("USB permission denied for $deviceName")
-            com.andrerinas.openheadunit.HostIntegration.engineEvent(this, // CarLink
+            com.andrerinas.openheadunit.HostIntegration.engineEvent(this, // MobileCarConnect
                 com.andrerinas.openheadunit.HostIntegration.EngineEvent.USB_PERMISSION_DENIED, "device=$deviceName")
             ToastUtils.showToast(this, getString(R.string.usb_permission_denied), Toast.LENGTH_LONG)
         }
@@ -2219,7 +2219,7 @@ class AapService : Service(), UsbReceiver.Listener {
             usbManager.requestPermission(device, permissionIntent)
         } catch (e: Exception) {
             AppLog.e("Failed to request USB permission: ${e.message}. This device might not support USB permission dialogs.", e)
-            com.andrerinas.openheadunit.HostIntegration.engineEvent(this, // CarLink
+            com.andrerinas.openheadunit.HostIntegration.engineEvent(this, // MobileCarConnect
                 com.andrerinas.openheadunit.HostIntegration.EngineEvent.USB_PERMISSION_DENIED,
                 "device=${UsbDeviceCompat(device).uniqueName};requestFailed=true")
             ToastUtils.showToast(this, getString(R.string.error_usb_permission_failed), Toast.LENGTH_LONG)
@@ -2242,7 +2242,7 @@ class AapService : Service(), UsbReceiver.Listener {
         val deviceName = UsbDeviceCompat(accessoryDevice).uniqueName
         AppLog.w("Handshake failed on accessory device $deviceName (failure #$accessoryHandshakeFailures)")
 
-        // CarLink: a host that owns the accessory switch re-switches a stale accessory itself, on the
+        // MobileCarConnect: a host that owns the accessory switch re-switches a stale accessory itself, on the
         // first failure (connection/aa/AaCommandHandler.reswitchStaleAccessory); two switches would race.
         if (com.andrerinas.openheadunit.HostIntegration.hostOwnsUsbSwitch) return
         if (accessoryHandshakeFailures > MAX_STALE_ACCESSORY_RETRIES) {
@@ -2523,7 +2523,7 @@ class AapService : Service(), UsbReceiver.Listener {
             return
         }
         AppLog.i("AapService: Received WiFi credentials from manager (SSID=$ssid, IP=$ip). Updating and Triggering Poke.")
-        WirelessTiming.mark(WirelessTimeline.Phase.CREDENTIALS, "bssid=${WirelessTiming.maskBssid(bssid)}") // CarLink
+        WirelessTiming.mark(WirelessTimeline.Phase.CREDENTIALS, "bssid=${WirelessTiming.maskBssid(bssid)}") // MobileCarConnect
         nativeAaHandshakeManager?.updateWifiCredentials(ssid, psk, ip, bssid)
         if (commManager.isConnected ||
             commManager.connectionState.value is CommManager.ConnectionState.Connecting) {
@@ -2818,7 +2818,7 @@ class AapService : Service(), UsbReceiver.Listener {
             .setSmallIcon(R.drawable.ic_stat_aa)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
-            .setContentTitle(HostIntegration.appName) // CarLink
+            .setContentTitle(HostIntegration.appName) // MobileCarConnect
             .setContentText(contentText)
             .setContentIntent(PendingIntent.getActivity(
                 this, requestCode, notificationIntent,
@@ -3348,7 +3348,7 @@ class AapService : Service(), UsbReceiver.Listener {
                         AppLog.d("WirelessServer: Waiting for TCP connection on port 5288...")
                         val clientSocket = serverSocket?.accept() ?: break
                         AppLog.i("WirelessServer: Incoming connection detected from ${clientSocket.inetAddress}")
-                        WirelessTiming.mark(WirelessTimeline.Phase.TCP_ACCEPTED) // CarLink
+                        WirelessTiming.mark(WirelessTimeline.Phase.TCP_ACCEPTED) // MobileCarConnect
                         serviceScope.launch {
                             if (commManager.isConnected) {
                                 AppLog.w("WirelessServer: Already connected, dropping client from ${clientSocket.inetAddress}")

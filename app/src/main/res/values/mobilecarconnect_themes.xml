@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base for MobileCarConnect's Compose activities. Engines keep their own activity themes. -->
+    <style name="Theme.MobileCarConnect" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/mobilecarconnect_window_background</item>
+        <item name="android:colorBackground">@color/mobilecarconnect_window_background</item>
+        <item name="android:colorAccent">@color/mobilecarconnect_accent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <!-- Launch theme: same background as the first frame, so there is no flash. -->
+    <style name="Theme.MobileCarConnect.Starting" parent="Theme.MobileCarConnect" />
+</resources>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- CarLink ships in English only (see androidResources.localeFilters in app/build.gradle.kts). -->
+<!-- MobileCarConnect ships in English only (see androidResources.localeFilters in app/build.gradle.kts). -->
 <locale-config xmlns:android="http://schemas.android.com/apk/res/android">
     <locale android:name="en" />
 </locale-config>

@@ -101,7 +101,7 @@ class IphoneUsbHost(
     fun discover(): List<UsbDevice> =
         usbManager.deviceList.values.filter { matcher.matches(it.vendorId, it.productId) }
 
-    /** CarLink: whether access is already granted (e.g. by Android's default-app grant on attach). */
+    /** MobileCarConnect: whether access is already granted (e.g. by Android's default-app grant on attach). */
     fun hasPermission(device: UsbDevice): Boolean = runCatching { usbManager.hasPermission(device) }.getOrDefault(false)
     /**
      * Every USB device Android lists, as `vid:pid node` like [Ch341UsbHost.describe], sorted. When no iPhone is
@@ -445,21 +445,21 @@ class Iap2UsbSession internal constructor(
     private val outEndpoint: UsbEndpoint,
     private val inEndpoint: UsbEndpoint,
     private val onDiagnostic: (String) -> Unit = {},
-    private val isDeviceAlive: () -> Boolean = { usbDeviceResponds(connection) }, // CarLink
+    private val isDeviceAlive: () -> Boolean = { usbDeviceResponds(connection) }, // MobileCarConnect
 ) : Closeable {
     private val stateLock = Any()
     private val readLock = Any()
     private val writeLock = Any()
     private var closed = false
     private var failure: IphoneUsbException? = null
-    // CarLink: one persistent read request and buffer, as NcmUsbBridge already does. Upstream made
+    // MobileCarConnect: one persistent read request and buffer, as NcmUsbBridge already does. Upstream made
     // a new request per read and cancelled it on every 1 s timeout; bytes that had already landed
     // in a cancelled request were dropped, and each cancel/drain was another chance for Android
     // to report a failure. A timed-out request now simply stays queued for the next read.
     private var pendingRead: UsbRequest? = null
     private var readQueued = false
     private val readBuffer = ByteBuffer.allocateDirect(USBMUX_READ_CHUNK_BYTES)
-    private val nullReaps = UsbTransientFailureBudget() // CarLink
+    private val nullReaps = UsbTransientFailureBudget() // MobileCarConnect
     private val readQueuePolicy = UsbReadQueuePolicy.forCurrentPlatform()
     private val requests = UsbRequestQueue(connection, "usbmux-read-reaper")
 
@@ -468,7 +468,7 @@ class Iap2UsbSession internal constructor(
         require(timeoutMillis > 0) { "timeoutMillis must be positive" }
         if (data.isEmpty()) return@synchronized
         var transferred = connection.bulkTransfer(outEndpoint, data, data.size, timeoutMillis)
-        // CarLink: a single-packet write either reached the phone whole or not at all, so one
+        // MobileCarConnect: a single-packet write either reached the phone whole or not at all, so one
         // retry cannot duplicate or tear USBMUX bytes. It is tried only while the phone still
         // answers a control request; a detached phone fails as before, at most one timeout later.
         if (transferred < 0 && data.size <= outEndpoint.maxPacketSize && !isClosed() && isDeviceAlive()) {
@@ -536,11 +536,11 @@ class Iap2UsbSession internal constructor(
                 val completed = try {
                     requests.await(remainingMillis)
                 } catch (_: TimeoutException) {
-                    // CarLink: the request stays queued; its data is read by the next call.
+                    // MobileCarConnect: the request stays queued; its data is read by the next call.
                     return@synchronized null
                 }
                 if (completed == null) {
-                    // CarLink: libusbhost reports EINTR/EAGAIN from poll or REAPURBNDELAY as a null
+                    // MobileCarConnect: libusbhost reports EINTR/EAGAIN from poll or REAPURBNDELAY as a null
                     // request, the same as a dead connection. The request is still queued, so wait
                     // again while the phone answers, within a small budget (UsbTransientRetry.kt).
                     if (nullReaps.recordFailure() && !isClosed() && isDeviceAlive()) {
@@ -578,14 +578,14 @@ class Iap2UsbSession internal constructor(
         requestToCancel?.cancel()
         requests.close()
         connection.close()
-        runCatching { requestToCancel?.close() } // CarLink: the request is persistent now
+        runCatching { requestToCancel?.close() } // MobileCarConnect: the request is persistent now
     }
 
     private fun checkOpen() {
         synchronized(stateLock) { checkOpenLocked() }
     }
 
-    private fun isClosed(): Boolean = synchronized(stateLock) { closed } // CarLink
+    private fun isClosed(): Boolean = synchronized(stateLock) { closed } // MobileCarConnect
 
     private fun checkOpenLocked() {
         failure?.let { throw it }

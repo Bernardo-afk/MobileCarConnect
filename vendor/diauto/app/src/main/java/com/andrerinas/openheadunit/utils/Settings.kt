@@ -415,7 +415,7 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean("debug-force-p2p-band-24", value).apply() }
 
     /**
-     * CarLink (open-headunit 30310b93): the build fingerprint on which this unit refused every
+     * MobileCarConnect (open-headunit 30310b93): the build fingerprint on which this unit refused every
      * banded Native AA group request and then hosted the no-band group, or null. See
      * [com.andrerinas.openheadunit.aap.NativeGroupBandPolicy.skipsBandedRequest].
      */
@@ -425,7 +425,7 @@ class Settings(private val context: Context) {
             val editor = prefs.edit()
             if (value.isNullOrEmpty()) editor.remove("wifi-direct-banded-refused-on")
             else editor.putString("wifi-direct-banded-refused-on", value)
-            // CarLink (open-headunit 79c67d57): commit(), written once per firmware; a force-stop must not lose it.
+            // MobileCarConnect (open-headunit 79c67d57): commit(), written once per firmware; a force-stop must not lose it.
             editor.commit()
         }
 
@@ -508,13 +508,13 @@ class Settings(private val context: Context) {
         get() = prefs.getString("vehicle-display-name", "DiAuto")!!
         set(value) { prefs.edit().putString("vehicle-display-name", value).apply() }
 
-    // CarLink: ported from open-headunit PR #1006 (same keys). Keep the Native AA Wi-Fi Direct
+    // MobileCarConnect: ported from open-headunit PR #1006 (same keys). Keep the Native AA Wi-Fi Direct
     // group's name and passphrase across bring-ups, so the phone rejoins a network it saved.
     var wifiDirectStableIdentity: Boolean
         get() = prefs.getBoolean("wifi-direct-stable-identity", true)
         set(value) { prefs.edit().putBoolean("wifi-direct-stable-identity", value).apply() }
 
-    /** CarLink (PR #1006): the kept pair, or null before the first bring-up draws one. */
+    /** MobileCarConnect (PR #1006): the kept pair, or null before the first bring-up draws one. */
     var wifiDirectGroupIdentity: com.andrerinas.openheadunit.aap.StoredP2pIdentity?
         get() {
             val name = prefs.getString("wifi-direct-group-name", null) ?: return null

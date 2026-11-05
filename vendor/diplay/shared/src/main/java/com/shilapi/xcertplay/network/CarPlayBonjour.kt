@@ -287,7 +287,7 @@ class CarPlayBonjour(
                         } else {
                             InetAddress.getByAddress(hostName, address.address)
                         }
-                        // CarLink: an extra IPv6 link-local (fresh, maybe still tentative) that
+                        // MobileCarConnect: an extra IPv6 link-local (fresh, maybe still tentative) that
                         // cannot bind yet must not cost the session; any other address is required.
                         val dns = if (address == localAdvertisedAddress || address !is Inet6Address || !address.isLinkLocalAddress) {
                             JmDNS.create(mdnsAddress, hostName)
@@ -301,7 +301,7 @@ class CarPlayBonjour(
                             0, 0, CarPlayBonjourProtocol.airPlayTxtRecords(config, identity),
                         ))
                     }
-                    publishedFamilies = interfaceMdns.joinToString(",") { // CarLink: what really runs
+                    publishedFamilies = interfaceMdns.joinToString(",") { // MobileCarConnect: what really runs
                         if (it.inetAddress is Inet4Address) "IPv4" else "IPv6"
                     }
                 } else {
@@ -366,7 +366,7 @@ class CarPlayBonjour(
             workerToJoin?.interrupt()
             if (multicastLock.isHeld) multicastLock.release()
         }
-        // CarLink: each JmDNS close (goodbye packets) and the worker's exit ran here in turn, with a
+        // MobileCarConnect: each JmDNS close (goodbye packets) and the worker's exit ran here in turn, with a
         // 2 s join, and held up every engine switch by 2-4 s (RELIABILITY_AUDIT K7). They finish on
         // daemon threads instead; the worker is interrupted and emits nothing once closed.
         dnsToClose.forEach { dns ->

@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit c86332be (AGPL-3.0), connection/wifi/modes/nativeaa/HfpAtResponder.kt (see docs/VENDOR_CHANGES.md).
+// MobileCarConnect: ported from open-headunit c86332be (AGPL-3.0), connection/wifi/modes/nativeaa/HfpAtResponder.kt (see docs/VENDOR_CHANGES.md).
 package com.andrerinas.openheadunit.connection
 
 /**

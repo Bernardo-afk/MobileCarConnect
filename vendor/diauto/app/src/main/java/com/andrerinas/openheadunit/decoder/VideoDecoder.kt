@@ -356,7 +356,7 @@ class VideoDecoder(
     // that showed plenty. See CommManager.noteSessionEnded.
     @Volatile var framesRenderedThisSession: Long = 0L
         set(value) {
-            // CarLink: the session's first rendered frame, for the host's "connected" status.
+            // MobileCarConnect: the session's first rendered frame, for the host's "connected" status.
             val first = field == 0L && value > 0L
             field = value
             if (first) com.andrerinas.openheadunit.HostIntegration.engineEvent(null,

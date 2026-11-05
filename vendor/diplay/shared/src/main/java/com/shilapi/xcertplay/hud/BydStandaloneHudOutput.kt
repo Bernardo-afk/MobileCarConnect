@@ -68,7 +68,7 @@ internal class BydStandaloneHudOutput private constructor(context: Context) {
             if (context.packageName !in setOf(
                     "com.andrerinas.headunitrevived", "com.shihab.diplay",
                     "com.andrerinas.headunitrevived.bydhudtest", "com.shihab.diplay.hudtest",
-                    "com.carlink.app", "com.carlink.app.hudtest")) return false
+                    "com.mobilecarconnect.app", "com.mobilecarconnect.app.hudtest")) return false
             if (Build.FINGERPRINT != "BYD-AUTO/IVI/IVI:13/TP1A.220624.014/eng.build20260722.221155:user/release-keys") return false
             return runCatching {
                 val manager = context.packageManager

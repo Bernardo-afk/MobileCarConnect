@@ -1,4 +1,4 @@
-// CarLink: built with AGP's built-in Kotlin support.
+// MobileCarConnect: built with AGP's built-in Kotlin support.
 plugins {
     alias(libs.plugins.android.library)
 }

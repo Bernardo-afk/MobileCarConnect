@@ -12,7 +12,7 @@ internal object AdbClusterRouter {
 
     /** Known 5/5.1 displays win; the explicit legacy route may own the measured projection task. */
     fun enabled(context: Context): Boolean {
-        if (!CarPlayHostIntegration.vehicleIntegrations) return false // CarLink
+        if (!CarPlayHostIntegration.vehicleIntegrations) return false // MobileCarConnect
         if (DiLink51ClusterLayout.supported()) return false
         val public = ClusterMapPresentation.findDisplay(context)
         if (AirPlayPersistence.loadLegacyClusterEnabled(context)) {

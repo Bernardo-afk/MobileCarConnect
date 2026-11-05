@@ -269,7 +269,7 @@ class VideoFragmentAssemblerTest {
         assertFalse(a.hasAnomalies())
     }
 
-    // CarLink (open-headunit d88b28d4)
+    // MobileCarConnect (open-headunit d88b28d4)
     @Test
     fun `a whole or first message's type picks its one payload offset`() {
         for (f in listOf(single, first)) {

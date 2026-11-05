@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), app/src/test/.../nativeaa/zbt/ZbtMessagesTest.kt
+// MobileCarConnect: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), app/src/test/.../nativeaa/zbt/ZbtMessagesTest.kt
 package com.andrerinas.openheadunit.connection.zbt
 
 import org.junit.Assert.assertArrayEquals
@@ -244,7 +244,7 @@ class ZbtMessagesTest {
 
     @Test
     fun `an rfcomm body is described by its size only`() {
-        // CarLink: these bytes are the handshake, and WifiInfoResponse carries the Wi-Fi password.
+        // MobileCarConnect: these bytes are the handshake, and WifiInfoResponse carries the Wi-Fi password.
         val body = ByteArray(200) { it.toByte() }
         assertEquals("RfcommData 200 bytes", ZbtMessages.describe(ZbtMessages.RFCOMM_DATA, body))
     }

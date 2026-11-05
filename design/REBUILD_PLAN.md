@@ -1,4 +1,4 @@
-# CarLink rebuild plan
+# MobileCarConnect rebuild plan
 
 > **Status (2026-10-09): superseded by [REBUILD_V2.md](REBUILD_V2.md).** This plan led to the v1
 > connection layer (`EngineCoordinator`, `CarPlayEngine`, `AndroidAutoEngine`,
@@ -13,14 +13,14 @@ research), and full settings inventories of both engines (DiPlay ≈70 settings,
 
 | Problem the user saw | Cause |
 |---|---|
-| "App inside app" | CarLink opened DiPlay's own home screen to start CarPlay and linked to both engines' settings screens. |
-| USB iPhone did nothing, no "Trust" prompt | An iPhone also exposes a photo (PTP) interface, so Photos/MTP competed for the plug-in event and Android never launched CarLink. When DiPlay's screen was on top, CarLink's own USB watcher was paused. |
-| CarPlay could not connect at all | The build had no CarPlay authentication files (they ship only in DiPlay's release APK). Fixed: extracted from the verified official APK into `~/.carlink-private`. |
+| "App inside app" | MobileCarConnect opened DiPlay's own home screen to start CarPlay and linked to both engines' settings screens. |
+| USB iPhone did nothing, no "Trust" prompt | An iPhone also exposes a photo (PTP) interface, so Photos/MTP competed for the plug-in event and Android never launched MobileCarConnect. When DiPlay's screen was on top, MobileCarConnect's own USB watcher was paused. |
+| CarPlay could not connect at all | The build had no CarPlay authentication files (they ship only in DiPlay's release APK). Fixed: extracted from the verified official APK into `~/.mobilecarconnect-private`. |
 | UI "very bad" | Generic light settings-app look, nothing premium; two apps' worth of screens. |
 
 ## Goals
 
-1. **One app.** The driver only ever sees CarLink screens and the CarPlay / Android Auto picture.
+1. **One app.** The driver only ever sees MobileCarConnect screens and the CarPlay / Android Auto picture.
 2. **Plug and play.** Plug in or bring a paired phone into the car: it connects. No setup wizard; one
    inline card asks for permissions the first time.
 3. **One set of settings** that applies to both CarPlay and Android Auto. Engine-only options live in
@@ -35,7 +35,7 @@ research), and full settings inventories of both engines (DiPlay ≈70 settings,
 
 | | Same Wi-Fi (phone and car on one router) | Car hotspot | Wi-Fi Direct |
 |---|---|---|---|
-| CarPlay (iPhone) | **Yes, today.** The car must already be on that Wi-Fi; CarLink stores its password once and tells the iPhone over Bluetooth to join it. | Yes | Yes |
+| CarPlay (iPhone) | **Yes, today.** The car must already be on that Wi-Fi; MobileCarConnect stores its password once and tells the iPhone over Bluetooth to join it. | Yes | Yes |
 | Android Auto (stock app, no phone app) | **Not supported by the protocol path in this engine.** Stock Android Auto wireless joins a network the car creates. An untested trick (send the router's details instead of the hotspot's) goes in Lab only. | Yes (default) | Yes |
 
 Bluetooth stays the "doorbell" for both: the phone's Bluetooth link starts every wireless session.
@@ -50,7 +50,7 @@ used ("Same Wi-Fi · fastest", "Car hotspot", "Wi-Fi Direct").
 
 ## One settings model
 
-Each unified setting says what the driver wants; CarLink translates it into each engine's own
+Each unified setting says what the driver wants; MobileCarConnect translates it into each engine's own
 storage before every session (and immediately for live settings). DiAuto's values are written
 inside the Android Auto process through a small settings bridge, because two processes writing the
 same preferences file lose each other's changes.
@@ -59,8 +59,8 @@ same preferences file lose each other's changes.
 
 | Setting | Choices | CarPlay (DiPlay) | Android Auto (DiAuto) | Applies |
 |---|---|---|---|---|
-| Connect automatically | On / Off | CarLink dispatcher | CarLink dispatcher | live |
-| Start with the car | On / Off | CarLink boot receiver | CarLink boot receiver | next boot |
+| Connect automatically | On / Off | MobileCarConnect dispatcher | MobileCarConnect dispatcher | live |
+| Start with the car | On / Off | MobileCarConnect boot receiver | MobileCarConnect boot receiver | next boot |
 | Connection method | Automatic / Same Wi-Fi / Car hotspot / Wi-Fi Direct | `wireless_hotspot_mode` EXISTING_WIFI / MANUAL / WIFI_P2P | `native-ap-transport` 1 (hotspot) / 0 (Wi-Fi Direct) | next connection |
 | Car hotspot name and password | text (only when needed) | `manual_hotspot_ssid/passphrase` | `hotspot-ssid/password` | next connection |
 | Home Wi-Fi password | text (only for Same Wi-Fi) | `existing_wifi_ssid/passphrase` | – | next connection |
@@ -68,10 +68,10 @@ same preferences file lose each other's changes.
 | Interface size | Small / Medium / Large | `display_width_physical_mm` 350 / 300 / 250 | `dpi-pixel-density` computed from the panel | next connection |
 | Day and night | Follow the car / Day / Night / Schedule | `carplay_night_mode` | `night-mode` | live |
 | Driving side | Left / Right | `right_hand_drive` | `right-hand-drive` | next connection |
-| Sound | Through CarLink / Through the car's Bluetooth | `car_bluetooth_audio` | `music-via-bluetooth` | next connection |
+| Sound | Through MobileCarConnect / Through the car's Bluetooth | `car_bluetooth_audio` | `music-via-bluetooth` | next connection |
 | Send car location to phone | On / Off | `location_reporting_enabled` | `gps-navigation` | next connection |
 | Directions on HUD and dashboard (BYD only) | On / Off | `BydOutputSettings.enabled` | `byd-navigation-enabled` | live |
-| Appearance | Follow the car / Dark / Light | CarLink only | CarLink only | live |
+| Appearance | Follow the car / Dark / Light | MobileCarConnect only | MobileCarConnect only | live |
 
 ### Advanced (one "Show advanced" switch; rows appear in their normal category)
 
@@ -108,24 +108,24 @@ sans-serif with tabular numbers, depth from imagery not shadows, calm motion.
   pre-blurred background, plus a faint fill and a lit edge), solid accent button. Automatic "Lite"
   tier for weak GPUs.
 - Hero: an unbranded phone render whose screen shows live status (detected phone, progress,
-  connected). No car renders (CarLink cannot know the car).
+  connected). No car renders (MobileCarConnect cannot know the car).
 - Home: one hero, one headline, up to three status chips, one 96dp button; phones list beside it.
 - Car and Handheld size profiles and window-size layouts stay (head unit, split screen, tablet,
   phone).
 
 ## Architecture changes
 
-1. **CarLink starts CarPlay directly.** CarLink runs DiPlay's pre-flight checks itself (authentication,
+1. **MobileCarConnect starts CarPlay directly.** MobileCarConnect runs DiPlay's pre-flight checks itself (authentication,
    saved Wi-Fi details, iPhone selection, permissions) and opens only the CarPlay picture
    (`CarPlayHostActivity`). DiPlay's home and settings screens are never shown
    (`CarPlayHostIntegration`, done).
-2. **USB detection that always works**: an app-wide watcher that keeps running while CarLink or the
+2. **USB detection that always works**: an app-wide watcher that keeps running while MobileCarConnect or the
    CarPlay/Android Auto picture is open, plus the system plug-in route. It identifies the phone and
    lets the engine ask for USB access (which is what triggers the iPhone's "Trust" prompt).
 3. **Settings bridge to the Android Auto process** (a private ContentProvider in `:aa`) so unified and
    Advanced settings write DiAuto's storage safely and notify the running service.
 4. **Unified settings store + per-engine appliers**, unit tested (each setting → exact engine keys).
-5. **Remove the old CarLink screens** (onboarding wizard, link-out settings) and DiAuto's/DiPlay's
+5. **Remove the old MobileCarConnect screens** (onboarding wizard, link-out settings) and DiAuto's/DiPlay's
    leftover entry points.
 
 ## Build order (each step: build, unit tests, emulator screenshots at head-unit and phone size)

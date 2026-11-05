@@ -92,7 +92,7 @@ class CarHotspotConfigWriteTest {
         assertEquals("password1", written?.preSharedKey)
     }
 
-    // CarLink: rename replaces the car's saved name, in the app write and in the shell command.
+    // MobileCarConnect: rename replaces the car's saved name, in the app write and in the shell command.
     @Test fun renameReplacesTheCarSsid() {
         val existing = WifiConfiguration().apply { SSID = "Car-Original" }
         var written: WifiConfiguration? = null

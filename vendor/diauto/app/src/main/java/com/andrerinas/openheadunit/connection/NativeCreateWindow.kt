@@ -1,6 +1,6 @@
 package com.andrerinas.openheadunit.connection
 
-// CarLink: new file, a minimal port of open-headunit's NativeRefreshPolicy create window
+// MobileCarConnect: new file, a minimal port of open-headunit's NativeRefreshPolicy create window
 // (see docs/VENDOR_CHANGES.md).
 
 /**

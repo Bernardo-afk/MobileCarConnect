@@ -1,4 +1,4 @@
-# CarLink logo: research, concepts and recommendation
+# MobileCarConnect logo: research, concepts and recommendation
 
 Status: four concepts designed. Orbit was the first recommendation; the user chose **"Cast"**,
 which is the logo the app ships (commit 42295f29). The README header and the social preview
@@ -8,15 +8,15 @@ which is the logo the app ships (commit 42295f29). The README header and the soc
 
 ## 1. Research
 
-### 1.1 Marks CarLink must stay clear of (trademarks)
+### 1.1 Marks MobileCarConnect must stay clear of (trademarks)
 
-| Mark | What it is | What CarLink avoids |
+| Mark | What it is | What MobileCarConnect avoids |
 |---|---|---|
 | Android Auto | A rounded upward arrow, like a paper plane or an "A", on a circle. In version 17.6 (Sept 2026) it changed from blue to a flat green similar to the Android green, with rounder corners and no gradient ([Android Authority](https://www.androidauthority.com/google-android-auto-new-green-icon-3705210/), [9to5Google](https://9to5google.com/2026/09/01/android-auto-17-6-update-rolling-out-with-redesigned-logo-gallery/), [Droid Life](https://www.droid-life.com/2026/09/01/fresh-new-android-auto-logo-is-here/)) | Upward arrows and chevrons, "A" shapes, green as the main colour |
 | Apple CarPlay | A white "play" triangle in a rounded square on green; Apple's HIG covers CarPlay *app* icons (one centred focal point, no black backgrounds) ([Apple HIG, CarPlay icons](https://developer-mdn.apple.com/design/human-interface-guidelines/technologies/carplay/icons-and-images)) | Play triangles, green, rounded-square framing inside the mark |
 | Google Maps | The pin alone, without a "G", since 2020 ([Creative Bloq](https://creativebloq.com/news/google-maps-new-look)) | Location pins |
 | Waze | A rounded "Wazer" speech bubble with wheels, redrawn by Pentagram (2020) on one geometric grid, with flat colour and rounded type ([Pentagram](https://www.pentagram.com/work/waze), [Creative Review](https://www.creativereview.co.uk/waze-rebrand/)) | Mascots and speech bubbles |
-| BYD | A wordmark. Since 2021 it has no oval, and the letters are opened up "to link with users … in a more open posture" ([CnEVPost](https://cnevpost.com/2021/01/04/byd-auto-unveils-new-logo-in-brand-upgrade/)) | Letter "BYD" forms. CarLink runs on BYD DiLink but is independent of BYD |
+| BYD | A wordmark. Since 2021 it has no oval, and the letters are opened up "to link with users … in a more open posture" ([CnEVPost](https://cnevpost.com/2021/01/04/byd-auto-unveils-new-logo-in-brand-upgrade/)) | Letter "BYD" forms. MobileCarConnect runs on BYD DiLink but is independent of BYD |
 | Rivian | A compass of four arrows, built from two nested rhombuses ([Rivian, "Our logo"](https://rivian.com/stories/our-logo), [MotorBiscuit](https://www.motorbiscuit.com/meaning-rivian-compass-logo/)) | Compass and four-arrow forms |
 | Polestar | Two opposed angular forms making a four-point star, in restrained silver or grey ([1000logos](https://1000logos.net/polestar-logo/)) | Opposed chevrons |
 | Tesla | A "T" drawn as a cross-section of an electric motor; the shield was dropped ([Not a Tesla App](https://www.notateslaapp.com/news/2115/teslas-logo-its-hidden-meaning-and-evolution-over-time), [Motor1](https://www.motor1.com/news/134480/elon-musk-tesla-logo-explained/)) | A single initial on its own |
@@ -100,7 +100,7 @@ checks the ink bounding box, the optical centroid, and that every ink pixel lies
 
 A heavy dial ring stands for the car: a steering wheel, an instrument dial, the Car Thing knob.
 It is open at the 1:30 position, where a solid Ion node, the phone, docks into it. The ring
-also reads as a **C** for CarLink. Ideas: *SpinShift* and *Hoopty* (dial and orbit), *Coves*
+also reads as a **C** for MobileCarConnect. Ideas: *SpinShift* and *Hoopty* (dial and orbit), *Coves*
 (the gap completes the C).
 
 ### 2. CL Ligature
@@ -129,7 +129,7 @@ This is the most literal option.
 - **The most ownable of the four.** It has no arrow, triangle, pin, chain, star or car body. In
   the research set, only Rivian (a compass) works in a similar "instrument" space, and its form
   is different.
-- **The meaning fits the product.** CarLink is the dial (the car) that the phone clicks into.
+- **The meaning fits the product.** MobileCarConnect is the dial (the car) that the phone clicks into.
   The node is the only Ion element, which matches the UI rule that Ion marks what is live or
   interactive. It can later animate on the splash screen, which supports the 2026 motion trend:
   the node travels round the ring and docks.
@@ -150,24 +150,24 @@ Material "devices" icon. **CL Ligature** reads mostly as a "C" with an underline
 | `concepts/<id>_icon.svg` | Full icon (Graphite background and mark), 108 canvas |
 | `concepts/<id>_mark.svg`, `_mark_day.svg` | Transparent mark, dark and day colours |
 | `concepts/<id>_mono.svg` | Single-colour mark |
-| `concepts/<id>_lockup_dark.svg`, `_lockup_day.svg` | Horizontal lockup with the "CarLink" wordmark. The wordmark uses the bundled Inter SemiBold through `@font-face`, for preview only. Convert it to outlines in a vector editor before using it outside this repo |
+| `concepts/<id>_lockup_dark.svg`, `_lockup_day.svg` | Horizontal lockup with the "MobileCarConnect" wordmark. The wordmark uses the bundled Inter SemiBold through `@font-face`, for preview only. Convert it to outlines in a vector editor before using it outside this repo |
 | `previews/<id>_board.png` | Presentation board: masks, sizes, themed icons, status bar, lockups |
 | `previews/overview_board.png` | All four side by side |
 | `previews/emulator_*.png` | Orbit verified on the emulator (splash, Home top bar, app drawer) |
-| `android/<id>/` | Complete drawable set per concept: `carlink_icon_foreground/monochrome/legacy.xml`, `ic_stat_carlink.xml`, `carlink_logo_mark_{primary,accent}.xml` |
-| `android/carlink_logo_alt{1,2,3}_{foreground,monochrome}.xml` | Alternates: 1 = CL Ligature, 2 = Merge, 3 = Cast |
+| `android/<id>/` | Complete drawable set per concept: `mobilecarconnect_icon_foreground/monochrome/legacy.xml`, `ic_stat_mobilecarconnect.xml`, `mobilecarconnect_logo_mark_{primary,accent}.xml` |
+| `android/mobilecarconnect_logo_alt{1,2,3}_{foreground,monochrome}.xml` | Alternates: 1 = CL Ligature, 2 = Merge, 3 = Cast |
 | `tools/build_logo.py`, `tools/measure.py`, `tools/render.sh` | Generator, safe-zone and centroid checker, board renderer |
 
 ### How to swap the logo in the app
 
 ```sh
 cp design/logo/android/merge/*.xml app/src/main/res/drawable/   # or ligature / cast / orbit
-.claude/skills/carlink-dev/scripts/dev.sh build && .claude/skills/carlink-dev/scripts/dev.sh install
+.claude/skills/mobilecarconnect-dev/scripts/dev.sh build && .claude/skills/mobilecarconnect-dev/scripts/dev.sh install
 ```
 
 The same file names are kept, so the manifest, the adaptive icon (`mipmap-anydpi-v26`), the
-notification (`HomeLauncher`) and the in-app mark (`CarLinkMark` in `ui/components/Components.kt`,
-which tints `carlink_logo_mark_primary` with `onSurface` and `carlink_logo_mark_accent` with the
+notification (`HomeLauncher`) and the in-app mark (`MobileCarConnectMark` in `ui/components/Components.kt`,
+which tints `mobilecarconnect_logo_mark_primary` with `onSurface` and `mobilecarconnect_logo_mark_accent` with the
 Ion primary) all pick up the change. To change geometry, edit the concept in `build_logo.py`,
 then run `python3 design/logo/tools/build_logo.py && python3 design/logo/tools/measure.py <tmpdir>
 && python3 design/logo/tools/build_logo.py && design/logo/tools/render.sh`, and look at the boards.

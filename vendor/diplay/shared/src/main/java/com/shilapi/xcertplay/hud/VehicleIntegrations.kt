@@ -1,7 +1,7 @@
 package com.shilapi.xcertplay.hud
 
 /**
- * CarLink: one process-wide switch for the BYD vehicle integrations that DiPlay runs on every
+ * MobileCarConnect: one process-wide switch for the BYD vehicle integrations that DiPlay runs on every
  * head unit without a setting of their own (docs/dissection/DIPLAY.md §12, the ⚠ rows):
  * the navigation output bridges ([BydNavigationOutputs.start], `onAppOpened`, `endNow`), BYD's
  * steering-wheel voice key codes (`CarPlayMediaButton.opensSiri`), the local-adb Wi-Fi scan pause

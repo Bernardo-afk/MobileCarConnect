@@ -1,6 +1,6 @@
 # External Bluetooth modules (FYT/ZLink-type stereos)
 
-> **Status: current.** CarLink detects these stereos, explains the limit and blocks wireless
+> **Status: current.** MobileCarConnect detects these stereos, explains the limit and blocks wireless
 > before an engine starts (`detect/ExternalBluetoothProbe`, `SessionManager`). Both upstream module
 > routes (ZBT and BLINK) are ported into DiAuto from open-headunit v.3.5.0 and can be tried with an
 > **experimental, off-by-default** setting ([below](#the-module-routes-experimental)). Not yet
@@ -21,7 +21,7 @@ Android Auto are unaffected.**
 Seen on the user's stereo (2026-10): FYT-type unit (MCU "…FYTR"), Unisoc UIS8581A, Android 10,
 1280×720; phone OnePlus Nord 5 paired to the module. DiAuto emitted `EXTERNAL_BLUETOOTH`
 (evidence from `ExternalBtPolicy`), Home said "Bluetooth connection failed — turn Bluetooth off
-and on…" (wrong advice) and Diagnostics said "Everything looks ready". CarLink had no adb access to
+and on…" (wrong advice) and Diagnostics said "Everything looks ready". MobileCarConnect had no adb access to
 the stereo, so the app must collect the evidence itself.
 
 ## What upstream does
@@ -49,8 +49,8 @@ Which route the user's stereo needs is unknown. That is what the probe is for.
 
 ## What the probe collects
 
-`carlink-core/.../detect/ExternalBluetoothProbe.kt`, once per app start on its own thread (the port
-check takes at most 300 ms), cached for the process. Its block goes into `files/logs/carlink.log`
+`mobilecarconnect-core/.../detect/ExternalBluetoothProbe.kt`, once per app start on its own thread (the port
+check takes at most 300 ms), cached for the process. Its block goes into `files/logs/mobilecarconnect.log`
 and into Diagnostics › **Share log**, right after the header:
 
 ```
@@ -83,13 +83,13 @@ External Bluetooth probe: classification=FYT_MODULE complete=true took=318ms
 | `node /dev/BT_serial` | file exists | recorded only; decides nothing |
 | `node /dev/rf_serial`, `/dev/zj_bt_serial` | file exists | ZLink markers |
 | `port 127.0.0.1:3152` | TCP connect, then close at once; nothing is sent | ZBT's daemon |
-| `packages` | package manager: `com.syu.carlink`, `com.zjinnova.zlink`, and names containing zlink, zjinnova, carlink, carplay, androidauto, easyconn, autokit, phonelink, carbit, speedplay, gocsdk, tlink (never CarLink itself) | name and version only |
+| `packages` | package manager: `com.syu.carlink`, `com.zjinnova.zlink`, and names containing zlink, zjinnova, mobilecarconnect, carplay, androidauto, easyconn, autokit, phonelink, carbit, speedplay, gocsdk, tlink (never MobileCarConnect itself) | name and version only |
 | `adapter` | Android's `BluetoothAdapter`: present, enabled, and whether its address is real (not `02:00:00:00:00:00`; the address itself is never stored) | |
-| `bonded`, `knownPhones` | how many devices Android lists as bonded; for each phone CarLink knows, whether it is among them | never a MAC; `LogMasking` applies to the block |
+| `bonded`, `knownPhones` | how many devices Android lists as bonded; for each phone MobileCarConnect knows, whether it is among them | never a MAC; `LogMasking` applies to the block |
 | `hardware` | `Build.HARDWARE/Build.BOARD` | the SoC family |
 
 The package query works on Android 10 (the stereos in question) without extra permissions;
-Android 11+ sees only what `carlink-core`'s manifest `<queries>` names (the two packages and
+Android 11+ sees only what `mobilecarconnect-core`'s manifest `<queries>` names (the two packages and
 launcher apps).
 
 ## Classifications and what each points to
@@ -106,7 +106,7 @@ Android 6+ gives apps the placeholder address, so `LIKELY_FALSE_POSITIVE` mostly
 that still exposes the real one (`Settings.Secure` `bluetooth_address`). That is deliberate: the
 classification blocks only on positive evidence and never guesses that a module is unused.
 
-## What CarLink does today
+## What MobileCarConnect does today
 
 - **Pre-flight.** `SessionManager.start` blocks every WIRELESS request for both engines with
   `Problem.EXTERNAL_BLUETOOTH` before any engine, settings write, Bluetooth warm-up or Wi-Fi
@@ -134,13 +134,13 @@ classification blocks only on positive evidence and never guesses that a module 
 ## The module routes (experimental)
 
 Ported from [open-headunit](https://github.com/andreknieriem/open-headunit) tag **v.3.5.0**, commit
-`1c1b5b7261ebebde8000778ff2c06e3af3e3a326` (AGPL-3.0, like CarLink); each new file says so in its
+`1c1b5b7261ebebde8000778ff2c06e3af3e3a326` (AGPL-3.0, like MobileCarConnect); each new file says so in its
 header, and `docs/VENDOR_CHANGES.md` lists every edit.
 
 | Piece | Where (vendor/diauto/app/src/main/java/com/andrerinas/openheadunit/) | Upstream |
 |---|---|---|
 | `HandshakeLink`, `BluetoothSocketLink`, `ExternalModuleCarrier` | `connection/HandshakeLink.kt` | `nativeaa/HandshakeLink.kt`, `ExternalModuleCarrier.kt` |
-| Route decision NORMAL / ZBT / BLINK / BLOCKED, the host's key, step logging, failure report | `connection/ExternalBtTransportPolicy.kt` | `nativeaa/ExternalBtTransportPolicy.kt` (only `route()`, with CarLink's inputs) |
+| Route decision NORMAL / ZBT / BLINK / BLOCKED, the host's key, step logging, failure report | `connection/ExternalBtTransportPolicy.kt` | `nativeaa/ExternalBtTransportPolicy.kt` (only `route()`, with MobileCarConnect's inputs) |
 | ZBT: 16-byte BE header (magic `0x0000FFFF`, version `0x101`, id, length) + protobuf body, `RequestInit{enable_type=2}` (0x101), raw RFCOMM bytes (0x105), `RequestReconn` (0x114) as the wake, link-state presence, attempt/wake/reopen/retransmit pacing | `connection/zbt/` | PRs #971, #1010, #1031, #1051 |
 | BLINK: `/dev/auto_serial` line protocol (`JH<MAC>`, `AA`, `SS`, `ZB<hex>` in; `AT#ZA<hex>\r\n` out), raw tty (`stty raw -echo -iuclc …`), opened as the app when `com.syu.carlink` is disabled, else through `su` (refused when the stock app is enabled), idle ping answers | `connection/blink/` | PR #1027 |
 
@@ -151,18 +151,18 @@ How a session uses it:
    and `DeviceEnvironment.moduleRoute` names the route: `ZLINK_DAEMON` and `EXTERNAL_UNKNOWN` → ZBT,
    `FYT_MODULE` → BLINK. Pre-flight for wireless Android Auto then skips "Bluetooth is off" and
    "phone not paired" (the phone pairs with the module, not with Android).
-2. `AaSessionSettings` writes the route into DiAuto's settings (`carlink-external-bt-route` = `ZBT`,
-   `BLINK`, or empty for USB sessions and every other stereo); carlink.log says
+2. `AaSessionSettings` writes the route into DiAuto's settings (`mobilecarconnect-external-bt-route` = `ZBT`,
+   `BLINK`, or empty for USB sessions and every other stereo); mobilecarconnect.log says
    `Android Auto Bluetooth through the stereo's module: <ROUTE> (experimental)`.
 3. In `:aa`, mode 3 asks `ExternalBtTransportPolicy.routeFor` (the host's route wins; without one,
    DiAuto's own ExternalBtPolicy markers still refuse as before). Wi-Fi Direct starts as usual, and
    `NativeAaHandshakeManager.start` hands over to the module carrier instead of opening RFCOMM
    listeners. The carrier hands each phone to the unchanged handshake (`WppHandshakeSession`) as a
-   `HandshakeLink`. CarLink's wake pokes become `RequestReconn` on ZBT and nothing on BLINK (its
+   `HandshakeLink`. MobileCarConnect's wake pokes become `RequestReconn` on ZBT and nothing on BLINK (its
    module opens Android Auto itself once the phone's hands-free link is up).
 4. If the module cannot be reached (ZBT: nothing answers on 3152 for 30 s; BLINK: `com.syu.carlink`
    enabled or still running, `/dev/auto_serial` not openable and no root), the engine reports
-   `EXTERNAL_MODULE_UNAVAILABLE`, CarLink fails the session with `FailureReason.EXTERNAL_MODULE`, and
+   `EXTERNAL_MODULE_UNAVAILABLE`, MobileCarConnect fails the session with `FailureReason.EXTERNAL_MODULE`, and
    Home says **Couldn't reach the stereo's Bluetooth module** with the cable help. Root is never
    required: `su` is only tried as upstream's fallback, and a stereo without it fails cleanly.
 
@@ -185,12 +185,12 @@ that printed them in hex was changed).
 
 ### Trying it on a stereo, step by step
 
-1. Install CarLink, open Diagnostics and check **Car stereo Bluetooth**: it should name the module
+1. Install MobileCarConnect, open Diagnostics and check **Car stereo Bluetooth**: it should name the module
    (the full probe block is in **Share log**, right after the header).
 2. On an FYT stereo (probe `FYT_MODULE`): Android Settings › Apps › Car Link (`com.syu.carlink`) ›
-   **Disable**. CarLink never disables it itself. Calls keep going through the module.
+   **Disable**. MobileCarConnect never disables it itself. Calls keep going through the module.
 3. Pair the phone with the stereo as usual (the stereo's own Bluetooth screen, i.e. the module).
-4. CarLink › Settings › Connection › **Show advanced** › turn on **Wireless through the stereo's
+4. MobileCarConnect › Settings › Connection › **Show advanced** › turn on **Wireless through the stereo's
    Bluetooth module (experimental)**.
 5. On the phone, make sure Android Auto's wireless option is on; keep Wi-Fi and Location on the
    stereo on.
@@ -202,7 +202,7 @@ that printed them in hex was changed).
 
 ### Not ported, and why
 
-- Upstream's daemon measurement (`ZbtProbe`, `ZbtDaemonReachability`): CarLink's own probe decides,
+- Upstream's daemon measurement (`ZbtProbe`, `ZbtDaemonReachability`): MobileCarConnect's own probe decides,
   and the driver opts in.
 - Seeding this unit's Bluetooth address from the module (upstream uses it to announce the
   Bluetooth service so calls stay on the car): this DiAuto has no such setting.
@@ -225,10 +225,10 @@ that printed them in hex was changed).
 
 - **A cable.** USB CarPlay and USB Android Auto work on these stereos.
 - **A USB wireless Android Auto (or CarPlay) dongle.** The dongle pairs with the phone over its own
-  Bluetooth and Wi-Fi and presents itself to the stereo as a wired phone on USB, so CarLink's USB
-  path serves it. Not yet tested with CarLink.
+  Bluetooth and Wi-Fi and presents itself to the stereo as a wired phone on USB, so MobileCarConnect's USB
+  path serves it. Not yet tested with MobileCarConnect.
 - **Headunit Server.** On the phone, Android Auto's developer settings offer "Start head unit
   server"; the head unit then connects to the phone over Wi-Fi (TCP port 5277), with no Bluetooth
   handshake. The vendored engine already has this client mode (`NetworkDiscovery`, `CommManager`).
   Android Auto only, the phone and stereo must share a Wi-Fi network, and the driver has to start the
-  server on the phone for every drive. Not yet exposed or evaluated in CarLink.
+  server on the phone for every drive. Not yet exposed or evaluated in MobileCarConnect.

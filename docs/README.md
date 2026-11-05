@@ -1,7 +1,7 @@
-# CarLink documentation
+# MobileCarConnect documentation
 
-The index of CarLink's documentation: what each page covers and who it is for. Start with the
-[project README](../README.md) for what CarLink is and how to install it.
+The index of MobileCarConnect's documentation: what each page covers and who it is for. Start with the
+[project README](../README.md) for what MobileCarConnect is and how to install it.
 
 ## For users
 
@@ -19,14 +19,14 @@ The index of CarLink's documentation: what each page covers and who it is for. S
 |---|---|
 | [BUILDING.md](BUILDING.md) | Toolchain, build and test commands, CarPlay authentication files, the screenshot gallery, testing on a real device |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | The one-APK, two-process design, the modules, where each part of the connection layer lives |
-| [INTEGRATION.md](INTEGRATION.md) | Reusing the backend: the `:carlink-core` library, `CarLinkCore.install`, the host interface, a minimal launcher |
+| [INTEGRATION.md](INTEGRATION.md) | Reusing the backend: the `:mobilecarconnect-core` library, `MobileCarConnectCore.install`, the host interface, a minimal launcher |
 | [RELEASING.md](RELEASING.md) | Versions, the signing key, `scripts/release.sh`, and what the in-app updater checks |
 | [VENDOR_CHANGES.md](VENDOR_CHANGES.md) | Every change made inside the vendored DiPlay and DiAuto engines, and how to audit them |
 | [LOW_END_PERFORMANCE.md](LOW_END_PERFORMANCE.md) | Measurements and rules for cheap head units: lite rendering, deferred start-up, smaller APK |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | How to build, test and submit a change; engine-edit rules; commit style |
 | [SECURITY.md](../SECURITY.md) | Reporting a vulnerability; the extractable CarPlay identity; update verification |
 | [dissection/DIPLAY.md](dissection/DIPLAY.md), [dissection/DIAUTO.md](dissection/DIAUTO.md) | How each engine works and fails (cited elsewhere as DP§… and DA§…) |
-| [`carlink-dev` skill](../.claude/skills/carlink-dev/SKILL.md), [`carlink-device` skill](../.claude/skills/carlink-device/SKILL.md) | The working rules and the device-test loop used in this repository |
+| [`mobilecarconnect-dev` skill](../.claude/skills/mobilecarconnect-dev/SKILL.md), [`mobilecarconnect-device` skill](../.claude/skills/mobilecarconnect-device/SKILL.md) | The working rules and the device-test loop used in this repository |
 
 ## Design and research
 
@@ -52,4 +52,4 @@ Dated records, kept as written. They describe the code as it was on their date.
 | Page | What it records |
 |---|---|
 | [RELIABILITY_AUDIT_2026-10-09.md](RELIABILITY_AUDIT_2026-10-09.md) | Connection reliability audit on the test tablet with an iPhone and a Samsung S25 Ultra |
-| [dissection/](dissection/DIPLAY.md) | The engine dissections cite CarLink v1 classes as they were when written (see each file's note) |
+| [dissection/](dissection/DIPLAY.md) | The engine dissections cite MobileCarConnect v1 classes as they were when written (see each file's note) |

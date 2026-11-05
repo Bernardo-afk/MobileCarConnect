@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Generate CarLink's icon drawables from Material Symbols Rounded (Apache License 2.0).
+"""Generate MobileCarConnect's icon drawables from Material Symbols Rounded (Apache License 2.0).
 
-Only the glyphs CarLink uses are shipped, as vector drawables (DESIGN_SPEC §5.8): weight 400,
+Only the glyphs MobileCarConnect uses are shipped, as vector drawables (DESIGN_SPEC §5.8): weight 400,
 optical size 48, outlined (fill 0) and, where listed, filled (fill 1) for selected/active states.
 
     python3 scripts/fetch_icons.py
 
-Output: app/src/main/res/drawable/carlink_ic_<name>.xml and carlink_ic_<name>_filled.xml.
+Output: app/src/main/res/drawable/mobilecarconnect_ic_<name>.xml and mobilecarconnect_ic_<name>_filled.xml.
 """
 import re
 import sys
@@ -89,7 +89,7 @@ def main() -> int:
                 failures.append(f"{name}/{style}: {error}")
                 continue
             mirror = '\n    android:autoMirrored="true"' if name in AUTO_MIRRORED else ""
-            (OUT / f"carlink_ic_{name}{suffix}.xml").write_text(
+            (OUT / f"mobilecarconnect_ic_{name}{suffix}.xml").write_text(
                 TEMPLATE.format(name=name, style=style, mirror=mirror, path=path))
     for failure in failures:
         print("failed:", failure, file=sys.stderr)

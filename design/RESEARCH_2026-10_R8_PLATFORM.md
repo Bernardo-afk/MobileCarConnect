@@ -12,12 +12,12 @@
 | 3 | Baseline + startup profiles covering engine code; explicit `androidx.profileinstaller` | Faster first launch / first connection | M | Low | Proven; sideloaded APKs get it after background dexopt |
 | 4 | Pull DiPlay 0.2.16 (we vendored 0.2.15) | **Done 2026-10-10.** Checked against the commits: video backlog recovery, Qualcomm low-latency decoding + FPS counter, smooth-video frame requests, call echo-cancel alignment, opt-in BYD Bluetooth pause, side panel and settings UI. It does *not* contain NCM/USB-retry/address-family changes (the first reading of the release notes was wrong). **Updated again 2026-10-15 to upstream main bc2bdb3e7 (DiPlay 0.2.19+) and 2026-10-19 to 6d3b8a8ce (0.2.21+)** by applying the upstream diff (the subtree lost its merge base) | S–M | Low–Med | Pulled; see docs/VENDOR_CHANGES.md |
 | 5 | Handle `BluetoothDevice.ACTION_KEY_MISSING` (Android 16) → "forget and re-pair" | Stale-pairing failures explained | S | Low | API proven |
-| 6 | CompanionDeviceManager association + device presence | Phone nearby could wake CarLink | M–L | Medium | Speculative for a tablet associating to a phone |
+| 6 | CompanionDeviceManager association + device presence | Phone nearby could wake MobileCarConnect | M–L | Medium | Speculative for a tablet associating to a phone |
 | 7 | Wi-Fi Direct R2 bootstrapping, Wi-Fi Aware, 6 GHz P2P | none | – | – | Neither AA nor CarPlay phones use them |
 
 Android 17 audio hardening: apps targeting 37 need a foreground service with while-in-use
 capability to take audio focus or play from the background; a service started from the background
-does not get it. Risky paths: USB plug-in / auto-start while CarLink is not visible (DiAuto
+does not get it. Risky paths: USB plug-in / auto-start while MobileCarConnect is not visible (DiAuto
 `AapService`, DiPlay's session service). Test on an Android 17 device with
 `adb shell cmd audio set-enable-hardening throw` and `dumpsys audio | grep AudioHardening`.
 
@@ -26,12 +26,12 @@ Already compliant: `ACCESS_LOCAL_NETWORK`; RFCOMM `read()` returning -1 on Andro
 
 ## R8 plan
 
-**Phase 1 is built (2026-10-10, branch `carlink-r8`), not yet verified on a device.** Release:
+**Phase 1 is built (2026-10-10, branch `mobilecarconnect-r8`), not yet verified on a device.** Release:
 `optimization { enable = true }` (R8 full mode, `proguard-android-optimize.txt`, resource
 shrinking), `-dontobfuscate`. Release APK 29.63 → 15.82 MB, dex 18.76 → 5.66 MB compressed,
 classes 39,194 → 10,696, methods 276,644 → 82,439 (docs/LOW_END_PERFORMANCE.md § APK size).
-Test it with `dev.sh build-release` + `CARLINK_TARGET=tablet dev.sh install-release` (release
-artifact, `com.carlink.app`, signed with the debug key when no release keystore is set).
+Test it with `dev.sh build-release` + `MOBILECARCONNECT_TARGET=tablet dev.sh install-release` (release
+artifact, `com.mobilecarconnect.app`, signed with the debug key when no release keystore is set).
 
 AGP 9.3 facts confirmed: app rules in `src/main/keepRules/*.keep` (merged with AGP's
 `proguard-android-optimize.txt`, which `keepRules.includeDefault` controls); libraries keep
@@ -44,8 +44,8 @@ Rules added (each found by the audit below or by diffing the dex before and afte
 
 | Rule | Where | Why |
 |---|---|---|
-| `-dontobfuscate`; `-keepattributes SourceFile,LineNumberTable,Signature,InnerClasses,EnclosingMethod,*Annotation*` | `app/src/main/keepRules/carlink.keep` | Readable logs and stack frames; nested-class simple names in diagnostics |
-| `-keep,allowshrinking,allowobfuscation,allowaccessmodification class com.carlink.**` (and `com.shilapi.**`, `com.andrerinas.**`, `com.byd.spi.**`), no members | `carlink.keep` | `-dontobfuscate` does not stop horizontal class merging: the first build merged `ConnectionProfiles` and `LiveVideoMeter` into `androidx.lifecycle.ViewModelLazy` and moved composables' statics into `kotlin.ExceptionsKt`. Keeps class identity only (merging, class inlining; full mode also keeps `InnerClasses` only for matched classes); +0.6 % dex |
+| `-dontobfuscate`; `-keepattributes SourceFile,LineNumberTable,Signature,InnerClasses,EnclosingMethod,*Annotation*` | `app/src/main/keepRules/mobilecarconnect.keep` | Readable logs and stack frames; nested-class simple names in diagnostics |
+| `-keep,allowshrinking,allowobfuscation,allowaccessmodification class com.mobilecarconnect.**` (and `com.shilapi.**`, `com.andrerinas.**`, `com.byd.spi.**`), no members | `mobilecarconnect.keep` | `-dontobfuscate` does not stop horizontal class merging: the first build merged `ConnectionProfiles` and `LiveVideoMeter` into `androidx.lifecycle.ViewModelLazy` and moved composables' statics into `kotlin.ExceptionsKt`. Keeps class identity only (merging, class inlining; full mode also keeps `InnerClasses` only for matched classes); +0.6 % dex |
 | `main(String[])` of `HotspotJoinRepairMain`, `BydCarPlayCallTool`, `BydClusterSongTool`, `Byd13CatalogProbeMain`, `LocalMfiProbe` | DiPlay `shared/ambient-consumer-rules.pro` | app_process entry points started by class name (`BydAmbientLightTool` was already kept upstream) |
 | `LinuxI2cNativeException { <init>(int, String); }` | same | `linux_i2c_jni.c` `FindClass` + `GetMethodID` |
 | `-keepclassmembers class com.android.dx.TypeId { public static *** get(...); }` | DiAuto `app/proguard-project.txt` | `HotspotManager` reflects on it (Android 7-10 tethering callback) |
@@ -73,7 +73,7 @@ scores (r8-analyzer skill): optimization 71.6 %, shrinking 72.9 %, obfuscation 0
 
 Device matrix for phase 1 (release build on the tablet; after each step
 `adb logcat -d | grep -E "FATAL|ClassNotFound|NoSuchMethod|NoSuchField|NoClassDefFound|AbstractMethodError|UnsatisfiedLink|ExceptionInInitializer"`
-must be empty for `com.carlink.app`):
+must be empty for `com.mobilecarconnect.app`):
 
 1. Launch; Home ready; `:aa` warm-up line; Settings › Show advanced, every category; change Visual
    effects and an Android Auto and a CarPlay setting, force-stop, reopen: values kept (persisted
@@ -103,7 +103,7 @@ Phase 2 (left on purpose):
   need retrace (or the class-identity rules extended into `-keeppackagenames`).
 - Revisit the class-identity rules if a stable R8 option to restrict merging appears.
 
-Phase 3: **done 2026-10-15 on CarLink's emulator** (`:baselineprofile`; docs/LOW_END_PERFORMANCE.md
+Phase 3: **done 2026-10-15 on MobileCarConnect's emulator** (`:baselineprofile`; docs/LOW_END_PERFORMANCE.md
 "Round 2"): generated baseline and startup profiles, R8 lays out a start-up dex. Phase 2's protobuf
 keep was measured (1.21 MB of 10.1 MB dex) and left as is.
 
@@ -135,7 +135,7 @@ Phases:
 Starting rules:
 
 ```
-# app/src/main/keepRules/carlink.keep
+# app/src/main/keepRules/mobilecarconnect.keep
 -dontobfuscate
 -keepattributes SourceFile,LineNumberTable,Signature,InnerClasses,EnclosingMethod,*Annotation*
 -printconfiguration build/outputs/logs/r8-config.txt
@@ -159,7 +159,7 @@ i.e. without optimization). No published rules exist for DiPlay or other CarPlay
   rebuilding it; confirm DiAuto parity (seconds per reconnect, unmeasured).
 - aa-proxy-rs: detects a user-chosen disconnect so it does not auto-reconnect; worth copying.
 - WirelessAndroidAutoDongle v0.5.0: 5 GHz to avoid Bluetooth interference, Bluetooth connect retry,
-  phone-first/dongle-first strategy; claims < 30 s (CarLink ≈ 5 s).
+  phone-first/dongle-first strategy; claims < 30 s (MobileCarConnect ≈ 5 s).
 - pycarplay / node-CarPlay / FastCarPlay drive Carlinkit dongles: nothing to reuse.
 - No primary source found for a faster wireless CarPlay technique without the HFP role.
   CarPlay Ultra (2025) changes nothing for iAP2/AirPlay receivers. No new AA wireless protocol.

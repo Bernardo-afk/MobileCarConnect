@@ -6,7 +6,7 @@ import android.view.View
 import com.andrerinas.openheadunit.main.MainActivity
 
 /**
- * CarLink: lets an APK that embeds this engine choose the screens the engine opens on its own
+ * MobileCarConnect: lets an APK that embeds this engine choose the screens the engine opens on its own
  * (notification tap, boot launch, return after a Wi-Fi Direct prompt), the name its notifications
  * and media session carry, and what happens to its toasts. Standalone DiAuto keeps its defaults.
  */
@@ -58,7 +58,7 @@ object HostIntegration {
     var exitMenuHomeLabel: String? = null
 
     /**
-     * CarLink: the phone asked for the car's own screen (the Exit / car tile). Non-null: the engine
+     * MobileCarConnect: the phone asked for the car's own screen (the Exit / car tile). Non-null: the engine
      * answers "native", keeps the session, and calls this (any thread) while the projection is in
      * front, so the host shows its screen; showing the projection again regains focus. Null
      * (standalone) ends the session as before.
@@ -67,7 +67,7 @@ object HostIntegration {
     @JvmStatic
     var openCarScreen: (() -> Unit)? = null
 
-    // CarLink: process lifecycle. Standalone DiAuto keeps both true: it owns the device and wants
+    // MobileCarConnect: process lifecycle. Standalone DiAuto keeps both true: it owns the device and wants
     // its engine back after a low-memory kill or a task swipe. A host that drives the engine itself
     // sets both false, so no engine runs that the host did not start and cannot see.
 
@@ -82,7 +82,7 @@ object HostIntegration {
     var restartOnTaskRemoved: Boolean = true
 
     /**
-     * CarLink: true lets the projection claim the window area a BYD DiLink caption hides
+     * MobileCarConnect: true lets the projection claim the window area a BYD DiLink caption hides
      * ([com.andrerinas.openheadunit.utils.BydFullscreen]). On other devices that area is a real
      * system bar or cutout, so a host that knows it is not on a DiLink sets this false.
      */
@@ -90,7 +90,7 @@ object HostIntegration {
     @JvmStatic
     var claimHiddenBottomStrip: Boolean = true
 
-    /** CarLink: what [onEngineEvent] reports. Detail strings are `key=value` pairs joined by `;`. */
+    /** MobileCarConnect: what [onEngineEvent] reports. Detail strings are `key=value` pairs joined by `;`. */
     enum class EngineEvent {
         /** The Wi-Fi radio is off, so the Wi-Fi Direct route cannot start (API 29+ cannot turn it on). */
         WIFI_OFF,
@@ -133,17 +133,17 @@ object HostIntegration {
     }
 
     /**
-     * CarLink: called (on any engine thread) when something a host should show or act on happens.
+     * MobileCarConnect: called (on any engine thread) when something a host should show or act on happens.
      * The engine's own toasts and logs are unchanged. Null (standalone) does nothing.
      */
     @Volatile
     @JvmStatic
     var onEngineEvent: ((context: Context?, kind: EngineEvent, detail: String?) -> Unit)? = null
 
-    /** CarLink: fires [onEngineEvent]; a failing host hook never reaches the engine. */
+    /** MobileCarConnect: fires [onEngineEvent]; a failing host hook never reaches the engine. */
     @JvmStatic
     fun engineEvent(context: Context?, kind: EngineEvent, detail: String? = null) {
-        when (kind) { // CarLink: wireless timing (aap/WirelessTiming), whether or not a host listens
+        when (kind) { // MobileCarConnect: wireless timing (aap/WirelessTiming), whether or not a host listens
             EngineEvent.BT_CHANNEL_ACCEPTED -> com.andrerinas.openheadunit.aap.WirelessTiming.mark(
                 com.andrerinas.openheadunit.aap.WirelessTimeline.Phase.PHONE_RFCOMM)
             EngineEvent.CREDENTIALS_SENT -> com.andrerinas.openheadunit.aap.WirelessTiming.mark(
@@ -161,7 +161,7 @@ object HostIntegration {
     }
 
     /**
-     * CarLink: the host performs the USB accessory switch itself. When true, a phone attached in
+     * MobileCarConnect: the host performs the USB accessory switch itself. When true, a phone attached in
      * normal mode is left to the host instead of the engine's delayed fallback switch, which
      * otherwise races the host's own switch on the same device. Default false (standalone).
      */
@@ -170,7 +170,7 @@ object HostIntegration {
     var hostOwnsUsbSwitch: Boolean = false
 
     /**
-     * CarLink: the host runs a USB-only session. While true, the service arms no wireless route
+     * MobileCarConnect: the host runs a USB-only session. While true, the service arms no wireless route
      * (`initWifiMode` returns at once: no Wi-Fi Direct group, no Bluetooth wake pokes, no wireless
      * server), so a plugged-in phone is never pulled into the wireless flow. Default false.
      */
@@ -179,7 +179,7 @@ object HostIntegration {
     var usbOnlySession: Boolean = false
 
     /**
-     * CarLink: the density announced when the DPI setting is Automatic (0), from the device's own
+     * MobileCarConnect: the density announced when the DPI setting is Automatic (0), from the device's own
      * density and the visible codec area (codec size less margins, in pixels). Null = the device's
      * density (standalone).
      */

@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), app/src/test/.../nativeaa/blink/BlinkTtyModeTest.kt
+// MobileCarConnect: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), app/src/test/.../nativeaa/blink/BlinkTtyModeTest.kt
 package com.andrerinas.openheadunit.connection.blink
 
 import org.junit.Assert.assertTrue

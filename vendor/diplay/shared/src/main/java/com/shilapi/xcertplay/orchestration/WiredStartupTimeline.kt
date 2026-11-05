@@ -1,6 +1,6 @@
 package com.shilapi.xcertplay.orchestration
 
-// CarLink: new file. Always-on, INFO-level wired bring-up timing (see docs/VENDOR_CHANGES.md).
+// MobileCarConnect: new file. Always-on, INFO-level wired bring-up timing (see docs/VENDOR_CHANGES.md).
 
 /**
  * Records each wired milestone once and reports it as one line:

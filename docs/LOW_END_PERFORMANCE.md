@@ -1,7 +1,7 @@
-# CarLink on low-end head units
+# MobileCarConnect on low-end head units
 
 October 2026. What was measured on a cheap-head-unit emulator, what changed, and the rules
-CarLink now follows on weak hardware: lite rendering, deferred start-up work, Automatic picture
+MobileCarConnect now follows on weak hardware: lite rendering, deferred start-up work, Automatic picture
 from the hardware decoder, and a smaller APK.
 
 Typical targets: Android 10-13, 1-4 GB of RAM, MediaTek MT8163/MT8227, UNISOC UIS7862/7870 or
@@ -11,7 +11,7 @@ are often H.264-only, slow eMMC.
 ## Results
 
 Release APK (`assembleRelease`, signed locally with the debug key for measuring only), on the
-`carlink_lowend` emulator described below. Cold start is the median of 10 `am start -W -S` runs
+`mobilecarconnect_lowend` emulator described below. Cold start is the median of 10 `am start -W -S` runs
 (TotalTime; the "Displayed" log line matched it within 1 ms on every run). The "after" build is
 measured twice: with Automatic visual effects (which picks **lite** on this 2 GB, 2-core device)
 and with **Full** forced in Settings, to separate the lite-mode gain from the start-up changes.
@@ -41,10 +41,10 @@ What the numbers say, honestly:
   fill cost is exaggerated here; a real Mali-T720/PowerVR GE8300 class GPU is also fill-limited
   and compiles each new shader on first use, so the gain should be in the same direction but
   smaller. Not yet measured on a real head unit.
-- **The start-up changes alone are worth ~1 %** on this device (1284 → 1272 ms in Full). CarLink's
+- **The start-up changes alone are worth ~1 %** on this device (1284 → 1272 ms in Full). MobileCarConnect's
   own `Application.onCreate` was already ~10 ms. Their real value is removing a second process
   start and an engine round-trip from the first second (below).
-- **Memory did not drop.** PSS is dominated by code; the new baseline profile compiles CarLink's
+- **Memory did not drop.** PSS is dominated by code; the new baseline profile compiles MobileCarConnect's
   own classes ahead of time (+1.4 MB of `Code` in PSS), which outweighs the 64 KB grain bitmap
   lite mode no longer allocates. GPU memory could not be read on this emulator (`Graphics: 0`).
 - **Transitions jank the same in both modes.** Opening Settings is dominated by composing the new
@@ -54,12 +54,12 @@ What the numbers say, honestly:
 
 ## Method
 
-**Emulator** (`~/.android/avd/carlink_lowend.avd`): API 30 `default` (AOSP, no Play Store) x86_64
+**Emulator** (`~/.android/avd/mobilecarconnect_lowend.avd`): API 30 `default` (AOSP, no Play Store) x86_64
 image, 1024×600 at 160 dpi, 2048 MB RAM, 2 cores, SwiftShader GPU, landscape, dark mode. It runs
 headless on port 5562 (`emulator-5562`) only while measuring:
 
 ```sh
-ANDROID_SDK_ROOT=$HOME/android-sdk ~/android-sdk/emulator/emulator -avd carlink_lowend \
+ANDROID_SDK_ROOT=$HOME/android-sdk ~/android-sdk/emulator/emulator -avd mobilecarconnect_lowend \
   -sysdir ~/android-sdk/system-images/android-30/default/x86_64 -port 5562 \
   -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 2048 -cores 2
 ```
@@ -69,14 +69,14 @@ ANDROID_SDK_ROOT=$HOME/android-sdk ~/android-sdk/emulator/emulator -avd carlink_
 `system-images/` is now a directory of per-API links.)
 
 **Build**: `assembleRelease` with `ANDROID_KEYSTORE_*` pointing at `~/.android/debug.keystore`, lint
-vital skipped, and for the emulator `-Pcarlink.emulatorAbi=true` (adds x86_64 to the release).
+vital skipped, and for the emulator `-Pmobilecarconnect.emulatorAbi=true` (adds x86_64 to the release).
 
 **Per APK**: uninstall, `install -g`, launch once, deliver the APK's baseline profile as
 ProfileInstaller does (`am broadcast -a androidx.profileinstaller.action.INSTALL_PROFILE`), force
 stop, `cmd package compile -m speed-profile -f` (status `speed-profile` in both runs), then:
 
 1. 10 × (`force-stop`, 2 s, `am start -W -S`, read TotalTime and the `Displayed` line);
-2. 10 s idle on Home, `dumpsys meminfo` for `com.carlink.app` and `com.carlink.app:aa`;
+2. 10 s idle on Home, `dumpsys meminfo` for `com.mobilecarconnect.app` and `com.mobilecarconnect.app:aa`;
 3. `dumpsys gfxinfo reset`, 10 s idle on Home, read frames;
 4. `gfxinfo reset`, tap Settings and Back three times, read;
 5. in Settings: `gfxinfo reset`, two down/up swipes of the content, tap Display, General,
@@ -127,7 +127,7 @@ Connected, a failure, the Phones sheet, Settings › General and the Visual effe
 
 ## Start-up
 
-- **The Android Auto engine process starts after the first frame.** `CarLinkApplication` used to
+- **The Android Auto engine process starts after the first frame.** `MobileCarConnectApplication` used to
   call `Connection.prewarm` in `onCreate`, which forks `:aa` (DiAuto's whole `App.onCreate`)
   while Home draws its first frame, on a device that may have two cores. Worse, the session layer,
   created a few milliseconds later by Home's ViewModel, then found a live `:aa` process, asked it
@@ -139,8 +139,8 @@ Connected, a failure, the Phones sheet, Settings › General and the Visual effe
 - **The decoder probe for Automatic picture runs in the same deferred step**, on a low-priority
   thread, so the first session does not pay for it (5 ms on the emulator; longer on units with
   many codecs).
-- **Baseline profile** (`app/src/main/baseline-prof.txt` lists all of `com.carlink.app`,
-  `carlink-core/src/main/baseline-prof.txt` all of `com.carlink.core`), so ART compiles CarLink's
+- **Baseline profile** (`app/src/main/baseline-prof.txt` lists all of `com.mobilecarconnect.app`,
+  `mobilecarconnect-core/src/main/baseline-prof.txt` all of `com.mobilecarconnect.core`), so ART compiles MobileCarConnect's
   own code at install (with ProfileInstaller) instead of interpreting it on the first launches.
   AGP merges the library's profile, and those of Compose and Material 3, into the APK.
 - Unchanged and measured cheap: brand hooks, DiPlay hooks, USB watcher registration and the
@@ -176,9 +176,9 @@ Examples:
 | 1920×720 head unit whose decoder tops out at 720p30 | **720p**, **30 fps**, H.264 | **75 %** (1440×540), 30 fps |
 | 1920×1080 unit with only a software decoder | **720p**, **30 fps** | **50 %** (960×540) |
 
-Each session logs the decision to CarLink's event log ("Automatic picture: Android Auto 720p
+Each session logs the decision to MobileCarConnect's event log ("Automatic picture: Android Auto 720p
 (panel) 30 fps H.264; CarPlay 100% of 1024x600 30 fps H.264; decoder …; low-end: 1981 MB RAM, 2
-CPU cores"), and logcat `CarLink-Capabilities` has the full probe. The only connection-layer
+CPU cores"), and logcat `MobileCarConnect-Capabilities` has the full probe. The only connection-layer
 change is this hook: `Connection.writeSession` passes the choice to `CarPlaySettingsPolicy.map`
 and `AaSessionSettings.values`.
 
@@ -186,7 +186,7 @@ and `AaSessionSettings.values`.
 
 - **ABIs**: release builds ship arm64-v8a and armeabi-v7a only (car stereos are ARM; many are
   still 32-bit). x86_64 (3.3 MB of native code, mostly Conscrypt) stays in debug builds for the
-  emulator and in release builds only with `-Pcarlink.emulatorAbi=true`.
+  emulator and in release builds only with `-Pmobilecarconnect.emulatorAbi=true`.
 - **Excluded Java resources**: Bouncy Castle's Picnic post-quantum tables (1.2 MB; neither engine
   uses Picnic and only Picnic's classes read them), its German certificate-path messages, and
   kotlinx-coroutines' `DebugProbesKt.bin`.
@@ -195,7 +195,7 @@ and `AaSessionSettings.values`.
   or resource from `docs/` is in the APK); DiPlay's `navigation_test.pcm` (171 KB compressed) is
   used by DiPlay's own test button and left alone (vendor asset).
 - **R8 (release builds, 2026-10-10, phase 1)**: shrink, optimize and shrink resources, without
-  renaming (`-dontobfuscate`); rules in `app/src/main/keepRules/carlink.keep` and the engines'
+  renaming (`-dontobfuscate`); rules in `app/src/main/keepRules/mobilecarconnect.keep` and the engines'
   consumer files (`docs/VENDOR_CHANGES.md`). Measured with `assembleRelease` signed with the debug
   key, no CarPlay authentication files, arm ABIs only; `apkanalyzer` and `unzip -lv`:
 
@@ -218,7 +218,7 @@ and `AaSessionSettings.values`.
   `ConnectionProfiles` and DiPlay's `LiveVideoMeter` into `androidx.lifecycle.ViewModelLazy` and
   moved composables' static methods into `kotlin.ExceptionsKt` (horizontal class merging), which
   would have put wrong class names in stack frames and in the diagnostics' `javaClass` names.
-  `carlink.keep` keeps the identity (not the members) of the app's and engines' classes; it costs
+  `mobilecarconnect.keep` keeps the identity (not the members) of the app's and engines' classes; it costs
   0.6 % of dex. Inlined frames still disappear from raw stack traces: keep
   `app/build/outputs/mapping/release/mapping.txt` with each release build and retrace with it.
 
@@ -229,10 +229,10 @@ and `AaSessionSettings.values`.
   decoders.
 - Connecting/connected animations were not measured for frame rate (they need a phone).
 - The deferred prewarm changes when `:aa` starts; plug-in and wireless start times on the tablet
-  were not re-measured (`carlink-device` skill).
+  were not re-measured (`mobilecarconnect-device` skill).
 - The R8 release build (above) has passed the build, the unit tests and an audit of reflection,
   JNI and by-name loading, but has not run on a device yet. Install it with
-  `dev.sh build-release` and `CARLINK_TARGET=tablet dev.sh install-release` and run the device
+  `dev.sh build-release` and `MOBILECARCONNECT_TARGET=tablet dev.sh install-release` and run the device
   matrix in `design/RESEARCH_2026-10_R8_PLATFORM.md` before calling it done.
 
 ## Round 2 (2026-10-15)
@@ -242,20 +242,20 @@ Target: the user's FYT stereo (Unisoc UIS8581A: 8× Cortex-A55 at 1.6 GHz, Power
 
 ### What helps on weak devices now (research, primary sources, read 2026-10-15)
 
-| Topic | Finding | Source (date) | For CarLink |
+| Topic | Finding | Source (date) | For MobileCarConnect |
 |---|---|---|---|
 | Baseline profiles, sideloaded | Outside Play, a profile is not compiled at install: "users don't see the benefits until background dexopt runs, which is likely overnight". ProfileInstaller writes it ~5 s after the first frame (plus up to 1 s jitter) | [Baseline Profiles overview](https://developer.android.com/topic/performance/baselineprofiles/overview) (updated 2026-10-07); [ProfileInstallerInitializer](https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/profileinstaller/profileinstaller/src/main/java/androidx/profileinstaller/ProfileInstallerInitializer.java) | Declared `androidx.profileinstaller` 1.4.1 explicitly |
-| Background dexopt on Android 10 | `BackgroundDexOptService` runs once a day and only while the device is **idle and charging** | [AOSP android10-release](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/android10-release/services/core/java/com/android/server/pm/BackgroundDexOptService.java) | A stereo that powers off with the ignition may never compile the profile. One adb command after installing does it: `cmd package compile -f -m speed-profile com.carlink.app` ([manual measurement page](https://developer.android.com/topic/performance/baselineprofiles/manually-create-measure), updated 2026-10-01) |
+| Background dexopt on Android 10 | `BackgroundDexOptService` runs once a day and only while the device is **idle and charging** | [AOSP android10-release](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/android10-release/services/core/java/com/android/server/pm/BackgroundDexOptService.java) | A stereo that powers off with the ignition may never compile the profile. One adb command after installing does it: `cmd package compile -f -m speed-profile com.mobilecarconnect.app` ([manual measurement page](https://developer.android.com/topic/performance/baselineprofiles/manually-create-measure), updated 2026-10-01) |
 | Startup profile (dex layout) | Needs R8; puts start-up classes first in `classes.dex`; "15-30 % faster than with Baseline Profiles alone" | [Dex layout optimizations](https://developer.android.com/topic/performance/baselineprofiles/dex-layout-optimizations) (updated 2026-06-16) | Works without dexopt (it is the APK's layout), so it is the part that reaches a stereo that never dexopts |
-| Profile generation | BaselineProfileRule needs root below API 33; benchmark / baselineprofile plugin **1.5.0** (2026-09-09) supports AGP 9 | [Create baseline profiles](https://developer.android.com/topic/performance/baselineprofiles/create-baselineprofile) (2026-10-07); [benchmark releases](https://developer.android.com/jetpack/androidx/releases/benchmark) | Generated on CarLink's API 30 AVD with `adb root` |
+| Profile generation | BaselineProfileRule needs root below API 33; benchmark / baselineprofile plugin **1.5.0** (2026-09-09) supports AGP 9 | [Create baseline profiles](https://developer.android.com/topic/performance/baselineprofiles/create-baselineprofile) (2026-10-07); [benchmark releases](https://developer.android.com/jetpack/androidx/releases/benchmark) | Generated on MobileCarConnect's API 30 AVD with `adb root` |
 | Compose versions | BOM 2026.02.01 = Compose 1.10.4 (pausable composition in lazy prefetch on by default). 1.12 (Aug 2026) claims start-up TTID comparable to Views; needs AGP ≥ 9.1.1 | [BOM mapping](https://developer.android.com/develop/ui/compose/bom/bom-mapping); [Dec 2025](https://android-developers.googleblog.com/2025/12/whats-new-in-jetpack-compose-december.html), [Aug 2026](https://android-developers.googleblog.com/2026/08/jetpack-compose-august-2026-release.html) posts | Upgrade not done here (it moves every screen; separate change with a gallery re-render) |
-| Strong skipping | On by default since Kotlin 2.0.20; unstable parameters are compared by identity | [Strong skipping](https://developer.android.com/develop/ui/compose/performance/stability/strongskipping) (2026-01-16) | Value classes from `:carlink-core` declared stable (`app/compose-stability.conf`) |
+| Strong skipping | On by default since Kotlin 2.0.20; unstable parameters are compared by identity | [Strong skipping](https://developer.android.com/develop/ui/compose/performance/stability/strongskipping) (2026-01-16) | Value classes from `:mobilecarconnect-core` declared stable (`app/compose-stability.conf`) |
 | Deferred reads, caching | Read fast-changing state in lambda modifiers / draw (`drawBehind`, `offset {}`); `drawWithCache` keeps brushes and shaders until size or read state changes; an alpha < 1 `graphicsLayer` renders off-screen | [Best practices](https://developer.android.com/develop/ui/compose/performance/bestpractices) (2026-09-22); [Graphics modifiers](https://developer.android.com/develop/ui/compose/graphics/draw/modifiers) (2026-10-12) | Dial charge and step pulse read in draw; Atmosphere cached |
 | R8 | Package-wide `-keep … { *; }` "completely removes R8's benefits for that package"; optimized resource shrinking is AGP 9's default; Configuration Analyzer needs AGP 9.3 | [Keep rules post](https://android-developers.googleblog.com/2025/11/configure-and-troubleshoot-r8-keep-rules.html) (2025-11-18); [Analyzer](https://developer.android.com/topic/performance/app-optimization/r8-configuration-analyzer) (2026-09-08) | Protobuf keep left (below) |
 | App start-up | Excessive cold start is ≥ 5 s; initialise lazily | [Launch time](https://developer.android.com/topic/performance/vitals/launch-time) (2026-09-21) | Round 1 already defers `:aa` and probes; App Startup library adds nothing here (one provider, ProfileInstaller's) |
 | Memory | Android 14+ delivers only `TRIM_MEMORY_UI_HIDDEN` and `BACKGROUND`; 10-13 still deliver every level. A running service shrinks the cached-process pool | [Manage app memory](https://developer.android.com/topic/performance/memory/manage-app-memory) (2026-09-21) | `onTrimMemory` drops the decoder probe; `:aa` not prewarmed on a memory-tight unit without an Android phone |
 | Video surface | TextureView is composited by the app's GPU ("every visible pixel is composited twice"); SurfaceView gets its own layer, often a hardware overlay; media3 recommends SurfaceView for lower power and accurate frame timing | [AOSP TextureView](https://source.android.com/docs/core/graphics/arch-tv) (2026-10-09); [media3 surfaces](https://developer.android.com/media/media3/ui/surface) (2026-03-30) | Both engines default to TextureView (below) |
-| Thread priority | `THREAD_PRIORITY_AUDIO` = -16, `URGENT_AUDIO` = -19 (apps "can not normally" use it), `DISPLAY` = -4; AAudio's data callback already runs on a high-priority thread; `PerformanceHintManager` is API 31+ | AOSP `Process.java` (android10-release); [AAudio](https://developer.android.com/ndk/guides/audio/aaudio/aaudio) (2026-03-06) | Engines' own threads; nothing for CarLink to change (not on Android 10 stereos) |
+| Thread priority | `THREAD_PRIORITY_AUDIO` = -16, `URGENT_AUDIO` = -19 (apps "can not normally" use it), `DISPLAY` = -4; AAudio's data callback already runs on a high-priority thread; `PerformanceHintManager` is API 31+ | AOSP `Process.java` (android10-release); [AAudio](https://developer.android.com/ndk/guides/audio/aaudio/aaudio) (2026-03-06) | Engines' own threads; nothing for MobileCarConnect to change (not on Android 10 stereos) |
 | Device tier signals | Media performance class only exists from Android 12 (cheap stereos report 0); `largeHeap` "doesn't guarantee a fixed increase"; no official GPU-name tiering exists | [Performance class](https://developer.android.com/topic/performance/performance-class) (2026-09-21); [`<application>`](https://developer.android.com/guide/topics/manifest/application-element) (2026-08-21) | Our own heuristic: RAM, cores, ABI (round 1) + GL renderer and CPU clock (round 2) |
 
 Not confirmed from a primary source: the RAM threshold behind `isLowRamDevice` (AndroidX calls it
@@ -264,18 +264,18 @@ memory cost (measured below instead).
 
 ### Results
 
-Release APKs built with `-Pcarlink.emulatorAbi=true`, signed with the debug key, measured with
+Release APKs built with `-Pmobilecarconnect.emulatorAbi=true`, signed with the debug key, measured with
 `scripts/measure_lowend.sh` (round 1's method as a script: install, skip the setup, ProfileInstaller
 broadcast, `cmd package compile -m speed-profile -f`, 10 cold starts, PSS after 10 s idle, gfxinfo
 for idle Home, Settings and back ×3, Settings scrolling and categories, Settings › General ›
 Diagnostics). Before = 9511a8af7; after = this round. The host was idle during every run.
 
 Two AVDs (both API 30 `default` x86_64, SwiftShader GPU, landscape):
-`carlink_lowend` (1024×600, 160 dpi, 2 GB, 2 cores; round 1's) and the new `carlink_uis8581`
+`mobilecarconnect_lowend` (1024×600, 160 dpi, 2 GB, 2 cores; round 1's) and the new `mobilecarconnect_uis8581`
 (1280×720, 160 dpi, 4 GB, 8 cores (the guest reports 6), port 5564: the user's stereo's panel
-and memory). Start it like `carlink_lowend` with `-avd carlink_uis8581 -port 5564 -memory 4096 -cores 8`.
+and memory). Start it like `mobilecarconnect_lowend` with `-avd mobilecarconnect_uis8581 -port 5564 -memory 4096 -cores 8`.
 
-**`carlink_uis8581`** (the user's stereo's class). Automatic visual effects picked **Full** before
+**`mobilecarconnect_uis8581`** (the user's stereo's class). Automatic visual effects picked **Full** before
 (4 GB, 8 cores) and picks **Lite** now (the GPU probe reads "Google SwiftShader", a software
 renderer; on the stereo it would read "PowerVR Rogue GE8322"):
 
@@ -288,7 +288,7 @@ renderer; on the stereo it would read "PowerVR Rogue GE8322"):
 | Settings scroll and categories | 180 / 26.7 % / 10 / 19 / 34 ms | 281 / 2.5 % / 5 / 15 / 24 ms | 250 / 18.4 % / 9 / 18 / 26 ms |
 | Diagnostics, scroll, back | 47 / 17.0 % / 15 / 16 / 22 ms | 46 / 0 % / 5 / 8 / 11 ms | 47 / 14.9 % / 15 / 16 / 20 ms |
 
-**`carlink_lowend`** (Automatic = Lite in both builds; no phone known):
+**`mobilecarconnect_lowend`** (Automatic = Lite in both builds; no phone known):
 
 | Measure | Before (two runs) | After |
 |---|---|---|
@@ -304,7 +304,7 @@ The main process's PSS rises because PSS divides shared pages (the APK's dex and
 between the processes that map them: with `:aa` gone, the main process carries all of them.
 The total is what the device pays.
 
-**Profiles (Macrobenchmark, `carlink_uis8581`, after build, TTID median of 10 cold starts):**
+**Profiles (Macrobenchmark, `mobilecarconnect_uis8581`, after build, TTID median of 10 cold starts):**
 
 | | `CompilationMode.None` | `Partial(BaselineProfileMode.Require)` |
 |---|---|---|
@@ -328,13 +328,13 @@ compresses a little worse); `baseline.prof` 7.7 → 14.2 KB. The shipping arm-on
 
 - **Baseline and startup profiles** (`:baselineprofile`, `androidx.baselineprofile` 1.5.0):
   journeys for cold start to Home (the only one in the startup profile), and Settings with every
-  category and Diagnostics. Generated on `carlink_uis8581` with `adb root`; committed in
+  category and Diagnostics. Generated on `mobilecarconnect_uis8581` with `adb root`; committed in
   `app/src/release/generated/baselineProfiles/` (8,782 baseline rules, 8,146 startup rules: 1,021
-  CarLink, 4,642 Compose, 177 DiPlay, 143 DiAuto). The hand-written wildcard profiles of `:app` and
-  `:carlink-core` stay and are merged. R8 lays out a start-up `classes.dex` (2,409 classes). The
+  MobileCarConnect, 4,642 Compose, 177 DiPlay, 143 DiAuto). The hand-written wildcard profiles of `:app` and
+  `:mobilecarconnect-core` stay and are merged. R8 lays out a start-up `classes.dex` (2,409 classes). The
   journeys run without a phone, so the connecting states are not in the generated profile; they
-  are covered by the wildcard profile of `com.carlink.app`. Regenerate with
-  `ANDROID_SERIAL=emulator-5564 ./gradlew :app:generateReleaseBaselineProfile -Pcarlink.emulatorAbi=true`
+  are covered by the wildcard profile of `com.mobilecarconnect.app`. Regenerate with
+  `ANDROID_SERIAL=emulator-5564 ./gradlew :app:generateReleaseBaselineProfile -Pmobilecarconnect.emulatorAbi=true`
   (signing variables as `dev.sh build-release` sets them); measure with
   `:baselineprofile:connectedBenchmarkReleaseAndroidTest`. `androidx.profileinstaller` 1.4.1 is
   declared explicitly, and the manifest has `<profileable android:shell="true"/>`.
@@ -351,9 +351,9 @@ compresses a little worse); `baseline.prof` 7.7 → 14.2 KB. The shipping arm-on
   (`loopingState`), so an animation frame redraws one layer instead of recomposing both
   composables; the Atmosphere builds its four brushes and the grain shader once per size
   (`drawWithCache`) and reads the state glow there. Pixel-identical in the gallery (Home in Full
-  and Lite). `app/compose-stability.conf` declares `:carlink-core`'s immutable value classes
+  and Lite). `app/compose-stability.conf` declares `:mobilecarconnect-core`'s immutable value classes
   (`LinkState`, `PairedPhone`, …) and read-only collections stable: `HomeState` and `HomeUi` are now
-  stable (unstable classes in the app 30 → 22). `-Pcarlink.composeReports=true` writes the
+  stable (unstable classes in the app 30 → 22). `-Pmobilecarconnect.composeReports=true` writes the
   compiler's reports to `app/build/compose_compiler/`.
 - **Memory**: `:aa` is not prewarmed on a memory-tight unit (low-RAM build or ≤ 3.3 GB) unless an
   Android phone is known (`EnginePrewarmPolicy`; logged once). The main process answers
@@ -369,13 +369,13 @@ Both engines draw the picture into a **TextureView** by default:
   output" is on, or the decoder is an FFmpeg Codec2 one whose pictures a texture cannot take; then
   a `SurfaceView` (its own note: direct output "can save about a refresh").
 - DiAuto `Settings.viewMode` resolves to TextureView except on the DiLink 5.1 (`ProjectionRendererPolicy`);
-  `AapProjectionActivity` escalates to SurfaceView by itself after a display stall. CarLink offers
+  `AapProjectionActivity` escalates to SurfaceView by itself after a display stall. MobileCarConnect offers
   it as Settings › Lab › "Video surface" (`view-mode`, default TextureView) and writes nothing per session.
 
 A SurfaceView would save the GPU composition pass of every video frame (the AOSP docs), which
 matters most on a PowerVR GE8322. It was not changed: both engines' authors kept TextureView as the
 default (DiAuto switches to SurfaceView only on one verified car), the default is not a setting
-CarLink writes per session, and the picture path cannot be tested without a phone. Next step on the stereo: compare Android Auto
+MobileCarConnect writes per session, and the picture path cannot be tested without a phone. Next step on the stereo: compare Android Auto
 with Lab › Video surface = SurfaceView and CarPlay with Smooth video on, against the defaults.
 
 ### What did not help, or was not done
@@ -385,12 +385,12 @@ with Lab › Video surface = SurfaceView and CarPlay with Smooth video on, again
   layout alone showed none (the emulator reads the APK from a fast host disk with a warm page
   cache; slow eMMC is where layout should matter). The stereo only gets the AOT part after a
   background dexopt, which on Android 10 needs idle and charging; run
-  `adb shell cmd package compile -f -m speed-profile com.carlink.app` once after installing.
+  `adb shell cmd package compile -f -m speed-profile com.mobilecarconnect.app` once after installing.
 - **AOT code costs memory**: the same APK compiled with `verify` used 37 MB of main-process PSS
   against 46 MB with `speed-profile` (the compiled code). On a 1 GB unit that is a real trade-off;
   not changed (the start-up and first-frame gains were measured worth it in round 1).
 - **Frame timing of Settings**: within the emulator's noise in Full (janky % moves 5-20 points
-  between identical runs); the large drop on `carlink_uis8581` comes from Automatic now choosing
+  between identical runs); the large drop on `mobilecarconnect_uis8581` comes from Automatic now choosing
   lite, not from the profiles or the Compose changes.
 - **R8 phase 2 (protobuf)**: DiAuto's `-keep class com.google.protobuf.** { *; }` keeps 1.21 MB of
   the 10.1 MB dex (12 %), all of it used only in `:aa` during an Android Auto session. The full
@@ -398,9 +398,9 @@ with Lab › Video surface = SurfaceView and CarPlay with Smooth video on, again
   the rule was left as is: an APK-size gain, not a start-up one (the main process never loads it).
 - **Compose BOM upgrade** (1.10 → 1.12, start-up TTID improvements): not done; it changes every
   screen and needs a gallery re-render and review. Worth its own change.
-- **Thread priorities, `largeHeap`, App Startup**: nothing to gain in CarLink's code (the audio and
+- **Thread priorities, `largeHeap`, App Startup**: nothing to gain in MobileCarConnect's code (the audio and
   video threads belong to the engines; `largeHeap` is the engines' requirement and only raises a
-  limit; App Startup would not remove work CarLink does).
+  limit; App Startup would not remove work MobileCarConnect does).
 - **The `:aa` process when a phone is known**: still prewarmed on every device (the plug-in time
   it saves was measured on the tablet in round 1); a stereo with an Android phone pays 18 MB.
 
@@ -408,7 +408,7 @@ with Lab › Video surface = SurfaceView and CarPlay with Smooth video on, again
 
 Everything above is from the emulator (SwiftShader, x86_64) and Robolectric. The GPU names in
 `GpuClass` come from the SoCs' published specifications, not from reading them on each device;
-the user's stereo should be checked with `adb logcat -s CarLink-Capabilities` ("GL renderer
+the user's stereo should be checked with `adb logcat -s MobileCarConnect-Capabilities` ("GL renderer
 '…'") and Settings › General › Visual effects ("Automatic · Lite"). The prewarm change alters when
 `:aa` starts on 2-3 GB units without a known Android phone: the first Android Auto plug-in there
 starts the process cold (round 1 measured 4.5 s for that on the tablet).
@@ -416,10 +416,10 @@ starts the process cold (round 1 measured 4.5 s for that on the tablet).
 ## Round 3 (2026-10-20): CarPlay lag on a 2 GB stereo (issue #4)
 
 Report: a cheap Android 12 head unit (8 cores at 1.6 GHz, 2 GB), iPhone 12 Pro on iOS 27 over
-USB, CarLink 1.0.4: "lag and lack of fluency", "with Carlinkit box + Autokit it works way better".
+USB, MobileCarConnect 1.0.4: "lag and lack of fluency", "with Carlinkit box + Autokit it works way better".
 No log yet.
 
-**What CarLink asked for on that unit (before this round).** `DeviceSignals.lowEnd` (1.8-1.9 GB
+**What MobileCarConnect asked for on that unit (before this round).** `DeviceSignals.lowEnd` (1.8-1.9 GB
 reported) → Automatic picture: CarPlay at 100 % of the panel, 30 fps (CarPlay was never asked for
 60), HEVC off unless a hardware HEVC decoder exists. Resolution, frame rate and codec were already
 the cheap ones. What it did not change was the video output: DiPlay drew the picture into a
@@ -437,17 +437,17 @@ software decoding (software "fixed 800 * 480 resolution") and a render-mode swit
 the dongle's own settings page suggests a lower frame rate for an obviously delayed screen and a
 bit rate under 8 Mbps for freezing or lag
 ([Carlinkit: 192.168.50.2 options](https://autokitcarplay.com/blogs/u2w-plus/as-for-the-192-168-50-2-backend-what-are-those-option-settings-mean)).
-CarLink does all of that on the stereo: DiPlay decrypts every video frame with ChaCha20-Poly1305
+MobileCarConnect does all of that on the stereo: DiPlay decrypts every video frame with ChaCha20-Poly1305
 (`ScreenStream`/`ScreenCodec.decryptFrame`), decodes the audio and runs the USB network, on
 little cores. That CPU cost is the protocol's and stays; the GPU pass and the picture size are
-what CarLink can cut.
+what MobileCarConnect can cut.
 
 **Code findings.**
 
 | Suspect | Finding | Changed |
 |---|---|---|
-| Video view | DiPlay `carPlayVideoSurfaceMode`: TextureView unless Smooth video, Direct video output, no hardware acceleration or an FFmpeg Codec2 decoder. **Smooth video** paces frames to the iPhone's timestamps plus a delay that starts at 40 + 3000/fps ms (140 ms at 30 fps, `smoothVideoDelayMillis`): steadier but *more* touch latency, so not for lag. **Direct video output** is a SurfaceView with frames "shown as soon as they are decoded"; DiPlay documents it as able to save "about one screen refresh", experimental, off by default, picture adjustments unavailable, "turn it off if the picture shows artifacts or freezes" (DiPlay `docs/INSTALL.md`, 0.2.16 notes). CarLink already offers it for the iOS 27 black screen | Automatic turns it on on slow hardware |
-| CarLink's waiting view | `CarPlayWaitingContent` (Compose) stays attached in the host window; DiPlay sets its panel `GONE` while a screen stream is active (`connectionPanel`). In the Connected state Home's dial and progress line have no endless animation (`DialReading(progress = 1f)`, no `ProgressLine`) and the waiting view passes no `connectedSince`, so no one-second ticker: nothing runs behind the video | No |
+| Video view | DiPlay `carPlayVideoSurfaceMode`: TextureView unless Smooth video, Direct video output, no hardware acceleration or an FFmpeg Codec2 decoder. **Smooth video** paces frames to the iPhone's timestamps plus a delay that starts at 40 + 3000/fps ms (140 ms at 30 fps, `smoothVideoDelayMillis`): steadier but *more* touch latency, so not for lag. **Direct video output** is a SurfaceView with frames "shown as soon as they are decoded"; DiPlay documents it as able to save "about one screen refresh", experimental, off by default, picture adjustments unavailable, "turn it off if the picture shows artifacts or freezes" (DiPlay `docs/INSTALL.md`, 0.2.16 notes). MobileCarConnect already offers it for the iOS 27 black screen | Automatic turns it on on slow hardware |
+| MobileCarConnect's waiting view | `CarPlayWaitingContent` (Compose) stays attached in the host window; DiPlay sets its panel `GONE` while a screen stream is active (`connectionPanel`). In the Connected state Home's dial and progress line have no endless animation (`DialReading(progress = 1f)`, no `ProgressLine`) and the waiting view passes no `connectedSince`, so no one-second ticker: nothing runs behind the video | No |
 | Home behind the projection | `HomeActivity` is stopped under the full-screen host, so its recomposer is paused | No |
 | Floating switcher | A small `TYPE_APPLICATION_OVERLAY` window (translucent) over the projection, static after its fade to idle alpha; it draws no frames by itself but is one more layer for the compositor | No (Settings › General › Floating switcher can turn it off) |
 | Audio | DiPlay's music clock trim (`MediaClockTrim`) changes the AudioTrack rate by at most 26 cents and only for music; the music buffer (300 ms wired by default) delays music, not touches or the picture. Neither explains a laggy picture | No |
@@ -461,27 +461,27 @@ what CarLink can cut.
 - On the same devices CarPlay's size is also held to 1600×900 pixels: 1024×600 to 1920×720 panels
   stay at 100 %, 1920×1080 and 2000×1200 panels go to 75 %.
 - **Settings › Display › Direct video output** now counts as a Picture override like Resolution
-  and Frame rate: changing it sets Picture to Custom, under which CarLink writes no picture
+  and Frame rate: changing it sets Picture to Custom, under which MobileCarConnect writes no picture
   values, so a driver who turns it off keeps it off.
 - Not changed: CarPlay stays at 30 fps (Automatic never asked for 60); Android Auto is untouched
   (its TextureView/SurfaceView choice is DiAuto's, Lab › Video surface).
 - Tests: `PicturePolicyTest.issue4TwoGigabyteStereoGetsTheCheapCarPlayPath` (the reporter's unit)
   and `aWeakGpuOrSlowCpuAloneTurnsOnDirectVideo`, plus the Automatic-only mapping.
 
-**Not verified.** No measurement: the CarPlay video path needs an iPhone, and `carlink_lowend` has
+**Not verified.** No measurement: the CarPlay video path needs an iPhone, and `mobilecarconnect_lowend` has
 none (the emulator cannot carry a USB CarPlay session), so neither the GPU saving nor Direct video
 output's stability on cheap HWCs was measured. The user's FYT stereo (GE8322) and the reporter's
 unit are the next checks: DiPlay's log line `Video output mode=SURFACE … directVideoOutput=true`
-and CarLink's `Automatic picture: … direct video output` show the new path was taken.
+and MobileCarConnect's `Automatic picture: … direct video output` show the new path was taken.
 
 ## Round 4 (2026-10-27): the wired CarPlay data path on a weak SoC (issues #4, #5)
 
-Reporter's unit (issue #5 report, CarLink 1.0.4): Unisoc UIS8581A (sprd s9863a1h10), 8 × 1.6 GHz,
+Reporter's unit (issue #5 report, MobileCarConnect 1.0.4): Unisoc UIS8581A (sprd s9863a1h10), 8 × 1.6 GHz,
 2 GB, reports "Android 12 (SDK 29)", 1280×720 panel. Picture was already panel-native 1280×720
 at 30 fps H.264 (round 3); audio on wired is already LPCM (`AirPlayInfoPlist.audioFormats`: only
 the buffered music stream is AAC-LC); video decryption already uses Conscrypt's native
 ChaCha20-Poly1305 (`AirPlayCrypto.platformChacha`; DiPlay logs `chacha=<provider>` on the first
-frame). What CarLink does per packet that a dongle does not:
+frame). What MobileCarConnect does per packet that a dongle does not:
 
 | Cost | Where | Changed |
 |---|---|---|
@@ -495,3 +495,37 @@ frame). What CarLink does per packet that a dongle does not:
 (decode latency, late frames, `recovery:`), `chacha=` on the first frame, and that a 10-minute
 session's Diagnostics shows no `wired io` warnings. **On the tablet**: a USB CarPlay session
 connects in ≈ 3.4 s as before and video/audio stay smooth for 10 minutes.
+
+## CarPlay only (2026-11-03)
+
+**Settings › Connection › CarPlay only** (`MobileCarConnectPreferences.carPlayOnly`, off by default) keeps
+Android Auto's `:aa` process down for drivers who use only an iPhone. On the 4 GB `mobilecarconnect_headunit`
+emulator, idle on Home with the debug APK, `:aa` held **33 MB PSS** (the main process 73 MB) although
+no Android phone was ever connected (above 3 GB `EnginePrewarmPolicy` always prewarms).
+
+With the option on:
+
+- `Connection.prewarm` returns at once.
+- `AndroidAutoSettings.read/write` neither read nor write. Each call would start `:aa` through
+  its content provider: the prewarm, the Settings screen's engine values and a session's settings
+  write.
+- `SessionManager` ignores Android phones on every trigger: USB, Bluetooth, Home shown, Connect,
+  Try again, a switch offer and a lost pairing (`Environment.engineEnabled`).
+- Settings hides Android Auto's Advanced and Lab rows.
+
+Measured on the same emulator and debug APK (compiled `speed`). Each run was a cold start, then
+Settings opened and closed, then 10 s idle on Home:
+
+| CarPlay only | Main PSS | `:aa` PSS | Total |
+|---|---|---|---|
+| Off | 73.5 MB | 36.0 MB | **109.5 MB** |
+| On (two runs) | 85.9 / 85.3 MB | not running | **85.6 MB** (−24 MB, −22 %) |
+
+The main process alone reads higher with the option on. PSS splits pages that both processes map
+(the APK's dex and native libraries, ART's boot image) between them; with `:aa` gone the main
+process carries all of them, so only the total compares. Not yet measured with the release (R8)
+APK or on a real head unit.
+
+Turning it on stops an Android Auto session or request first (`SessionManager.releaseEngine`, so
+Android Auto's Wi-Fi Direct group is released) and then ends `:aa` (`Process.killProcess`, same
+app). Turning it off prewarms again.

@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/zbt/ZbtMessages.kt
+// MobileCarConnect: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/zbt/ZbtMessages.kt
 // (see docs/VENDOR_CHANGES.md).
 package com.andrerinas.openheadunit.connection.zbt
 
@@ -264,7 +264,7 @@ object ZbtMessages {
     }
 
     private fun describeOrThrow(msgId: Int, body: ByteArray): String {
-        // CarLink: size only. These bytes are the handshake itself, and WifiInfoResponse carries the
+        // MobileCarConnect: size only. These bytes are the handshake itself, and WifiInfoResponse carries the
         // Wi-Fi password, which must never reach a log.
         if (isRawBytes(msgId)) return "RfcommData ${body.size} bytes"
         val r = parse(body) ?: return "unparsed ${body.size} bytes ${hex(body, limit = 64)}"

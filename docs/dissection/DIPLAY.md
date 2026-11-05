@@ -1,16 +1,16 @@
-# DiPlay dissection: engineering reference for CarLink
+# DiPlay dissection: engineering reference for MobileCarConnect
 
-> **Note (2026-10-09):** the CarLink v1 classes this document cites as they were when it was
+> **Note (2026-10-09):** the MobileCarConnect v1 classes this document cites as they were when it was
 > written (`EngineCoordinator`, `CarPlayEngine`, `engine/CarPlayPreflight`, `AndroidAutoEngine`,
 > `AndroidAutoCommandReceiver`, `AndroidAutoStateReporter`, `AndroidAutoWifiFallback`,
 > `EngineSettingsApplier`, `EngineMappings`/`WirelessPathSelector`) and the hooks
-> `EXTRA_CARLINK_CONNECT` and `onPhoneWifiJoinFailed` have been removed; the v2 replacements are in
-> `carlink-core/.../connection/` ([design/REBUILD_V2.md](../../design/REBUILD_V2.md)). Engine findings are
+> `EXTRA_MOBILECARCONNECT_CONNECT` and `onPhoneWifiJoinFailed` have been removed; the v2 replacements are in
+> `mobilecarconnect-core/.../connection/` ([design/REBUILD_V2.md](../../design/REBUILD_V2.md)). Engine findings are
 > unaffected.
 
 DiPlay version vendored: **0.2.15** (`vendor/diplay/mobile/build.gradle.kts:21`, `CHANGELOG.md:1`).
 Package `com.shilapi.xcertplay`. Paths below are relative to `vendor/diplay/` unless they start
-with `app/` (CarLink). `CarPlayController.kt` means
+with `app/` (MobileCarConnect). `CarPlayController.kt` means
 `shared/src/main/java/com/shilapi/xcertplay/orchestration/CarPlayController.kt`,
 `CarPlayHostActivity.kt` / `DiPlayActivity.kt` mean the files in
 `common/src/main/java/com/shilapi/xcertplay/`.
@@ -32,7 +32,7 @@ F-e-n-y-x/DiPlay has Issues turned off.
    - `CarPlayHostActivity` builds the `CarPlayController`, owns the projection surface and owns the retry loop [V].
    - `DiPlaySessionService` only provides the foreground notification and its "Disconnect" action [V].
    - So whatever a host does, the driver sees `CarPlayHostActivity` from "Connect" until teardown, including its **waiting screen**.
-2. **That waiting screen is the "DiPlay screen" the driver sees.** CarLink opens `CarPlayHostActivity` at once (`app/.../engine/CarPlayEngine.kt:172-187`). The Activity:
+2. **That waiting screen is the "DiPlay screen" the driver sees.** MobileCarConnect opens `CarPlayHostActivity` at once (`app/.../engine/CarPlayEngine.kt:172-187`). The Activity:
    - shows its WAITING chrome;
    - asks for its own runtime permissions and VPN consent;
    - shows DiPlay's per-stage text (`CarPlayStatus.describe()`, `CarPlayHostActivity.kt:5099`).
@@ -48,10 +48,10 @@ F-e-n-y-x/DiPlay has Issues turned off.
 4. **The user's symptom, "authenticated over Bluetooth, never any Bonjour or TCP", is the most common failure reported upstream.** It is always a network-reachability problem (address family, client isolation, multicast filtering, or the iPhone not on the same network/BSSID), never an authentication problem [M].
    - Existing Wi-Fi on a WPA2/WPA3-mixed router is **not hardware-validated** upstream (`docs/EXISTING_WIFI.md:66-67`).
    - Existing Wi-Fi always tells the iPhone the security is `WPA_WPA2` (`ExistingWifiManager.kt:152-153`).
-5. **CarLink's main faults are in how it reads DiPlay's status:**
+5. **MobileCarConnect's main faults are in how it reads DiPlay's status:**
    - It treats every `CarPlayStatus.Failed` as final, but DiPlay retries five times on its own (`CarPlayHostActivity.kt:4559-4597`).
-   - On Same Wi-Fi, CarLink tears down at the first Failed, records the network as permanently "refused", and moves to another path (`app/.../EngineCoordinator.kt:253-265`). It does this even when the failure was Bluetooth, not Wi-Fi.
-   - CarLink defaults the BYD navigation output **on** (`app/.../UnifiedSettings.kt:24,56` → `BydOutputSettings.setEnabled`).
+   - On Same Wi-Fi, MobileCarConnect tears down at the first Failed, records the network as permanently "refused", and moves to another path (`app/.../EngineCoordinator.kt:253-265`). It does this even when the failure was Bluetooth, not Wi-Fi.
+   - MobileCarConnect defaults the BYD navigation output **on** (`app/.../UnifiedSettings.kt:24,56` → `BydOutputSettings.setEnabled`).
    - It leaves the iPhone-visible OEM label at "BYD" (`AirPlayPersistence.kt:113`).
    - It targets SDK 37 without `ACCESS_LOCAL_NETWORK`, which upstream #425 shows silently breaks IPv4 on Android 17.
    - It reads `CarPlayStatusBus.current == null` as "no session". But DiPlay publishes `null` at the start of every internal restart (`CarPlayController.kt:604`). So Home flashes Idle on each retry, stop and start requests can be ignored, and a restart can race the old session's teardown (§10, F13 and F14).
@@ -62,9 +62,9 @@ F-e-n-y-x/DiPlay has Issues turned off.
 
 ### 1.1 Modules
 
-| Module | Role | Built in CarLink? |
+| Module | Role | Built in MobileCarConnect? |
 |---|---|---|
-| `shared` (`:carplay-shared` in CarLink) | Engine core: iAP2, MFi, USB (usbmux/lockdown/NCM), Wi-Fi backends, Bonjour, AirPlay/RTSP/crypto, media sink, `CarPlayController`, BYD output bridges (`hud/`) | Yes |
+| `shared` (`:carplay-shared` in MobileCarConnect) | Engine core: iAP2, MFi, USB (usbmux/lockdown/NCM), Wi-Fi backends, Bonjour, AirPlay/RTSP/crypto, media sink, `CarPlayController`, BYD output bridges (`hud/`) | Yes |
 | `common` | Android shell around the engine: `CarPlayHostActivity` (projection plus its chrome and the session owner), `DiPlayActivity` (standalone app UI), settings persistence, session service, cluster/map features, accessibility services | Yes |
 | `mobile` | Standalone app wrapper: manifest additions (`PhoneBluetoothReceiver`, launcher icon, `BootReceiver` enable) | **No** (replaced by `:app`) |
 | `automotive`, `samples/*` | AAOS build and launcher/map-host samples | No |
@@ -72,26 +72,26 @@ F-e-n-y-x/DiPlay has Issues turned off.
 ### 1.2 Components in the merged manifest
 
 Sources: `common/src/main/AndroidManifest.xml`, `shared/src/main/AndroidManifest.xml`,
-`mobile/src/main/AndroidManifest.xml` [V]. The "CarLink" column describes
+`mobile/src/main/AndroidManifest.xml` [V]. The "MobileCarConnect" column describes
 `app/src/main/AndroidManifest.xml:122-132` [V].
 
-| Component | Kind | What it does | Core or standalone UI | CarLink |
+| Component | Kind | What it does | Core or standalone UI | MobileCarConnect |
 |---|---|---|---|---|
 | `CarPlayHostActivity` | Activity, singleTask, own task affinity `.carplay`, USB_DEVICE_ATTACHED filter | **Owns the session.** Runs the permission/VPN prerequisites, builds `CarPlayController`, shows the waiting screen, then the projection SurfaceView/TextureView. Runs the reconnect/backoff loop, the in-session menu, the side panel, cluster outputs | **Core (required)** | Kept; not exported; intent filter and USB meta-data removed |
-| `DiPlayActivity` | Activity, LAUNCHER | Standalone app home, settings, setup guide, `connect()` pre-flight, "Choose iPhone" dialog, diagnostics, updates | Standalone UI | Kept; not exported; no filters. Never opened by CarLink's CarPlay path |
+| `DiPlayActivity` | Activity, LAUNCHER | Standalone app home, settings, setup guide, `connect()` pre-flight, "Choose iPhone" dialog, diagnostics, updates | Standalone UI | Kept; not exported; no filters. Never opened by MobileCarConnect's CarPlay path |
 | `MainActivity` | Activity | Board I2C MFi self-check diagnostic (`MainActivity.kt:31-60`) | Dev tool | Kept (unused) |
 | `CarPlayVideoActivity` | Activity | "Video in car" ExoPlayer player for iPhone video while parked | Optional feature | Kept |
 | `ImageCropActivity` | Activity | Crops the custom car-button icon | Standalone UI | Kept |
 | `AdbClusterActivity` | Activity, exported, embeddable | DiLink 4 dashboard-cluster map surface launched over local ADB | BYD-specific | Kept (see §12) |
 | `DiPlaySessionService` | FGS `connectedDevice\|microphone\|location` | Notification "CarPlay connection running" plus Disconnect; `ACTION_STOP` → `CarPlayBackgroundSession.stop()`; task removed → stop (`DiPlaySessionService.kt:19-62`) | **Core (required)** | Kept |
 | `CarPlayVpnService` | VpnService | Hosts the AirPlay listener. For **wired**, also creates a TUN with a link-local IPv6 route that bridges NCM (`network/CarPlayVpnService.kt:95-104`). Wireless binds it for the listener only (`CarPlayController.kt:2464-2473`) | **Core (required)** | Kept |
-| `MapEmbedService` | Service, **exported**, action `com.shihab.diplay.action.EMBED_MAP` | Streams the dashboard map into third-party launchers | Optional | Kept. [I] An exported surface CarLink may not want |
+| `MapEmbedService` | Service, **exported**, action `com.shihab.diplay.action.EMBED_MAP` | Streams the dashboard map into third-party launchers | Optional | Kept. [I] An exported surface MobileCarConnect may not want |
 | `WheelKeyService` | AccessibilityService | Steering-wheel keys for map zoom and call keys (BYD key codes) | Optional / BYD | Kept |
 | `UsbAutoConfirmService` | AccessibilityService | Auto-ticks "Always" and taps OK on the system USB-permission dialog (`UsbAutoConfirmService.kt:1-40`) | Optional | Kept |
 | `MyCarAppService` | androidx.car.app service | Placeholder POI car app | Unused | Removed |
 | `NavigationWidget` | AppWidget receiver | Turn-by-turn widget | Optional | Kept |
 | `BootReceiver` | BOOT_COMPLETED | If `auto_start_on_boot` is set, opens `DiPlayActivity` (`BootReceiver.kt:85-106`) | Standalone | **Removed**; `SystemEventReceiver` replaces it |
-| `PhoneBluetoothReceiver` | ACL_CONNECTED (**mobile manifest only**) | If `connect_on_phone_bluetooth` is set and the ACL is from the selected iPhone, opens `DiPlayActivity` with `EXTRA_AUTO_CONNECT`, 15 s debounce (`PhoneBluetoothReceiver.kt:14-49`) | Standalone | Not present; CarLink's `SystemEventReceiver` replaces it |
+| `PhoneBluetoothReceiver` | ACL_CONNECTED (**mobile manifest only**) | If `connect_on_phone_bluetooth` is set and the ACL is from the selected iPhone, opens `DiPlayActivity` with `EXTRA_AUTO_CONNECT`, 15 s debounce (`PhoneBluetoothReceiver.kt:14-49`) | Standalone | Not present; MobileCarConnect's `SystemEventReceiver` replaces it |
 | `DiagnosticReportProvider`, `UpdateApkProvider` | FileProviders | Report sharing; in-app APK update | Standalone | Kept |
 
 ### 1.3 What a session strictly needs, and why
@@ -115,7 +115,7 @@ Sources: `common/src/main/AndroidManifest.xml`, `shared/src/main/AndroidManifest
    - No network and no UI is involved; there is "no remote fallback".
    - `RemoteMfiAuthenticationClient` and `MfiTarget` I2C/CH341 are alternative targets; default `MfiTarget.LOCAL` (`AirPlayPersistence.kt:260-264`).
 5. **USB permission, wired only.** The controller asks through `UsbManager.requestPermission` (status `RequestingIphonePermission`, `CarPlayController.kt:1728`) and polls for up to 120 s (`:2667`).
-   - [I] When the app was launched by a USB_DEVICE_ATTACHED intent for that device, Android has already granted it. CarLink's `UsbRouterActivity` is that receiver, in the same package.
+   - [I] When the app was launched by a USB_DEVICE_ATTACHED intent for that device, Android has already granted it. MobileCarConnect's `UsbRouterActivity` is that receiver, in the same package.
 6. **Foreground service start** (`ContextCompat.startForegroundService`, `CarPlayHostActivity.kt:4264`). If this throws, the attempt shuts down with "could not start CarPlay" (`:4266-4270`).
 
 ---
@@ -126,8 +126,8 @@ Sources: `common/src/main/AndroidManifest.xml`, `shared/src/main/AndroidManifest
 
 | Step | Owner | Evidence |
 |---|---|---|
-| Trigger (button, USB, BT, boot) | `DiPlayActivity` / `BootReceiver` / `PhoneBluetoothReceiver` / host USB filter. **In CarLink:** `EngineCoordinator` | `DiPlayActivity.kt:4408-4440`, `BootReceiver.kt`, `PhoneBluetoothReceiver.kt` |
-| Pre-flight | `DiPlayActivity.connect()`. **In CarLink:** `CarPlayPreflight` | below |
+| Trigger (button, USB, BT, boot) | `DiPlayActivity` / `BootReceiver` / `PhoneBluetoothReceiver` / host USB filter. **In MobileCarConnect:** `EngineCoordinator` | `DiPlayActivity.kt:4408-4440`, `BootReceiver.kt`, `PhoneBluetoothReceiver.kt` |
+| Pre-flight | `DiPlayActivity.connect()`. **In MobileCarConnect:** `CarPlayPreflight` | below |
 | Prerequisites (permissions, VPN) | `CarPlayHostActivity` | `:696-771` |
 | Controller creation and start | `CarPlayHostActivity.startCarPlay()` | `:4167-4271` |
 | Protocol state machine | `CarPlayController` (one worker executor; status callbacks on main) | `CarPlayController.kt:146-175` |
@@ -165,7 +165,7 @@ adopts a running session through `adoptBackgroundSession()` (`:4527-4531`).
 | End | `ControlEnded` | 1433, 1496, 2042 |
 | | `Failed(message, wifiResetRequired, startupFailure)` | 896, 915, 1498, 1504, 1774, 1793, 2044, 2439, 2455, 2547 |
 
-`CarPlayStatusBus` (a CarLink addition) republishes each status, and `null` on close.
+`CarPlayStatusBus` (a MobileCarConnect addition) republishes each status, and `null` on close.
 
 ### 2.3 Timeouts and retries [V]
 
@@ -220,9 +220,9 @@ The host's recovery loop (`CarPlayHostActivity.kt:4064-4087, 4559-4640`):
 
 1. `startupHotspotCancelled = true`.
 2. Wireless and a pending car-hotspot setup → stop and open Connection setup.
-3. `setupError` (from `DiPlayBootstrap.ensure`, `:327`) → toast and stop. *(CarLink: `CarPlayHostIntegration.authenticationError`.)*
-4. Wireless and mode `MANUAL` and invalid SSID/passphrase → open setup. *(CarLink: `CAR_HOTSPOT_DETAILS_MISSING`.)*
-5. Wireless and `carHotspotOff()` (`:2121`) → `carHotspotOffDialog()`, which offers to open the system tethering settings or auto-start (`WRITE_SETTINGS` / BYD ADB). *(CarLink: `CAR_HOTSPOT_OFF`.)*
+3. `setupError` (from `DiPlayBootstrap.ensure`, `:327`) → toast and stop. *(MobileCarConnect: `CarPlayHostIntegration.authenticationError`.)*
+4. Wireless and mode `MANUAL` and invalid SSID/passphrase → open setup. *(MobileCarConnect: `CAR_HOTSPOT_DETAILS_MISSING`.)*
+5. Wireless and `carHotspotOff()` (`:2121`) → `carHotspotOffDialog()`, which offers to open the system tethering settings or auto-start (`WRITE_SETTINGS` / BYD ADB). *(MobileCarConnect: `CAR_HOTSPOT_OFF`.)*
 6. Wireless and no `phone_address` → `choosePhone()` (`:4441-4472`):
    - Asks for `BLUETOOTH_CONNECT`.
    - Requires Bluetooth on.
@@ -237,7 +237,7 @@ Not part of `connect()`, though a reader might expect it:
 
 - Existing Wi-Fi details are **not** checked there.
 - Permissions, VPN and location are handled by the host.
-- `EXTRA_CARLINK_CONNECT` / `consumeCarLinkConnectIntent()` (`DiPlayActivity.kt:384-391, 5210-5211`) is a CarLink hook that routes a request through `connect()`. **CarLink no longer uses it.** `CarPlayEngine` opens the host directly, so `docs/VENDOR_CHANGES.md` describes a path that is now dead code [V].
+- `EXTRA_MOBILECARCONNECT_CONNECT` / `consumeMobileCarConnectConnectIntent()` (`DiPlayActivity.kt:384-391, 5210-5211`) is a MobileCarConnect hook that routes a request through `connect()`. **MobileCarConnect no longer uses it.** `CarPlayEngine` opens the host directly, so `docs/VENDOR_CHANGES.md` describes a path that is now dead code [V].
 
 ---
 
@@ -292,7 +292,7 @@ The default mode is `MANUAL`, meaning car hotspot (`AirPlayPersistence.kt:306-31
   - Since IPv4-first: no first TCP (#464, #467; fix in open PR #474).
   - Head-unit reboots on Wuling (#457, #471).
   - Recovery: `wifiResetRequired`, then "Reset CarPlay Wi-Fi" removes the group (`DiPlayActivity.kt:4474-4500`).
-- **CarLink: one identity per install.** Upstream draws a new `DIRECT-dp<hash>-xxxx` name and passphrase every session. CarLink asks for `DIRECT-dp<hash>-<car>` with a stored passphrase as a persistent group (API 29+), and reads a live group under that pair instead of rebuilding it (`network/P2pStableIdentity.kt`; docs/VENDOR_CHANGES.md). `WIRELESS_TIMING hotspot-ready … identity=kept|new|off|system known=yes|no group=created|read bssid=<hash>`.
+- **MobileCarConnect: one identity per install.** Upstream draws a new `DIRECT-dp<hash>-xxxx` name and passphrase every session. MobileCarConnect asks for `DIRECT-dp<hash>-<car>` with a stored passphrase as a persistent group (API 29+), and reads a live group under that pair instead of rebuilding it (`network/P2pStableIdentity.kt`; docs/VENDOR_CHANGES.md). `WIRELESS_TIMING hotspot-ready … identity=kept|new|off|system known=yes|no group=created|read bssid=<hash>`.
 - **iPhone side:** the iPhone leaves its Wi-Fi and has **no Internet** (#189).
 
 **Car hotspot (`MANUAL`, `network/ManualHotspotManager.kt`)**
@@ -300,7 +300,7 @@ The default mode is `MANUAL`, meaning car hotspot (`AirPlayPersistence.kt:306-31
 - **Network:** the system SoftAP/tethering. The user types the SSID and passphrase. Security `OPEN`, `WPA2`, `WPA3_TRANSITION` or `WPA3`; band and channel are hints.
 - **Starting it:** optional auto-start, either `CarHotspotTethering.enable()` with WRITE_SETTINGS plus reflection `startTethering`, or local-ADB fallback (`network/CarHotspotTethering.kt:28-60`).
   - If `CarHotspotStatus.isEnabled()==false`: "The car hotspot is off" (`CarPlayController.kt:2104-2108`).
-- **Requirements:** the AP must be on. The user must know its credentials; they can't be read on most phones and tablets, although CarLink tries `HotspotConfigReader`. API 33+ needs NEARBY.
+- **Requirements:** the AP must be on. The user must know its credentials; they can't be read on most phones and tablets, although MobileCarConnect tries `HotspotConfigReader`. API 33+ needs NEARBY.
 - **Recommendation:** "it's recommended to stick the built in hotspot … if you have managed to turn on 5 GHz" [M #131].
 - **Proven:** BYD Qin Plus 2025 (PR #394); Gordon Peak (#242); Song Plus (#131); Seal DiLink 5 (#271).
 - **Known failures:**
@@ -388,11 +388,11 @@ Candidate causes, most likely first. All are [I] unless marked.
    - The endpoint is IPv4 (`HotspotAddressPolicy`); Bonjour is published on both families (`WirelessHostAddress.kt:15-29`).
    - #464 and #469 show some environments where only IPv6 works. Upstream PR #474 (family flip) covers hotspot backends only.
 5. **Android 17 Local Network Protection.**
-   - CarLink is `targetSdk = 37` (`app/build.gradle.kts:55`) and does **not** declare `ACCESS_LOCAL_NETWORK` (CarLink manifest lines 19-26 [V]).
+   - MobileCarConnect is `targetSdk = 37` (`app/build.gradle.kts:55`) and does **not** declare `ACCESS_LOCAL_NETWORK` (MobileCarConnect manifest lines 19-26 [V]).
    - #425: on Android 17 local IPv4 is then "silently dropped", while link-local IPv6 keeps working. Granting the permission fixed it (upstream PR #465, not in 0.2.15).
    - The Redmi Pad Pro is on Android 16, so [I] this is probably not the user's cause today. It will be on HyperOS 3 / Android 17.
-6. **CarLink cut the attempt short.**
-   - CarLink abandons Same Wi-Fi at the first `Failed`, even a Bluetooth one (§10, F1). So the user may only ever have had **one** 30 s attempt per path.
+6. **MobileCarConnect cut the attempt short.**
+   - MobileCarConnect abandons Same Wi-Fi at the first `Failed`, even a Bluetooth one (§10, F1). So the user may only ever have had **one** 30 s attempt per path.
    - It also stores a permanent "refused" mark that keeps AUTOMATIC away from Same Wi-Fi afterwards.
 
 7. **The SSID is not trimmed, and the name check is usually skipped.**
@@ -417,9 +417,9 @@ Logs to collect (DiPlay debug log on, `debug_logs_enabled`; logcat tags `xcertpl
 - `iap2 tx=0x5703`, `tx=0x4301`
 - `No AirPlay TCP after CarPlay StartSession`
 
-CarLink side: `CarLink-Settings` (`path=… ssidReadable=… open=…`) and `CarLink-Engine` ("trying the next path").
+MobileCarConnect side: `MobileCarConnect-Settings` (`path=… ssidReadable=… open=…`) and `MobileCarConnect-Engine` ("trying the next path").
 
-Note: `DiPlayBootstrap.ensure()` turns debug logs **off** at every bootstrap (`DiPlayBootstrap.kt:40`). So turning the setting on before a session does not stick unless it is re-enabled after `ensure()` [V]. That matters for CarLink's Advanced toggle (`app/.../AdvancedSettings.kt:184`).
+Note: `DiPlayBootstrap.ensure()` turns debug logs **off** at every bootstrap (`DiPlayBootstrap.kt:40`). So turning the setting on before a session does not stick unless it is re-enabled after `ensure()` [V]. That matters for MobileCarConnect's Advanced toggle (`app/.../AdvancedSettings.kt:184`).
 
 ### 3.5 iPhone side
 
@@ -428,7 +428,7 @@ Note: `DiPlayBootstrap.ensure()` turns debug logs **off** at every bootstrap (`D
   2. On the first iAP2 contact, the iPhone shows **"Use CarPlay with <name>?"**. The user must tap it while the iPhone is unlocked. [I] Until then the iPhone does not advertise wireless CarPlay, so the attempt stalls before `0x5703`.
   3. The iPhone joins the network in `0x5703` by itself (P2P / hotspot), or stays on it (Same LAN).
   4. The iPhone opens AirPlay TCP to the `0x4301` endpoint.
-- **Name shown:** the iAP2 identification name is hard-coded `"DiPlay"` and the label `"DiPlay"` (`CarPlayHostActivity.kt:160-173`). Manufacturer and model come from prefs (CarLink renames them to "CarLink", `app/.../CarLinkApplication.kt:89-94`). The OEM label (car brand) defaults to **"BYD"** (`AirPlayPersistence.kt:113, 466-470`).
+- **Name shown:** the iAP2 identification name is hard-coded `"DiPlay"` and the label `"DiPlay"` (`CarPlayHostActivity.kt:160-173`). Manufacturer and model come from prefs (MobileCarConnect renames them to "MobileCarConnect", `app/.../MobileCarConnectApplication.kt:89-94`). The OEM label (car brand) defaults to **"BYD"** (`AirPlayPersistence.kt:113, 466-470`).
 - **Reconnects:** need Bluetooth on, Wi-Fi on, and auto-join enabled for the car network (`COMPATIBILITY.md` "Known limitations"). iOS 13 and older fail identification (#507, #508).
 
 ---
@@ -439,7 +439,7 @@ Note: `DiPlayBootstrap.ensure()` turns debug logs **off** at every bootstrap (`D
 - **Selection:**
   - The `diplay` prefs `phone_address` / `phone_name` (`DiPlayBootstrap.kt:65-71`) go into `CarPlayRuntimeConfig.wirelessBluetoothDeviceAddress` (`CarPlayHostActivity.kt:176`).
   - The fallback heuristics are in §3.1 step 6.
-  - CarLink sets the address through `CarPlayHostIntegration.selectPhone` before each wireless start (`app/.../CarPlayEngine.kt:135-137`).
+  - MobileCarConnect sets the address through `CarPlayHostIntegration.selectPhone` before each wireless start (`app/.../CarPlayEngine.kt:135-137`).
 - **Transport:** an RFCOMM client to the iPhone's iAP2 service UUID (`IAP2_IPHONE_UUID`, `CarPlayController.kt:1298-1303`), 15 s connect, streams acquired before iAP2 (`transport/BluetoothRfcommDuplexStream.kt`).
   - Bond state is evidence, not a gate (`docs/CONNECTION_RELIABILITY.md`).
   - "Ordinary pairing or connect() success does not establish an iAP2 link".
@@ -447,7 +447,7 @@ Note: `DiPlayBootstrap.ensure()` turns debug logs **off** at every bootstrap (`D
   - DiPlay core has **none**. When the iPhone comes back, nothing restarts a closed session.
   - In standalone, the optional `PhoneBluetoothReceiver` (ACL_CONNECTED for the selected address) opens DiPlayActivity, which calls `connect(true)`.
   - Inside a running session, the host's backoff loop keeps retrying (§2.3). So an iPhone that returns within the retry budget reconnects, and one that returns after the budget is spent does not [V/I].
-  - CarLink replaces this with `SystemEventReceiver` (ACL_CONNECTED, then SDP-based classification if needed, then `HomeLauncher.open`, then `EngineCoordinator.onBluetoothPhone`; `carlink-core/.../entry/SystemEventReceiver.kt`). It needs the overlay permission on Android 10+, otherwise a full-screen notification is used (`app/.../entry/HomeLauncher.kt:33-40`).
+  - MobileCarConnect replaces this with `SystemEventReceiver` (ACL_CONNECTED, then SDP-based classification if needed, then `HomeLauncher.open`, then `EngineCoordinator.onBluetoothPhone`; `mobilecarconnect-core/.../entry/SystemEventReceiver.kt`). It needs the overlay permission on Android 10+, otherwise a full-screen notification is used (`app/.../entry/HomeLauncher.kt:33-40`).
 - **Head unit vs tablet:**
   - **Head units:** OEM Bluetooth apps may hold the stack, so third-party RFCOMM fails (#227 com.syu.bt, #98 RK3326, #330/#354 Android 9, #435 ac8x).
   - **Tablets:** the stack is generic, so RFCOMM generally works. HarmonyOS was the exception (#142).
@@ -466,7 +466,7 @@ Flow [V] (`CarPlayController.kt:1688-1900`, `transport/IphoneUsbHost.kt`, `Iap2U
    - Some ROMs never show the dialog (#442).
 3. `SelectingConfiguration`: an iPhone control request switches it to its CarPlay USB configuration.
 4. `WaitingForReenumeration`: the iPhone detaches and re-attaches as a new `UsbDevice` (at most 2 attempts). `onIphoneAttached` asks for permission again.
-   - This is why CarLink ignores a USB re-attach during a running USB session (`app/.../EngineCoordinator.kt:110-118`).
+   - This is why MobileCarConnect ignores a USB re-attach during a running USB session (`app/.../EngineCoordinator.kt:110-118`).
 5. `OpeningDataPaths`: claim the usbmux and NCM interfaces.
    - Claim failures are an open issue (#335, #340, #443: a native daemon holds NCM).
    - Large-request queue rejection: retry at 16 KiB (#135, #244).
@@ -475,7 +475,7 @@ Flow [V] (`CarPlayController.kt:1688-1900`, `transport/IphoneUsbHost.kt`, `Iap2U
 8. `AttachingNetwork`: the NCM link is bridged through the `CarPlayVpnService` TUN (link-local IPv6). **This needs VPN consent.**
 9. `RunningControl`, then AirPlay over NCM.
 
-**PTP/MTP competition.** The iPhone's photo/PTP prompt ("Allow this device to access photos and videos?") can loop every 2-5 s on some units (#318, open). Other apps that hold Apple devices (system MTP, launchers) can win the attach; CarLink takes it by being the only `USB_DEVICE_ATTACHED` handler (`UsbRouterActivity`).
+**PTP/MTP competition.** The iPhone's photo/PTP prompt ("Allow this device to access photos and videos?") can loop every 2-5 s on some units (#318, open). Other apps that hold Apple devices (system MTP, launchers) can win the attach; MobileCarConnect takes it by being the only `USB_DEVICE_ATTACHED` handler (`UsbRouterActivity`).
 
 **Failure modes:**
 
@@ -556,7 +556,7 @@ Already present:
 - **`CarPlayStatusBus`**: `current` plus listeners; `null` means no controller.
 - `DiPlaySessionService.ACTION_STOP` to stop.
 - `AirPlayPersistence.*` public setters for every setting.
-- `DiPlayActivity.EXTRA_CARLINK_CONNECT`, which is unused (§2.5).
+- `DiPlayActivity.EXTRA_MOBILECARCONNECT_CONNECT`, which is unused (§2.5).
 
 The cleanest contract with today's code:
 
@@ -590,17 +590,17 @@ What is missing to hide DiPlay's screens (vendor changes suggested, each small a
 
 ## 8. Standalone-app UX and what a host must replicate
 
-| DiPlay feature | Where | Must CarLink replicate? |
+| DiPlay feature | Where | Must MobileCarConnect replicate? |
 |---|---|---|
 | First-run Setup guide (DiLink generation, feature tiers) | `setup/SetupGuide.kt`, `DiPlayActivity.kt:341-343` | Partly. The "pair your iPhone / choose iPhone / Wi-Fi method" steps are essential; the DiLink tiers are not |
 | Choose iPhone: BT permission → BT on → bonded list → "Pair another" opens system BT settings | `DiPlayActivity.kt:4441-4472` | **Yes.** Wireless can't start without a bonded, selected iPhone |
 | Connection setup: Wi-Fi method; car-hotspot SSID/password/security/band; Existing Wi-Fi SSID/password; "open hotspot settings"; hotspot auto-start (WRITE_SETTINGS / ADB) | `DiPlayActivity.kt:1220-1580, 2542+`, `CarHotspotSetup.kt` | **Yes.** Credentials can't be read on most devices |
-| Car-hotspot-off dialog | `DiPlayActivity.kt:2121, 2290` | Yes (CarLink: `CAR_HOTSPOT_OFF`) |
-| Notification permission, asked once | `:4425-4430` | Yes (CarLink asks in its permission card) |
-| Wireless help: "Pair your iPhone…keep Wi-Fi on…" plus **Reset CarPlay Wi-Fi** (remove P2P group) | `:4474-4500` | Yes (CarLink: `WifiDirectReset`, Home `wireless-recovery`) |
+| Car-hotspot-off dialog | `DiPlayActivity.kt:2121, 2290` | Yes (MobileCarConnect: `CAR_HOTSPOT_OFF`) |
+| Notification permission, asked once | `:4425-4430` | Yes (MobileCarConnect asks in its permission card) |
+| Wireless help: "Pair your iPhone…keep Wi-Fi on…" plus **Reset CarPlay Wi-Fi** (remove P2P group) | `:4474-4500` | Yes (MobileCarConnect: `WifiDirectReset`, Home `wireless-recovery`) |
 | Overlay permission (boot/BT launch), Usage access, Accessibility (USB auto-confirm, wheel keys) via `UsbPermissionSetup` | `UsbPermissionSetup.kt`, `DiPlayActivity.kt:436, 3138` | Overlay: **yes** for automatic starts on Android 10+. USB auto-confirm: recommended on head units. Usage/wheel: BYD only |
-| Battery optimisation | Not requested by DiPlay (no `IGNORE_BATTERY` in common, [V] grep) | CarLink already checks it (`app/.../diagnostics/Checks.kt:132`) |
-| Status text during a session: `CarPlayStatus.describe()` and the retry/"retries exhausted" text and Retry / Reset Wi-Fi buttons on the waiting screen | `CarPlayHostActivity.kt:4064-4087, 4566-4571, 5099` | Yes, in CarLink's own words (needs §7 hook 2) |
+| Battery optimisation | Not requested by DiPlay (no `IGNORE_BATTERY` in common, [V] grep) | MobileCarConnect already checks it (`app/.../diagnostics/Checks.kt:132`) |
+| Status text during a session: `CarPlayStatus.describe()` and the retry/"retries exhausted" text and Retry / Reset Wi-Fi buttons on the waiting screen | `CarPlayHostActivity.kt:4064-4087, 4566-4571, 5099` | Yes, in MobileCarConnect's own words (needs §7 hook 2) |
 | Diagnostics: Save/View/Share report (redacted), phone-wake and startup snapshots, wireless diagnostics | `DiagnosticExportStore`, `DiagnosticRedactor`, `docs/WIRELESS_DIAGNOSTICS.md` | Strongly recommended. Upstream triage depends on it |
 | Update checker | `update/*` | No |
 
@@ -609,7 +609,7 @@ What is missing to hide DiPlay's screens (vendor changes suggested, each small a
 ## 9. Upstream issues: real-world lessons
 
 Sources: all 303 issues with comments, recent PRs, the docs. Full per-issue notes:
-`/tmp/claude-1000/-DATA-blue-Projects-CarLink/8adedd86-6109-4369-85ba-228070abe845/scratchpad/all.txt`.
+`/tmp/claude-1000/-DATA-blue-Projects-MobileCarConnect/8adedd86-6109-4369-85ba-228070abe845/scratchpad/all.txt`.
 
 **1. "Authenticated but no AirPlay TCP" is the dominant wireless failure, and it is a network problem.**
 - Seen in #151, #226, #242, #253, #254, #299, #316, #318, #455, #464, #467, #469.
@@ -659,14 +659,14 @@ Full list of proven combinations: §3.2 and the upstream report summary in §0.
 
 ---
 
-## 10. Review of CarLink's integration
+## 10. Review of MobileCarConnect's integration
 
 Files read:
 
 - `app/.../engine/CarPlayPreflight.kt`, `CarPlayEngine.kt`, `EngineCoordinator.kt`, `WifiDirectReset.kt`
 - `app/.../settings/EngineSettingsApplier.kt`, `EngineMappings.kt`
-- `carlink-core/.../entry/SystemEventReceiver.kt`, `HomeLauncher.kt`
-- `app/.../CarLinkApplication.kt`, `app/src/main/AndroidManifest.xml`
+- `mobilecarconnect-core/.../entry/SystemEventReceiver.kt`, `HomeLauncher.kt`
+- `app/.../MobileCarConnectApplication.kt`, `app/src/main/AndroidManifest.xml`
 
 The findings are ranked.
 
@@ -693,15 +693,15 @@ The findings are ranked.
 - `EngineChrome` only restyles it (`app/.../EngineChrome.kt:153-203`).
 - That is what "when an iPhone is chosen the driver sees DiPlay's waiting screen" refers to.
 - The Activity must be in front: §1.3 item 1. [I] It can't be started invisibly behind Home.
-- **Fix:** add `CarPlayHostIntegration.waitingView` (§7 hook 1) so CarLink renders its own waiting, failure and recovery UI inside the host window. Until then, restyle fully and map every `describe()` string through CarLink resources (`carlink_engine_overrides.xml`).
+- **Fix:** add `CarPlayHostIntegration.waitingView` (§7 hook 1) so MobileCarConnect renders its own waiting, failure and recovery UI inside the host window. Until then, restyle fully and map every `describe()` string through MobileCarConnect resources (`mobilecarconnect_engine_overrides.xml`).
 
 **F3 (high, verified): permissions and consent are left to the projection Activity.**
 
 - `CarPlayPreflight`'s own comment says "The CarPlay host itself still asks for runtime permissions and VPN consent" (`CarPlayPreflight.kt:15-18`). So the first wired session pops the **VPN consent** system dialog over the waiting screen, and on API 33+ the microphone, Nearby and BT dialogs.
-- CarLink's permission card asks for most of these (`ui/CarLinkViewModel.kt:229-243`): BT_CONNECT, BT_SCAN, NEARBY, POST_NOTIFICATIONS, FINE_LOCATION, RECORD_AUDIO. It does **not** ask for VPN consent, and the pre-flight never checks permissions.
+- MobileCarConnect's permission card asks for most of these (`ui/MobileCarConnectViewModel.kt:229-243`): BT_CONNECT, BT_SCAN, NEARBY, POST_NOTIFICATIONS, FINE_LOCATION, RECORD_AUDIO. It does **not** ask for VPN consent, and the pre-flight never checks permissions.
 - **Fix:**
   - The pre-flight should check that `CarPlayVpnService.prepare(context) == null` before wired.
-  - Run `VpnService.prepare` from CarLink's onboarding.
+  - Run `VpnService.prepare` from MobileCarConnect's onboarding.
   - Check the wireless permission set `requiredWirelessPermissions()` would request (§1.3).
   - Report `LinkProblem.PERMISSION` instead of launching the host.
 
@@ -714,11 +714,11 @@ The findings are ranked.
 **F5 (medium, verified): BYD defaults are on for every head unit.**
 
 - `UnifiedSettings.bydDirections = true` (`app/.../UnifiedSettings.kt:24, 56`) is written to `BydOutputSettings.setEnabled` (`EngineSettingsApplier.kt:76`).
-- The OEM label stays "BYD" (`AirPlayPersistence.kt:113`; CarLink renames only manufacturer and model, `CarLinkApplication.kt:89-94`).
+- The OEM label stays "BYD" (`AirPlayPersistence.kt:113`; MobileCarConnect renames only manufacturer and model, `MobileCarConnectApplication.kt:89-94`).
 - The iAP2 accessory name stays "DiPlay" (`CarPlayHostActivity.kt:161, 173`).
-- See §12. **Fix:** a vehicle profile; default `bydDirections=false` unless a BYD is detected; set `oem_label` to "CarLink".
+- See §12. **Fix:** a vehicle profile; default `bydDirections=false` unless a BYD is detected; set `oem_label` to "MobileCarConnect".
 
-**F6 (medium, verified): `debug_logs_enabled` cannot be turned on.** `DiPlayBootstrap.ensure()` saves it as false on every bootstrap (`DiPlayBootstrap.kt:40`), and CarLink's pre-flight runs `ensure` before every session. CarLink's Advanced toggle (`AdvancedSettings.kt:184`) is overwritten. **Fix:** re-apply the toggle after `authenticationError()`, or remove that line in vendor (and list it in VENDOR_CHANGES).
+**F6 (medium, verified): `debug_logs_enabled` cannot be turned on.** `DiPlayBootstrap.ensure()` saves it as false on every bootstrap (`DiPlayBootstrap.kt:40`), and MobileCarConnect's pre-flight runs `ensure` before every session. MobileCarConnect's Advanced toggle (`AdvancedSettings.kt:184`) is overwritten. **Fix:** re-apply the toggle after `authenticationError()`, or remove that line in vendor (and list it in VENDOR_CHANGES).
 
 **F7 (medium, verified): the Existing Wi-Fi pre-flight cannot catch the common mistakes.**
 
@@ -726,7 +726,7 @@ The findings are ranked.
 - When the joined SSID is unreadable (no location permission, or location off) a typo goes unnoticed. `EngineSettingsApplier` only logs that case (`:50-56`).
 - `ExistingWifiManager` also skips the check when the SSID is unreadable (`:91-94`).
 - **Fix:**
-  - Require fine location plus location-on for Same Wi-Fi, so CarLink and DiPlay can confirm the SSID.
+  - Require fine location plus location-on for Same Wi-Fi, so MobileCarConnect and DiPlay can confirm the SSID.
   - Offer "use the network I'm on" to fill the SSID automatically.
   - Warn on WPA3/SAE (`currentSecurityType == SAE`) that mixed mode is unvalidated, and suggest WPA2.
   - Detect multiple Wi-Fi networks before start (Samsung/Xiaomi dual Wi-Fi gives "Multiple Wi-Fi networks are active").
@@ -744,21 +744,21 @@ The findings are ranked.
 - [I] `startService` from the background is allowed while DiPlay's foreground service runs, but not before it starts.
 - **Fix:** a vendor `stop()` hook (§7 item 4), or also finish the host via an intent extra.
 
-**F10 (low, verified): `CarPlayStatus.ControlEnded` maps to Idle.** CarLink disengages (`EngineCoordinator.kt:243`). DiPlay does not retry on ControlEnded, so this is consistent. Note that a wired `TIMED_OUT` also ends as ControlEnded (`CarPlayController.kt:2042`). There is no "the iPhone left" message to show.
+**F10 (low, verified): `CarPlayStatus.ControlEnded` maps to Idle.** MobileCarConnect disengages (`EngineCoordinator.kt:243`). DiPlay does not retry on ControlEnded, so this is consistent. Note that a wired `TIMED_OUT` also ends as ControlEnded (`CarPlayController.kt:2042`). There is no "the iPhone left" message to show.
 
-**F11 (low, verified): stale documentation.** `docs/VENDOR_CHANGES.md` says CarLink starts CarPlay "through DiPlay's own `connect()` pre-flight" (`EXTRA_CARLINK_CONNECT`), but `CarPlayEngine` bypasses DiPlayActivity. Either remove the hook or update the doc.
+**F11 (low, verified): stale documentation.** `docs/VENDOR_CHANGES.md` says MobileCarConnect starts CarPlay "through DiPlay's own `connect()` pre-flight" (`EXTRA_MOBILECARCONNECT_CONNECT`), but `CarPlayEngine` bypasses DiPlayActivity. Either remove the hook or update the doc.
 
 **F12 (low, verified): no auto-reconnect inside an engaged session after DiPlay gives up.**
 
 - When DiPlay exhausts its startup budget it shows its Retry button and stops reporting.
-- CarLink then sits in FAILED with the host still open. `SystemEventReceiver.act()` ignores BT links while a session "isActive", and FAILED is presumably not active ([I] `LinkState.isActive`).
-- **Fix:** on exhausted retries, close the host and return to Home with a CarLink failure card plus an automatic retry when the iPhone's ACL next connects.
+- MobileCarConnect then sits in FAILED with the host still open. `SystemEventReceiver.act()` ignores BT links while a session "isActive", and FAILED is presumably not active ([I] `LinkState.isActive`).
+- **Fix:** on exhausted retries, close the host and return to Home with a MobileCarConnect failure card plus an automatic retry when the iPhone's ACL next connects.
 
-**F13 (high, verified): `CarPlayStatusBus.current == null` does not mean "no session", but CarLink treats it that way.**
+**F13 (high, verified): `CarPlayStatusBus.current == null` does not mean "no session", but MobileCarConnect treats it that way.**
 
 - `CarPlayController.close()` publishes `null` at the *start* of teardown (`CarPlayController.kt:604`), and DiPlay calls `close()` on every internal restart (`restartCarPlay`, `CarPlayHostActivity.kt:4604-4630`).
 - `current` is also null while the host waits for permissions, VPN consent or its window size, before any controller exists.
-- CarLink uses `current` for several decisions:
+- MobileCarConnect uses `current` for several decisions:
   - `stop()` and `requestStop()` do nothing when it is null (`CarPlayEngine.kt:158, 165-166`);
   - `start()` opens immediately when it is null (`:142-143`);
   - `map(null)` gives Idle, so `EngineCoordinator` disengages (`EngineCoordinator.kt:243`).
@@ -766,36 +766,36 @@ The findings are ranked.
   - Each DiPlay-internal retry makes Home flash Idle and drops `sessionRequest`, which also defeats the F1 fallback. The next status is then "adopted" as a foreign session (`EngineCoordinator.kt:227-232`).
   - A Disconnect pressed while the host shows a permission dialog is ignored, and the session is adopted later.
   - A new `start()` in that window only `REORDER_TO_FRONT`s the existing singleTask host. Its `onNewIntent` handles only USB attach (`CarPlayHostActivity.kt:773-791`), so the old phone and mode keep running.
-- **Fix (vendor hook):** expose `CarPlayHostIntegration.hasSession()` (wrapping `CarPlayBackgroundSession.hasSession()` plus "host alive") and `stopSession(completion)`. Also publish a distinct "closed for good" from `shutdown()`. CarLink should then key on those, not on `current`.
+- **Fix (vendor hook):** expose `CarPlayHostIntegration.hasSession()` (wrapping `CarPlayBackgroundSession.hasSession()` plus "host alive") and `stopSession(completion)`. Also publish a distinct "closed for good" from `shutdown()`. MobileCarConnect should then key on those, not on `current`.
 
 **F14 (high, verified by reading both paths; the race itself is [I]): a restart can kill the new session's foreground service.**
 
-- CarLink opens the replacement host as soon as `null` is published (`CarPlayEngine.kt:108-117`), which is the start of the old `close()`.
+- MobileCarConnect opens the replacement host as soon as `null` is published (`CarPlayEngine.kt:108-117`), which is the start of the old `close()`.
 - The old host's `shutdown()` finishes on a teardown thread and only then calls `stopService(DiPlaySessionService)` (`CarPlayHostActivity.kt:4791-4803`).
 - If the new host has already called `startForegroundService` (`:4264`), that late stop removes the new session's foreground service.
 - DiPlay itself waits for the completion callback: `CarPlayBackgroundSession.stop { open() }` (`DiPlayActivity.kt:4434-4436`).
 - Affected flows: Same Wi-Fi fallback, phone switch, and USB taking over wireless.
 - **Fix:** start the next session only on the stop completion (needs the F13 hook).
 
-**F15 (medium, verified): host-side blocking states never reach CarLink.** None of these produce a `CarPlayStatus`:
+**F15 (medium, verified): host-side blocking states never reach MobileCarConnect.** None of these produce a `CarPlayStatus`:
 
 - VPN consent denied (`CarPlayHostActivity.kt:189-198`);
 - wireless permissions denied (`:200-213`);
-- the foreground service failing to start (`:4266-4270`; only the `null` from `shutdown` is seen, so CarLink shows Idle);
+- the foreground service failing to start (`:4266-4270`; only the `null` from `shutdown` is seen, so MobileCarConnect shows Idle);
 - retries exhausted (`:4566-4571`).
 
-CarLink shows "Waiting" until its 60 s timeout, then a generic ENGINE failure, which also triggers F1. **Fix:** pre-flight these in CarLink (F3) and add a vendor host-state callback.
+MobileCarConnect shows "Waiting" until its 60 s timeout, then a generic ENGINE failure, which also triggers F1. **Fix:** pre-flight these in MobileCarConnect (F3) and add a vendor host-state callback.
 
 **F16 (medium, verified): pre-flight gaps compared with `choosePhone()`/`connect()`.**
 
 - **Bluetooth adapter off is not checked.** The controller then throws "Bluetooth is not enabled" (`CarPlayController.kt:1217`), which is a Failed, so F1 blacklists Same Wi-Fi. Add `LinkProblem.BLUETOOTH_OFF`.
 - **The selected iPhone is not checked to still be bonded.** The controller fails with "The selected iPhone is no longer paired" (`:2174-2177`). Check `bondedDevices` in the pre-flight.
-- **"Reset CarPlay Wi-Fi" does not reconnect.** CarLink's `HomeActivity.consumeRecovery` stops the attempt and removes the group, but does not reconnect (`app/.../ui/HomeActivity.kt:55-66`). DiPlay reconnects after the reset (`DiPlayActivity.kt:4482-4520`).
+- **"Reset CarPlay Wi-Fi" does not reconnect.** MobileCarConnect's `HomeActivity.consumeRecovery` stops the attempt and removes the group, but does not reconnect (`app/.../ui/HomeActivity.kt:55-66`). DiPlay reconnects after the reset (`DiPlayActivity.kt:4482-4520`).
 
 **F17 (medium, verified): settings-mapping details.**
 
-- **Stale Same Wi-Fi details.** Existing Wi-Fi details are written only when valid (`EngineSettingsApplier.kt:83-85`). Clearing them in CarLink leaves DiPlay's old values, and `CarPlayPreflight` validates DiPlay's (stale) copy (`CarPlayPreflight.kt:38-41`). Always write or clear them for a SAME_WIFI session, and pre-flight against CarLink's own values.
-- **Location reporting.** `sendCarLocation` (CarLink) defaults to true, against DiPlay's false. The host then asks for location before every start (`CarPlayHostActivity.kt:697-699`). When it is denied, DiPlay saves false (`:226-233`) and CarLink rewrites true on the next session. Map it to `sendCarLocation && fine-location granted`.
+- **Stale Same Wi-Fi details.** Existing Wi-Fi details are written only when valid (`EngineSettingsApplier.kt:83-85`). Clearing them in MobileCarConnect leaves DiPlay's old values, and `CarPlayPreflight` validates DiPlay's (stale) copy (`CarPlayPreflight.kt:38-41`). Always write or clear them for a SAME_WIFI session, and pre-flight against MobileCarConnect's own values.
+- **Location reporting.** `sendCarLocation` (MobileCarConnect) defaults to true, against DiPlay's false. The host then asks for location before every start (`CarPlayHostActivity.kt:697-699`). When it is denied, DiPlay saves false (`:226-233`) and MobileCarConnect rewrites true on the next session. Map it to `sendCarLocation && fine-location granted`.
 - **Car-hotspot band is forced to AUTO** on every write (`EngineSettingsApplier.kt:81`).
 - **Verified correct:** key names, types and enum strings match DiPlay. Night-mode keys, scale/fps/width ranges, `WirelessHotspotMode` names and Wi-Fi Direct band constants are all consistent. Ordering is correct: settings are written on the worker before `start()`, and the host re-reads them on resume.
 
@@ -804,9 +804,9 @@ CarLink shows "Waiting" until its 60 s timeout, then a generic ENGINE failure, w
 - Raw engine messages on the waiting screen, for example "No AirPlay TCP after CarPlay StartSession" (`setConnectionStage(status.describe())`, `CarPlayHostActivity.kt:4069-4071`).
 - English-only notification text "CarPlay connection running" / "Disconnect" (`DiPlaySessionService.kt:39-41`).
 - A raw `Toast` that bypasses `showToast` (`CarPlayHostActivity.kt:2725`).
-- CarLink's `toastHandler` drops **every** projection toast, including real dead-end errors (`app/.../CarLinkApplication.kt:64-67`).
+- MobileCarConnect's `toastHandler` drops **every** projection toast, including real dead-end errors (`app/.../MobileCarConnectApplication.kt:64-67`).
 
-**What CarLink does right [V]:**
+**What MobileCarConnect does right [V]:**
 
 - Pre-checks MFi, the iPhone selection and hotspot details.
 - Writes prefs before opening the host.
@@ -849,20 +849,20 @@ CarLink shows "Waiting" until its 60 s timeout, then a generic ENGINE failure, w
    - Refusals expire.
 5. **Recovery:**
    - On `wifiResetRequired`, run `WifiDirectReset` automatically, once.
-   - On exhausted retries, close the host, show CarLink's failure card, and re-arm the start on the next ACL_CONNECTED from that iPhone.
-6. **Diagnostics:** keep a CarLink-side ring log of `CarPlayStatus` transitions with timestamps and the `startupFailure` reason. Force DiPlay debug logs on after `ensure()` (F6). Offer a one-tap export of DiPlay's diagnostic report.
+   - On exhausted retries, close the host, show MobileCarConnect's failure card, and re-arm the start on the next ACL_CONNECTED from that iPhone.
+6. **Diagnostics:** keep a MobileCarConnect-side ring log of `CarPlayStatus` transitions with timestamps and the `startupFailure` reason. Force DiPlay debug logs on after `ensure()` (F6). Offer a one-tap export of DiPlay's diagnostic report.
 
 ### 11.3 Presenting waiting, failure and recovery
 
 **Today, without vendor changes:**
 
-- CarLink Home shows the staged progress from `CarPlayStatusBus` (it already maps statuses to 6 steps).
+- MobileCarConnect Home shows the staged progress from `CarPlayStatusBus` (it already maps statuses to 6 steps).
 - The host waiting screen is fully restyled by `chromeStyler`.
-- DiPlay strings are rewritten in `carlink_engine_overrides.xml`.
+- DiPlay strings are rewritten in `mobilecarconnect_engine_overrides.xml`.
 
 **Better, with the §7 hooks:**
 
-- The host shows a CarLink-provided waiting view.
+- The host shows a MobileCarConnect-provided waiting view.
 - The retry state is published.
 - Only the projection surface remains DiPlay's.
 
@@ -879,7 +879,7 @@ Map statuses to driver language:
 ### 11.4 What cannot be made automatic, and why
 
 - **Bluetooth pairing and the iPhone's "Use CarPlay" / "Trust" prompts.** Apple requires user consent on the phone, and Android pairing needs user confirmation.
-- **The Wi-Fi password for Same Wi-Fi and for most hotspots.** Android does not expose saved passwords to apps (`docs/EXISTING_WIFI.md:16-17`). Some head units allow reading the system hotspot config (CarLink already tries `HotspotConfigReader`).
+- **The Wi-Fi password for Same Wi-Fi and for most hotspots.** Android does not expose saved passwords to apps (`docs/EXISTING_WIFI.md:16-17`). Some head units allow reading the system hotspot config (MobileCarConnect already tries `HotspotConfigReader`).
 - **Router configuration** (client isolation, mDNS/multicast, WPA2 vs WPA3, band steering). This is outside the device.
 - **VPN consent, overlay, accessibility, battery exemption, WRITE_SETTINGS.** These are one-time system consents by design; they can be grouped in onboarding but not skipped. Exception: on rooted or ADB-enabled head units, `appops` can grant them (#357).
 - **OEM Bluetooth stacks that block third-party RFCOMM** (#227, #98). Wireless CarPlay requires the iAP2 bootstrap, so such units are wired-only.
@@ -896,8 +896,8 @@ They are mostly inert on non-BYD hardware. The exceptions, which run on every un
 | # | Feature / assumption | Where | Gate (verified) | On a non-BYD head unit or tablet | Generic behaviour |
 |---|---|---|---|---|---|
 | 1 | ⚠ Navigation output bridges started on **every** controller | `CarPlayController.kt:172-173, 293-294, 314, 601-603, 744` → `hud/BydNavigationOutputs.kt:68-79` | **None** at start | `BydHudBridge.initialize` tries `bindService(com.ts.car.someip.service/…SomeIpServerService)` (`hud/BydHudBridge.kt:162-176`) and starts a repeating sender thread (`:76-81`). `BydClusterBridge` probes for Amap adapters (`hud/BydClusterBridge.kt:38-53`). `BydClusterMapPause` starts a periodic ticker (`hud/BydClusterMapPause.kt:44-51`). Every route frame is parsed (`:81-98`). **Misbehaves (helper audit, from code):** `bindService` returns false, so the binding never completes. Every 300 ms tick (`BydHudProtocol.kt:7`, `BydHudBridge.kt:106-109`) binds again and logs `bindService=false`, plus an ActivityManager "not found" warning, for the life of the process. That is about 200 log lines a minute and a 300 ms wakeup. `endNow` does not stop it | Skip `start()` unless the BYD profile is on; add a gate in `CarPlayController` init. Upstream fix: return early when `com.ts.car.someip.service` isn't installed |
-| 2 | ⚠ `navigation_enabled` default **true** | `hud/BydOutputSettings.kt:29`; CarLink writes `bydDirections` default **true** (`app/.../UnifiedSettings.kt:24, 56`) | Pref | Enables HUD/cluster sends (no target, so no-ops) and `prepareProjectionDisplay` on app open (`BydNavigationOutputs.kt:17`) | Default false; true only with the BYD profile |
-| 3 | Standalone HUD output | `hud/BydStandaloneHudOutput.kt:66-81` | API ≥ 28, package allowlist (incl. `com.carlink.app`), **exact BYD fingerprint**, signed system app version | Inert | Keep |
+| 2 | ⚠ `navigation_enabled` default **true** | `hud/BydOutputSettings.kt:29`; MobileCarConnect writes `bydDirections` default **true** (`app/.../UnifiedSettings.kt:24, 56`) | Pref | Enables HUD/cluster sends (no target, so no-ops) and `prepareProjectionDisplay` on app open (`BydNavigationOutputs.kt:17`) | Default false; true only with the BYD profile |
+| 3 | Standalone HUD output | `hud/BydStandaloneHudOutput.kt:66-81` | API ≥ 28, package allowlist (incl. `com.mobilecarconnect.app`), **exact BYD fingerprint**, signed system app version | Inert | Keep |
 | 4 | `BydStarterBridge`, factory navigation, DiLink 3 cluster output and recovery journal | `hud/BydStarterBridge.kt`, `BydFactoryNavigationOutput.kt` (`.hudtest` only), `BydDiLink3ClusterOutput.kt:47` | Package allowlist / `.hudtest` suffix / `BydOutputSettings.enabled` | Inert except the journal restore on app open (`BydNavigationOutputs.onAppOpened`) | BYD profile only |
 | 5 | ⚠ Wi-Fi scan pause over local ADB | `network/WifiScanPause.kt:14-36`, called for every non-Same-LAN wireless session (`CarPlayController.kt:1163, 2167-2170`) | `WifiScanPause.eligible(backend)` plus **local ADB at 127.0.0.1:5555 already authorized** (`adb/LocalAdb.kt:24-28`) | Usually unreachable, so a no-op. [I] On a generic unit with network ADB on, it would disable the Wi-Fi connectivity manager (scans) for the session; restored after. Could surprise | Off unless the BYD profile is on (or an explicit "pause Wi-Fi scans" setting) |
 | 6 | Car-hotspot auto-start over local ADB / reflection `startTethering` | `network/CarHotspotTethering.kt:20-60`, `CarHotspotSettings.kt:10-17` | `auto_enable` (default false) plus WRITE_SETTINGS; UI only visible when `bydAvailable` | Reflection often fails on OEM ROMs, giving `UNSUPPORTED` | Generic: open the system tethering settings; auto-start only where it is proven |
@@ -909,12 +909,12 @@ They are mostly inert on non-BYD hardware. The exceptions, which run on every un
 | 12 | Calls on dashboard, cluster song, HUD song, OEM cluster hold | `hud/BydCarPlayCall.kt:132-193`, `BydClusterSong.kt:120-131` | `carplay_calls`, `cluster_song`, `hud_song`, `oem_cluster_hold`: false | `attach()` only stores a context; frames are parsed but not sent | BYD profile only |
 | 13 | Steering-wheel keys: `WheelKeyService` (accessibility), BYD key codes 304/312/327/328/331/353 | `WheelKeyService.kt:394-422`; `airplay/CarPlayMediaButton.kt:19-37`; `CarPlayHostActivity.kt:578` (`restoreIfNeeded`) | `WheelZoomSettings.anyEnabled` / call-key settings; restore only over authorized ADB | Codes never arrive; restore no-ops. Standard `KEYCODE_MEDIA_*` still work via `CarPlayMediaKeys` | Keep the generic media keys; BYD codes are harmless |
 | 14 | `HomeScreenMonitor` (Usage access) for centre-map auto-hide | `CarPlayHostActivity.kt:1302-1303` | `center_map_auto_hide` (true) **and** `center_map_overlay` (false) **and** Usage access | Inert | BYD/cluster only |
-| 15 | ⚠ OEM label "BYD" shown on the iPhone | `AirPlayPersistence.kt:113, 466-470` | Pref default | The iPhone shows a BYD brand label/icon on any car | Set to "CarLink" or the user's car brand (vehicle profile) |
+| 15 | ⚠ OEM label "BYD" shown on the iPhone | `AirPlayPersistence.kt:113, 466-470` | Pref default | The iPhone shows a BYD brand label/icon on any car | Set to "MobileCarConnect" or the user's car brand (vehicle profile) |
 | 16 | ⚠ `DiPlaySessionService.onTaskRemoved` ends BYD guidance | `DiPlaySessionService.kt:57-61` | None | Harmless no-op | — |
 | 17 | `<queries>` for `com.byd.*`, `com.ts.car.someip.service`, `com.byd.amapservice/automap` | `shared/src/main/AndroidManifest.xml` queries; `common` queries `com.byd.carsettings` | — | Visibility only | Fine |
-| 18 | Package allowlists incl. `com.carlink.app` | `hud/BydStandaloneHudOutput.kt:68-71`, `BydStarterBridge.kt` (CarLink edit) | — | Inert without the fingerprint | Keep |
-| 19 | Setup guide DiLink generation, `BydVehicleSettingsBackend`, `LocalizedOptions`, DiPlayActivity "BYD vehicle advanced" | `setup/DiLinkGeneration.kt`, `common/.../BydVehicleSettingsBackend.kt` | Standalone UI only | Never shown in CarLink | — |
-| 20 | Experimental ADB boot-start repair | `hud/BydBootStartRepair.kt` (0.2.15) | Explicit action | Not called by CarLink | — |
+| 18 | Package allowlists incl. `com.mobilecarconnect.app` | `hud/BydStandaloneHudOutput.kt:68-71`, `BydStarterBridge.kt` (MobileCarConnect edit) | — | Inert without the fingerprint | Keep |
+| 19 | Setup guide DiLink generation, `BydVehicleSettingsBackend`, `LocalizedOptions`, DiPlayActivity "BYD vehicle advanced" | `setup/DiLinkGeneration.kt`, `common/.../BydVehicleSettingsBackend.kt` | Standalone UI only | Never shown in MobileCarConnect | — |
+| 20 | Experimental ADB boot-start repair | `hud/BydBootStartRepair.kt` (0.2.15) | Explicit action | Not called by MobileCarConnect | — |
 | 21 | Defaults tuned on BYD: physical width 300 mm, resolution 100 %, 30 fps, `VoiceFilter` comment, audio stream IDs | `AirPlayPersistence.kt:524-527`, `media/VoiceFilter.kt:8`, `media/AndroidMediaSink.kt:1559` | Prefs | Reasonable generic defaults; physical width matters for tablets (set it from `DisplayMetrics`) | Compute the physical size from xdpi/ydpi on tablets |
 
 Further items from the BYD audit (verified from code by the helper; I spot-checked the HUD bind path):
@@ -923,8 +923,8 @@ Further items from the BYD audit (verified from code by the helper; I spot-check
 - **`BydClusterSong.note()` ignores the `cluster_song` setting** (`hud/BydClusterSong.kt:208-217`). It is called from `WheelKeyService` and tries an adb write. Low impact, because the wheel keys are off by default.
 - **`AdbClusterActivity` is exported with no permission** (common manifest :81-92). It is BYD-only; disable it in the generic profile.
 - **`WifiScanPause` runs only on SDK == 29 (Q)** and only with an already-approved adb (`network/WifiScanPause.kt:55-56`). In practice this is generic, not BYD-only.
-- **CarLink's BYD detection is weak.** `isBydHeadUnit()` (`app/.../ui/settings/SettingsScreen.kt:166-167`) and `UiProfile.kt:43` only check `"byd"` in MANUFACTURER/BRAND. Older BYD Qualcomm builds report QUALCOMM/qti (`CarHotspotSetup.kt:15`). On those, CarLink hides the BYD switch while the outputs stay on (default true). Use `BydOutputSettings.available(context)` (`hud/BydOutputSettings.kt:153-164`) instead.
-- **CarLink never calls `BydNavigationOutputs.onAppOpened()`** (`BydNavigationOutputs.kt:7-18`). DiPlay calls it from `DiPlayActivity.kt:318`. On a BYD this means a force-stopped OEM cluster hold or DiLink 3 cluster mode is never restored. In the BYD profile, call it at app start.
+- **MobileCarConnect's BYD detection is weak.** `isBydHeadUnit()` (`app/.../ui/settings/SettingsScreen.kt:166-167`) and `UiProfile.kt:43` only check `"byd"` in MANUFACTURER/BRAND. Older BYD Qualcomm builds report QUALCOMM/qti (`CarHotspotSetup.kt:15`). On those, MobileCarConnect hides the BYD switch while the outputs stay on (default true). Use `BydOutputSettings.available(context)` (`hud/BydOutputSettings.kt:153-164`) instead.
+- **MobileCarConnect never calls `BydNavigationOutputs.onAppOpened()`** (`BydNavigationOutputs.kt:7-18`). DiPlay calls it from `DiPlayActivity.kt:318`. On a BYD this means a force-stopped OEM cluster hold or DiLink 3 cluster mode is never restored. In the BYD profile, call it at app start.
 - **The Bonjour service name is hard-coded:** `deviceName = "DiPlay"` (`CarPlayHostActivity.kt:3716`), alongside the iAP2 name and label. This is branding, not BYD, and it has no hook.
 
 ### How a "vehicle profile" setting can switch these cleanly
@@ -944,7 +944,7 @@ Suggested `UnifiedSettings.vehicleProfile = GENERIC | BYD_DILINK3 | BYD_DILINK4 
 | battery / wheel speed / calls / cluster song / HUD song / OEM cluster hold | false | user choice |
 | `AirPlayPersistence.saveClusterMapEnabled`, `saveCenterMapOverlay`, `saveAdbClusterActivityEnabled` | false | user choice |
 | `CarHotspotSettings.auto_enable` | false | ADB auto-start allowed |
-| `saveOemLabel` | "CarLink" (or the user's brand) | "BYD" |
+| `saveOemLabel` | "MobileCarConnect" (or the user's brand) | "BYD" |
 | `CarPlayHostIntegration.menuItems` | without cluster-related items | — |
 | `WheelKeyService`, `UsbAutoConfirmService`, `AdbClusterActivity`, `MapEmbedService` | `PackageManager.setComponentEnabledSetting(...DISABLED)` (same mechanism `EngineCoordinator` uses for DiAuto receivers) | enabled |
 
@@ -963,4 +963,4 @@ Suggested `UnifiedSettings.vehicleProfile = GENERIC | BYD_DILINK3 | BYD_DILINK4 
 - Existing Wi-Fi: `shared/.../network/ExistingWifiManager.kt`; address policy `HotspotAddressPolicy.kt`, `WirelessHostAddress.kt`; Bonjour `CarPlayBonjour.kt`; watchdog `orchestration/FirstTcpWatchdog.kt`; policy `network/WirelessStartupPolicy.kt`
 - Standalone pre-flight: `common/.../DiPlayActivity.kt:4408-4472`
 - Settings: `common/.../AirPlayPersistence.kt`, `DiPlayBootstrap.kt` (`DiPlayPreferences`), `shared/.../hud/BydOutputSettings.kt`
-- CarLink: `app/src/main/java/com/carlink/app/engine/{CarPlayEngine,CarPlayPreflight,EngineCoordinator}.kt`, `settings/{EngineSettingsApplier,EngineMappings}.kt`, `entry/{SystemEventReceiver,HomeLauncher}.kt`
+- MobileCarConnect: `app/src/main/java/com/mobilecarconnect/app/engine/{CarPlayEngine,CarPlayPreflight,EngineCoordinator}.kt`, `settings/{EngineSettingsApplier,EngineMappings}.kt`, `entry/{SystemEventReceiver,HomeLauncher}.kt`

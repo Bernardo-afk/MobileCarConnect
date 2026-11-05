@@ -36,7 +36,7 @@ enum class WppStage {
     /** Credentials delivered; the phone is associating, doing WPS and getting a DHCP lease. */
     SETTLING,
     /**
-     * CarLink (open-headunit PR #1029): the session landed and the phone's channel stays open for
+     * MobileCarConnect (open-headunit PR #1029): the session landed and the phone's channel stays open for
      * it, answering its pings.
      */
     HOLDING,
@@ -66,9 +66,9 @@ sealed class WppEvent {
     object TcpSessionUp : WppEvent()
     /** The settling window elapsed with no session. */
     object SettleTimeout : WppEvent()
-    /** CarLink (PR #1029): the phone closed the channel. Only acted on in [WppStage.HOLDING]. */
+    /** MobileCarConnect (PR #1029): the phone closed the channel. Only acted on in [WppStage.HOLDING]. */
     object PeerClosed : WppEvent()
-    /** CarLink (PR #1029): the projection session this channel was held for has ended. */
+    /** MobileCarConnect (PR #1029): the projection session this channel was held for has ended. */
     object SessionEnded : WppEvent()
 }
 
@@ -101,7 +101,7 @@ sealed class WppAction {
     ) : WppAction()
     /** Restart the wake poke. Only ever emitted once the phone has given up on this handoff. */
     object ResumePoke : WppAction()
-    /** CarLink (PR #1029): a held channel is over; close it. [peerClosed] is true when the phone ended it first. */
+    /** MobileCarConnect (PR #1029): a held channel is over; close it. [peerClosed] is true when the phone ended it first. */
     data class Release(val peerClosed: Boolean) : WppAction()
 }
 
@@ -130,7 +130,7 @@ sealed class WppAction {
  *
  * @param versionExchangeEnabled whether to open with [WppMessageType.VERSION_REQUEST]. False sends
  *   exactly what shipped before it existed.
- * @param holdsChannel CarLink (open-headunit PR #1029): keep the channel after the session lands
+ * @param holdsChannel MobileCarConnect (open-headunit PR #1029): keep the channel after the session lands
  *   instead of finishing. Android Auto 17.8 treats the RFCOMM channel as the phone's for the whole
  *   session; when the head unit closes it, the phone restarts wireless setup and re-dials every 5 s
  *   while any Bluetooth profile keeps the unit present (measured upstream: 1-13 fps against 27-30).
@@ -198,7 +198,7 @@ class WppHandshakeSession(
      */
     fun on(event: WppEvent): List<WppAction> {
         if (isTerminal()) return emptyList()
-        if (stage == WppStage.HOLDING) return onHolding(event) // CarLink (PR #1029)
+        if (stage == WppStage.HOLDING) return onHolding(event) // MobileCarConnect (PR #1029)
 
         if (event is WppEvent.MessageReceived) {
             messagesReceived++
@@ -218,7 +218,7 @@ class WppHandshakeSession(
         }
     }
 
-    /** CarLink (PR #1029): pings are answered and nothing else is: credentials onto a live session drop it. */
+    /** MobileCarConnect (PR #1029): pings are answered and nothing else is: credentials onto a live session drop it. */
     private fun onHolding(event: WppEvent): List<WppAction> = when {
         event is WppEvent.MessageReceived -> {
             messagesReceived++
@@ -290,7 +290,7 @@ class WppHandshakeSession(
 
     private fun onSettling(event: WppEvent): List<WppAction> = when {
         event is WppEvent.TcpSessionUp -> {
-            stage = if (holdsChannel) WppStage.HOLDING else WppStage.DONE // CarLink (PR #1029)
+            stage = if (holdsChannel) WppStage.HOLDING else WppStage.DONE // MobileCarConnect (PR #1029)
             listOf(WppAction.CompleteSuccess)
         }
         event is WppEvent.MessageReceived &&

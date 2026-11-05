@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  CarLink's app manifest.
+  MobileCarConnect's app manifest.
 
-  The connection backend's manifest (carlink-core/src/main/AndroidManifest.xml) declares the USB,
+  The connection backend's manifest (mobilecarconnect-core/src/main/AndroidManifest.xml) declares the USB,
   boot and Bluetooth entry points and the engines' component overrides (":aa" process, removed
-  launchers and receivers). This file adds CarLink's Application, Home (the launcher) and what
-  only CarLink's own screens need.
+  launchers and receivers). This file adds MobileCarConnect's Application, Home (the launcher) and what
+  only MobileCarConnect's own screens need.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
@@ -15,10 +15,10 @@
 
     <!-- HomeLauncher's full-screen notification when Home cannot be opened directly. -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <!-- Diagnostics asks to keep CarLink ready when the car wakes (DESIGN_SPEC §6.4). -->
+    <!-- Diagnostics asks to keep MobileCarConnect ready when the car wakes (DESIGN_SPEC §6.4). -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- The in-app updater (update/): asks GitHub for the latest release and installs a verified
-         APK with PackageInstaller. Both are also declared by the engines; listed here for CarLink. -->
+         APK with PackageInstaller. Both are also declared by the engines; listed here for MobileCarConnect. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
@@ -32,9 +32,9 @@
     </queries>
 
     <application
-        android:name=".CarLinkApplication"
+        android:name=".MobileCarConnectApplication"
         android:allowBackup="false"
-        android:dataExtractionRules="@xml/carlink_data_extraction_rules"
+        android:dataExtractionRules="@xml/mobilecarconnect_data_extraction_rules"
         android:fullBackupContent="false"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
@@ -44,7 +44,7 @@
         android:resizeableActivity="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.CarLink"
+        android:theme="@style/Theme.MobileCarConnect"
         tools:replace="android:name,android:label,android:icon,android:roundIcon,android:theme,android:allowBackup,android:fullBackupContent,android:dataExtractionRules,android:localeConfig">
 
         <activity
@@ -52,7 +52,7 @@
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode"
             android:exported="true"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.CarLink.Starting"
+            android:theme="@style/Theme.MobileCarConnect.Starting"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -77,13 +77,13 @@
 
         <!-- Shares Diagnostics' connection log (cache/shared only); independent of the engines' providers. -->
         <provider
-            android:name=".diagnostics.CarLinkFileProvider"
-            android:authorities="${applicationId}.carlink.files"
+            android:name=".diagnostics.MobileCarConnectFileProvider"
+            android:authorities="${applicationId}.mobilecarconnect.files"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/carlink_file_paths" />
+                android:resource="@xml/mobilecarconnect_file_paths" />
         </provider>
     </application>
 </manifest>

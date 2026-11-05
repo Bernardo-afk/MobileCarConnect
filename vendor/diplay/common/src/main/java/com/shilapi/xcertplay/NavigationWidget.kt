@@ -66,7 +66,7 @@ internal object NavigationWidgetUpdater {
 
     fun views(context: Context, glance: CarPlayGlance.Snapshot): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_navigation)
-        // CarLink: the host's home when CarPlay is not running.
+        // MobileCarConnect: the host's home when CarPlay is not running.
         val open = if (glance.connected) Intent(context, CarPlayScreen.target(context))
             else CarPlayHostIntegration.homeIntent(context)
         views.setOnClickPendingIntent(

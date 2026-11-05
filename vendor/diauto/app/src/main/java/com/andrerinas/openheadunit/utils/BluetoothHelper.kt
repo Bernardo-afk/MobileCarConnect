@@ -115,7 +115,7 @@ object BluetoothHelper {
      * per-device equivalents are system-only. On a head unit paired with one phone that distinction
      * does not arise; where it does, this errs toward reporting a link.
      */
-    fun handsFreeLinkState(context: Context, pokedAddress: String? = null): Boolean? { // CarLink: pokedAddress
+    fun handsFreeLinkState(context: Context, pokedAddress: String? = null): Boolean? { // MobileCarConnect: pokedAddress
         val resolved = try {
             getBluetoothAdapter(context)
         } catch (e: Exception) {
@@ -137,7 +137,7 @@ object BluetoothHelper {
             }
             readAnyState = true
             if (state != BluetoothProfile.STATE_CONNECTED) continue
-            // CarLink: a gateway-role link counts only when it is to the poked phone.
+            // MobileCarConnect: a gateway-role link counts only when it is to the poked phone.
             if (profile == BluetoothProfile.HEADSET && !com.andrerinas.openheadunit.aap.BluetoothWakePolicy
                     .gatewayLinkBlocksPoke(pokedAddress, headsetPeers(context, adapter))) continue
             return true
@@ -146,7 +146,7 @@ object BluetoothHelper {
     }
 
     /**
-     * CarLink: addresses connected to this unit's `HEADSET` (gateway) profile, or null when they
+     * MobileCarConnect: addresses connected to this unit's `HEADSET` (gateway) profile, or null when they
      * cannot be read. Public API, but the proxy arrives on the main thread, so this blocks briefly
      * and must not run there.
      */

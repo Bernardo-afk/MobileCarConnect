@@ -43,7 +43,7 @@ internal class AapMessageIncoming(header: EncryptedHeader, ba: ByteArrayWithLimi
             // The payload length is ba.limit, not ba.data.size: the SSL layer hands back one reused
             // buffer whose length is the session ceiling, so data.size is always large enough and
             // this guard would never fire. Two bytes are needed for the message type read below.
-            // CarLink: only a first or single fragment (flag bit 0) carries the type; a middle or last
+            // MobileCarConnect: only a first or single fragment (flag bit 0) carries the type; a middle or last
             // video fragment is raw payload and may be 1 byte. Rejecting it truncated the frame and
             // glitched the picture until the next keyframe (S25, 2560x1440 HEVC, 2026-10-20).
             if (ba.limit < minimumPayload(header.flags)) {

@@ -200,7 +200,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         remoteMfiServer = remoteMfiServer.trim().takeIf { it.isNotEmpty() },
         remoteMfiToken = remoteMfiToken.takeIf { it.isNotEmpty() },
         identification = Iap2IdentificationConfig(
-            name = CarPlayHostIntegration.accessoryName, // CarLink
+            name = CarPlayHostIntegration.accessoryName, // MobileCarConnect
             modelIdentifier = normalizedModel(),
             manufacturer = normalizedManufacturer(),
             serialNumber = "DIPLAY-" + DiPlayBootstrap.deviceId(airPlayIdentity).replace(":", ""),
@@ -213,14 +213,14 @@ open class CarPlayHostActivity : ComponentActivity() {
             vehicleSpeedEnabled = locationReportingEnabled &&
                 (com.shilapi.xcertplay.hud.BydOutputSettings.wheelSpeedToIphoneActive(this) || EcarxWheelSpeed.present()),
         ),
-        label = CarPlayHostIntegration.accessoryName, // CarLink
+        label = CarPlayHostIntegration.accessoryName, // MobileCarConnect
         hostName = "diplay-" + DiPlayBootstrap.deviceId(airPlayIdentity).replace(":", "").lowercase(),
         hostMac = DiPlayBootstrap.deviceId(airPlayIdentity).split(":").map { it.toInt(16).toByte() }.toByteArray(),
         wirelessBluetoothDeviceAddress = DiPlayPreferences.phoneAddress(this),
         transport = if (wirelessEnabled) CarPlayTransport.WIRELESS else CarPlayTransport.WIRED,
         wirelessHotspotMode = wirelessHotspotMode,
         wifiP2pPreferredChannel = AirPlayPersistence.loadWifiP2pPreferredChannel(this),
-        wifiP2pStableIdentity = CarPlayHostIntegration.wifiP2pStableIdentity // CarLink
+        wifiP2pStableIdentity = CarPlayHostIntegration.wifiP2pStableIdentity // MobileCarConnect
             ?: AirPlayPersistence.loadWifiP2pStableIdentity(this),
         manualHotspotSsid = manualHotspotSsid,
         manualHotspotPassphrase = manualHotspotPassphrase,
@@ -250,7 +250,7 @@ open class CarPlayHostActivity : ComponentActivity() {
                         missingWirelessPermissions().joinToString(",") { it.substringAfterLast('.') }
                 },
             )
-            if (!wirelessPermissionsReady) { // CarLink
+            if (!wirelessPermissionsReady) { // MobileCarConnect
                 CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.PermissionsDenied(
                     requiredWirelessPermissions().filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }))
             }
@@ -754,12 +754,12 @@ open class CarPlayHostActivity : ComponentActivity() {
         }
     }
     private val teardownExecutor: ExecutorService = Executors.newSingleThreadExecutor()
-    // CarLink: this window as HostSessions sees it (CarPlayHostIntegration.hasSession/stopSession).
-    private var carLinkEnded = false
+    // MobileCarConnect: this window as HostSessions sees it (CarPlayHostIntegration.hasSession/stopSession).
+    private var mobileCarConnectEnded = false
     private val sessionHost = object : HostSessions.Host {
-        override val ended: Boolean get() = carLinkEnded || isFinishing || isDestroyed
+        override val ended: Boolean get() = mobileCarConnectEnded || isFinishing || isDestroyed
         override fun end(done: () -> Unit) {
-            carLinkEnded = true
+            mobileCarConnectEnded = true
             shutdown(terminateProcess = false, reason = "host stop", completion = done)
             finish()
         }
@@ -886,11 +886,11 @@ open class CarPlayHostActivity : ComponentActivity() {
             AirPlayPersistence.saveWirelessEnabled(this, false)
         }
         if (runCatching { DiPlayBootstrap.ensure(this, AirPlayPersistence.loadMfiTarget(this)) }.isFailure) {
-            CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.AuthenticationUnavailable) // CarLink
-            OwnScreenStart.start(this, CarPlayHostIntegration.homeIntent(this), ::appendLog) // CarLink
+            CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.AuthenticationUnavailable) // MobileCarConnect
+            OwnScreenStart.start(this, CarPlayHostIntegration.homeIntent(this), ::appendLog) // MobileCarConnect
             finish(); return
         }
-        HostSessions.opened(sessionHost) // CarLink
+        HostSessions.opened(sessionHost) // MobileCarConnect
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         getSystemService(android.hardware.display.DisplayManager::class.java)
             ?.registerDisplayListener(clusterDisplayListener, mainHandler)
@@ -1099,7 +1099,7 @@ open class CarPlayHostActivity : ComponentActivity() {
             maybeStartCarPlay()
         } else {
             setStatus(R.string.vpn_consent_was_denied)
-            CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.VpnConsentDenied) // CarLink
+            CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.VpnConsentDenied) // MobileCarConnect
         }
     }
 
@@ -1113,7 +1113,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         appendLog(diagnostic)
         setStatus(R.string.vpn_authorization_unavailable)
         if (!vpnAdbConsentTried) preConsentVpnOverAdb()
-        else CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.VpnConsentDenied) // CarLink
+        else CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.VpnConsentDenied) // MobileCarConnect
     }
 
     /** Without a consent dialog, the car's approved adb can allow the VPN instead (#604). */
@@ -1130,7 +1130,7 @@ open class CarPlayHostActivity : ComponentActivity() {
                     vpnReady = true
                     maybeStartCarPlay()
                 } else if (!granted) {
-                    // CarLink: neither the dialog nor adb could allow the VPN.
+                    // MobileCarConnect: neither the dialog nor adb could allow the VPN.
                     CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.VpnConsentDenied)
                     if (!awaitingVpnConsent && !wirelessEnabled) {
                         setStatus(VpnPreConsent.stage(access))
@@ -1695,7 +1695,7 @@ open class CarPlayHostActivity : ComponentActivity() {
 
     // Hardware navigation belongs to the iPhone-rendered CarPlay UI, not Android View focus.
     override fun dispatchKeyEvent(original: KeyEvent): Boolean {
-        val event = CarPlayHostIntegration.remapKey(original) // CarLink: learned steering-wheel keys
+        val event = CarPlayHostIntegration.remapKey(original) // MobileCarConnect: learned steering-wheel keys
         val physicalKey = Triple(event.deviceId, event.keyCode, event.scanCode)
         val downOrUp = event.action == KeyEvent.ACTION_DOWN || event.action == KeyEvent.ACTION_UP
         if (downOrUp && physicalKey in legacySiriPresses) {
@@ -2036,7 +2036,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         sessionLog?.close()
         sessionLog = null
         super.onDestroy()
-        HostSessions.closed(sessionHost) // CarLink
+        HostSessions.closed(sessionHost) // MobileCarConnect
     }
 
     private fun buildContentView(): View {
@@ -2057,14 +2057,14 @@ open class CarPlayHostActivity : ComponentActivity() {
         }
         root.addView(gestureLayer, FrameLayout.LayoutParams(-1, -1))
         // Measure the preparation content naturally, then fit it inside the safe viewport.
-        // CarLink: the host's own waiting view replaces DiPlay's panel (CarPlayHostIntegration.waitingView).
+        // MobileCarConnect: the host's own waiting view replaces DiPlay's panel (CarPlayHostIntegration.waitingView).
         val hostWaiting = CarPlayHostIntegration.waitingView?.let { factory ->
             runCatching { factory(this) }.onFailure { Log.w(TAG, "host waiting view failed", it) }.getOrNull()
         }
         val viewport = object : FrameLayout(this) {
             override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
                 super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-                if (hostWaiting != null) return // CarLink: full-bleed host view keeps its own measure
+                if (hostWaiting != null) return // MobileCarConnect: full-bleed host view keeps its own measure
                 getChildAt(0)?.measure(
                     View.MeasureSpec.makeMeasureSpec((measuredWidth - paddingLeft - paddingRight).coerceAtLeast(0), View.MeasureSpec.EXACTLY),
                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
@@ -2113,7 +2113,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         val retry = DiPlayButton(this).apply {
             text = getString(R.string.retry_carplay_connection)
             visibility = View.GONE
-            setOnClickListener { manualRetry() } // CarLink: shared with CarPlayHostIntegration.retryNow
+            setOnClickListener { manualRetry() } // MobileCarConnect: shared with CarPlayHostIntegration.retryNow
             startupRetryButton = this
         }
         panel.addView(retry, LinearLayout.LayoutParams(dp(300), dp(64)).apply { bottomMargin = dp(12) })
@@ -2140,10 +2140,10 @@ open class CarPlayHostActivity : ComponentActivity() {
             back.style(DiPlayButtonKind.PRIMARY, buttonPalette, overlay = false)
             retry.style(DiPlayButtonKind.SECONDARY, buttonPalette, overlay = false)
             recovery.style(DiPlayButtonKind.SECONDARY, buttonPalette, overlay = false)
-            if (hostWaiting == null) CarPlayHostIntegration.styleChrome(viewport, CarPlayHostIntegration.Chrome.WAITING, appNight) // CarLink
+            if (hostWaiting == null) CarPlayHostIntegration.styleChrome(viewport, CarPlayHostIntegration.Chrome.WAITING, appNight) // MobileCarConnect
         }
         paintWaitingScreen()
-        if (hostWaiting != null) { // CarLink
+        if (hostWaiting != null) { // MobileCarConnect
             viewport.addView(hostWaiting, FrameLayout.LayoutParams(-1, -1))
         } else {
             viewport.addView(panel, FrameLayout.LayoutParams(-1, -2, Gravity.CENTER))
@@ -2205,7 +2205,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         }
         ViewCompat.setOnApplyWindowInsetsListener(viewport) { _, insets ->
             val safe = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-            // CarLink: a host waiting view is full-bleed and handles insets itself.
+            // MobileCarConnect: a host waiting view is full-bleed and handles insets itself.
             if (hostWaiting == null) viewport.setPadding(safe.left, safe.top, safe.right, safe.bottom)
             viewport.post { updatePreparationLayout() }
             insets
@@ -2269,7 +2269,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         }
         contents.addView(sidePanelBattery)
         contents.addView(buildSidePanelTyres())
-        CarPlayHostIntegration.styleChrome(panel, CarPlayHostIntegration.Chrome.SIDE_PANEL, appNight) // CarLink
+        CarPlayHostIntegration.styleChrome(panel, CarPlayHostIntegration.Chrome.SIDE_PANEL, appNight) // MobileCarConnect
         return panel
     }
 
@@ -2778,7 +2778,7 @@ open class CarPlayHostActivity : ComponentActivity() {
 
     // Tyres through the head unit's adb shell; the reader stops by itself where there is no BYD autoservice.
     private fun startSidePanelTyres() {
-        // CarLink: BYD only; elsewhere the poll would open an ADB shell for a service that is not there.
+        // MobileCarConnect: BYD only; elsewhere the poll would open an ADB shell for a service that is not there.
         if (!CarPlayHostIntegration.vehicleIntegrations) return
         com.shilapi.xcertplay.hud.BydTyreStatus.start(this)
     }
@@ -2890,12 +2890,12 @@ open class CarPlayHostActivity : ComponentActivity() {
             (sidePanelTyres?.getChildAt(0) as? TextView)?.setTextColor(SIDE_PANEL_SECONDARY)
         }
         (picturePanel as? CarPlayPicturePanel)?.applyPalette(overlayPalette)
-        CarPlayHostIntegration.styleChrome(safeAreaEditor, CarPlayHostIntegration.Chrome.SAFE_AREA_EDITOR, appNight) // CarLink
-        CarPlayHostIntegration.styleChrome(sidePanel, CarPlayHostIntegration.Chrome.SIDE_PANEL, appNight) // CarLink
-        CarPlayHostIntegration.styleChrome(picturePanel, CarPlayHostIntegration.Chrome.PICTURE_PANEL, appNight) // CarLink
+        CarPlayHostIntegration.styleChrome(safeAreaEditor, CarPlayHostIntegration.Chrome.SAFE_AREA_EDITOR, appNight) // MobileCarConnect
+        CarPlayHostIntegration.styleChrome(sidePanel, CarPlayHostIntegration.Chrome.SIDE_PANEL, appNight) // MobileCarConnect
+        CarPlayHostIntegration.styleChrome(picturePanel, CarPlayHostIntegration.Chrome.PICTURE_PANEL, appNight) // MobileCarConnect
     }
 
-    // CarLink: leaves out the menu sections the host owns (CarPlayHostIntegration.menuItems).
+    // MobileCarConnect: leaves out the menu sections the host owns (CarPlayHostIntegration.menuItems).
     private fun <V : View> V.menuItem(vararg items: CarPlayHostIntegration.MenuItem): V = apply {
         if (items.none { it in CarPlayHostIntegration.menuItems }) visibility = View.GONE
     }
@@ -3111,7 +3111,7 @@ open class CarPlayHostActivity : ComponentActivity() {
             ).apply { topMargin = dp(12) },
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && CarHotspotSetup.isBydHeadUnit(this) &&
-            com.shilapi.xcertplay.hud.VehicleIntegrations.enabled) { // CarLink: BYD only
+            com.shilapi.xcertplay.hud.VehicleIntegrations.enabled) { // MobileCarConnect: BYD only
             content.addView(settingsSwitchRow(
                 label = getString(R.string.settings_hide_byd_call_popup),
                 checked = hideBydCallPopup,
@@ -3279,7 +3279,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         )
 
         val preview = menuText("", 17f, MENU_SECONDARY)
-            .menuItem(CarPlayHostIntegration.MenuItem.SETTINGS_SUMMARY) // CarLink
+            .menuItem(CarPlayHostIntegration.MenuItem.SETTINGS_SUMMARY) // MobileCarConnect
         content.addView(
             preview,
             LinearLayout.LayoutParams(
@@ -3353,11 +3353,11 @@ open class CarPlayHostActivity : ComponentActivity() {
             }
         }
         gestureButton.text = settingsGestureButtonText()
-        gestureButton.menuItem(CarPlayHostIntegration.MenuItem.GESTURE_FINGERS) // CarLink
+        gestureButton.menuItem(CarPlayHostIntegration.MenuItem.GESTURE_FINGERS) // MobileCarConnect
         pageFor("vehicle").addView(gestureButton, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
 
         val openDiPlaySettingsButton = DiPlayButton(this).apply {
-            // CarLink: a host's home has no DiPlay settings page; the button says where it goes.
+            // MobileCarConnect: a host's home has no DiPlay settings page; the button says where it goes.
             text = if (CarPlayHostIntegration.homeActivity == DiPlayActivity::class.java) {
                 "${getString(R.string.app_name)} ${getString(R.string.settings)}"
             } else getString(R.string.back_to_diplay)
@@ -3386,14 +3386,14 @@ open class CarPlayHostActivity : ComponentActivity() {
         )
 
         val pageHost = FrameLayout(this)
-        // CarLink: a page whose every section the host left out (CarPlayHostIntegration.menuItems)
+        // MobileCarConnect: a page whose every section the host left out (CarPlayHostIntegration.menuItems)
         // would show only its header; it gets no rail or chip button, as the old headers were hidden.
         val shownCategories = categories.filter { (key, _) ->
             val page = pages.getValue(key)
             (1 until page.childCount).any { page.getChildAt(it).visibility != View.GONE }
         }.ifEmpty { categories.take(1) }
         val selectedPage = settingsMenuCategoryKey.takeIf { key -> shownCategories.any { it.first == key } }
-            ?: shownCategories.first().first // CarLink: was pages::containsKey / "connection"
+            ?: shownCategories.first().first // MobileCarConnect: was pages::containsKey / "connection"
         settingsMenuCategoryKey = selectedPage
         pages.forEach { (key, page) ->
             page.visibility = if (key == selectedPage) View.VISIBLE else View.GONE
@@ -3443,7 +3443,7 @@ open class CarPlayHostActivity : ComponentActivity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(SWIPE_CHROME_PADDING_DP), dp(SWIPE_CHROME_PADDING_DP),
                 dp(SWIPE_CHROME_PADDING_DP), dp(SWIPE_CHROME_PADDING_DP))
-            shownCategories.forEach { (key, title) -> // CarLink: shownCategories
+            shownCategories.forEach { (key, title) -> // MobileCarConnect: shownCategories
                 addView(categoryButton(key, title), LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
                     bottomMargin = dp(SWIPE_ACTION_GAP_DP)
@@ -3459,7 +3459,7 @@ open class CarPlayHostActivity : ComponentActivity() {
             orientation = LinearLayout.HORIZONTAL
             setPadding(dp(SWIPE_CHROME_PADDING_DP), dp(SWIPE_ACTION_GAP_DP),
                 dp(SWIPE_CHROME_PADDING_DP), dp(SWIPE_ACTION_GAP_DP))
-            shownCategories.forEach { (key, title) -> // CarLink: shownCategories
+            shownCategories.forEach { (key, title) -> // MobileCarConnect: shownCategories
                 addView(categoryButton(key, title), LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
                     marginEnd = dp(SWIPE_ACTION_GAP_DP)
@@ -3469,7 +3469,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         chips = object : HorizontalScrollView(this) {
             override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
                 super.onLayout(changed, left, top, right, bottom)
-                val selectedIndex = shownCategories.indexOfFirst { it.first == settingsMenuCategoryKey } // CarLink
+                val selectedIndex = shownCategories.indexOfFirst { it.first == settingsMenuCategoryKey } // MobileCarConnect
                 if (selectedIndex >= 0) {
                     scrollTo((chipRow.getChildAt(selectedIndex).left - dp(SWIPE_CHROME_PADDING_DP))
                         .coerceAtLeast(0), 0)
@@ -3566,7 +3566,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         this.hotspotStatusView = hotspotStatusView
         updateHotspotStatusBlock()
         updateResolutionMenu()
-        CarPlayHostIntegration.styleChrome(overlay, CarPlayHostIntegration.Chrome.MENU, appNight) // CarLink
+        CarPlayHostIntegration.styleChrome(overlay, CarPlayHostIntegration.Chrome.MENU, appNight) // MobileCarConnect
         return overlay
     }
 
@@ -4437,7 +4437,7 @@ open class CarPlayHostActivity : ComponentActivity() {
             ),
         )
         safeAreaEditorView = editor
-        CarPlayHostIntegration.styleChrome(overlay, CarPlayHostIntegration.Chrome.SAFE_AREA_EDITOR, appNight) // CarLink
+        CarPlayHostIntegration.styleChrome(overlay, CarPlayHostIntegration.Chrome.SAFE_AREA_EDITOR, appNight) // MobileCarConnect
         return overlay
     }
 
@@ -5032,7 +5032,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         }
         if (smallerUiFallback || resolutionFallback) {
             runOnUiThread {
-                CarPlayHostIntegration.showToast(this, // CarLink
+                CarPlayHostIntegration.showToast(this, // MobileCarConnect
                     getString(if (resolutionFallback) R.string.resolution_canvas_unsupported
                         else R.string.this_head_unit_cannot_use_the_smaller_size_at_this_resolut),
                     android.widget.Toast.LENGTH_LONG)
@@ -5134,7 +5134,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         val carBluetoothAudio = AirPlayPersistence.loadCarBluetoothAudio(this)
         if (carBluetoothAudio) logCarBluetoothAudio()
         return AirPlayConfig(
-            deviceName = CarPlayHostIntegration.accessoryName, // CarLink
+            deviceName = CarPlayHostIntegration.accessoryName, // MobileCarConnect
             deviceId = DiPlayBootstrap.deviceId(airPlayIdentity),
             btMac = DiPlayBluetooth.localAddress(this) ?: DiPlayBootstrap.deviceId(airPlayIdentity),
             sourceVersion = "950.7.1",
@@ -5203,7 +5203,7 @@ open class CarPlayHostActivity : ComponentActivity() {
 
     private fun defaultAirPlayIconBytes(): ByteArray =
         // Shown in CarPlay's app list as the "back to the car" button.
-        // CarLink: the BYD logo only on a BYD (vehicleIntegrations); every other car gets CarLink's icon.
+        // MobileCarConnect: the BYD logo only on a BYD (vehicleIntegrations); every other car gets MobileCarConnect's icon.
         resources.openRawResource(AirPlayIconSizing.packagedIcon(CarPlayHostIntegration.vehicleIntegrations)).use { it.readBytes() }
 
     private fun updateAirPlayIconPreview() {
@@ -5441,7 +5441,7 @@ open class CarPlayHostActivity : ComponentActivity() {
                     if (firstFrame) appendLog("Main video first frame rendered; cluster output may start")
                     ensureClusterPresentation()
                     if (!firstFrame) return@runOnUiThread
-                    CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.FirstFrame) // CarLink
+                    CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.FirstFrame) // MobileCarConnect
                     mainHandler.postDelayed({
                         if (controllerGeneration == restartGeneration && activeAirPlaySession === session &&
                             !shuttingDown.get() && CarPlayBackgroundSession.isOwner(this@CarPlayHostActivity) &&
@@ -5561,7 +5561,7 @@ open class CarPlayHostActivity : ComponentActivity() {
                     if (startupFailureGeneration == controllerGeneration) return@report
                     startupFailureGeneration = controllerGeneration
                 }
-                reconnectAfterLoss(description, status.startupFailure, englishDescription, status) // CarLink: status
+                reconnectAfterLoss(description, status.startupFailure, englishDescription, status) // MobileCarConnect: status
             }
             else -> Unit
         }
@@ -5779,7 +5779,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         } catch (error: RuntimeException) {
             appendLog("Connection could not start: ${error.javaClass.simpleName}")
             shutdown(false, "foreground service could not start")
-            CarPlayHostIntegration.publishHostState( // CarLink
+            CarPlayHostIntegration.publishHostState( // MobileCarConnect
                 CarPlayHostIntegration.HostState.ForegroundServiceFailed(error.message ?: error.javaClass.simpleName))
             setConnectionStage(R.string.could_not_start_carplay_return_to_diplay_and_check_app_per)
         }
@@ -5856,7 +5856,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         }
         pendingDisplaySize = size
         // With a turning screen's square canvas nothing reconnects, so the turn need not wait for the size to settle.
-        // CarLink: the first size has nothing to settle; only later changes are debounced (0.5 s per start).
+        // MobileCarConnect: the first size has nothing to settle; only later changes are debounced (0.5 s per start).
         mainHandler.postDelayed(applyDisplaySize,
             if (sessionDisplay?.viewAreas?.turnsWithScreen == true || activeDisplaySize == null) 0L
             else DISPLAY_CHANGE_DEBOUNCE_MILLIS)
@@ -6091,7 +6091,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         startCarPlay(size)
     }
 
-    /** CarLink: an RFCOMM dial to the iPhone that got no answer (see [reconnectAfterLoss]). */
+    /** MobileCarConnect: an RFCOMM dial to the iPhone that got no answer (see [reconnectAfterLoss]). */
     private fun isBluetoothDialFailure(reason: String): Boolean =
         reason.contains("socket might closed", ignoreCase = true) ||
             reason.contains("RFCOMM", ignoreCase = true) ||
@@ -6101,7 +6101,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         reason: String,
         startupFailure: WirelessStartupFailure? = null,
         englishReason: String = reason,
-        failure: CarPlayStatus.Failed? = null, // CarLink: for HostState
+        failure: CarPlayStatus.Failed? = null, // MobileCarConnect: for HostState
         knownCause: ConnectionFailureCause? = failure?.knownCause,
     ) {
         if (!CarPlayBackgroundSession.isOwner(this)) return
@@ -6129,7 +6129,7 @@ open class CarPlayHostActivity : ComponentActivity() {
                     "$englishReason\n${englishResources.getString(R.string.wireless_startup_retries_exhausted)}")
             }
             appendLog("wireless startup recovery stopped generation=$restartGeneration reason=$startupFailure retries=${startupRetryBudget.retries}")
-            CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.RetriesStopped( // CarLink
+            CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.RetriesStopped( // MobileCarConnect
                 failure, startupFailure, startupRetryBudget.retries,
                 exhausted = startupFailure.retryable)) // 0.2.19: BLUETOOTH_UNUSABLE is not retried either
             return
@@ -6143,7 +6143,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         } else if (reason.contains("AirPlay iAP tunnel", ignoreCase = true)) {
             IAP_TUNNEL_RECONNECT_DELAY_MILLIS
         } else if (isBluetoothDialFailure(englishReason) && reconnectAttempts < BLUETOOTH_QUICK_RETRIES) {
-            // CarLink: the iPhone not answering the RFCOMM dial ("read failed, socket might
+            // MobileCarConnect: the iPhone not answering the RFCOMM dial ("read failed, socket might
             // closed or timeout") costs ~5 s per try and often succeeds on the next one; the
             // doubling backoff turned four misses into ~55 s on the user's tablet (2026-10-09).
             BLUETOOTH_RETRY_DELAY_MILLIS
@@ -6152,7 +6152,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         }
         reconnectAttempts += 1
         appendLog("$reason; retrying in ${delayMillis}ms generation=$generation startupFailure=$startupFailure startupRetries=${startupRetryBudget.retries}")
-        CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.Retrying( // CarLink
+        CarPlayHostIntegration.publishHostState(CarPlayHostIntegration.HostState.Retrying( // MobileCarConnect
             attempt = if (startupDelay != null) startupRetryBudget.retries else reconnectAttempts,
             maxAttempts = if (startupDelay != null) WirelessStartupPolicy.MAX_STARTUP_RETRIES else null,
             delayMillis = delayMillis, failure = failure, reason = englishReason))
@@ -6184,7 +6184,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         mainHandler.postDelayed(retry, delayMillis)
     }
 
-    /** The waiting screen's Retry after startup recovery stopped. CarLink: a function for retryNow. */
+    /** The waiting screen's Retry after startup recovery stopped. MobileCarConnect: a function for retryNow. */
     private fun manualRetry(): Boolean {
         if (!CarPlayBackgroundSession.isOwner(this@CarPlayHostActivity) ||
             shuttingDown.get() || menuOpen || handshakeResetInProgress) return false
@@ -6247,7 +6247,7 @@ open class CarPlayHostActivity : ComponentActivity() {
 
     private fun showDiPlayHome(page: String = "home") {
         releaseCarPlayTouches()
-        OwnScreenStart.start(this, CarPlayHostIntegration.homeIntent(this, page) // CarLink
+        OwnScreenStart.start(this, CarPlayHostIntegration.homeIntent(this, page) // MobileCarConnect
             .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT), ::appendLog)
     }
 
@@ -6306,7 +6306,7 @@ open class CarPlayHostActivity : ComponentActivity() {
                 topMargin = dp(12); marginEnd = dp(12)
             })
             picturePanel = panel
-            CarPlayHostIntegration.styleChrome(panel, CarPlayHostIntegration.Chrome.PICTURE_PANEL, appNight) // CarLink
+            CarPlayHostIntegration.styleChrome(panel, CarPlayHostIntegration.Chrome.PICTURE_PANEL, appNight) // MobileCarConnect
         }
     }
 
@@ -6415,7 +6415,7 @@ open class CarPlayHostActivity : ComponentActivity() {
 
     private fun shutdown(terminateProcess: Boolean, reason: String, completion: () -> Unit = {}) {
         if (!shuttingDown.compareAndSet(false, true)) { completion(); return }
-        HostSessions.teardownStarted() // CarLink
+        HostSessions.teardownStarted() // MobileCarConnect
         callPopupSessionReady = false
         updateCallPopupGuard()
         resetSidePanel()
@@ -6434,10 +6434,10 @@ open class CarPlayHostActivity : ComponentActivity() {
         discardLastPicture()
         Log.i(TAG, "shutdown reason=$reason terminateProcess=$terminateProcess")
         teardownExecutor.execute {
-            val teardownStarted = System.nanoTime() // CarLink: teardown duration
+            val teardownStarted = System.nanoTime() // MobileCarConnect: teardown duration
             oldController?.close()
             val clean = oldController?.awaitClosed(CONTROLLER_CLOSE_TIMEOUT_MILLIS) ?: true
-            Log.i(TAG, "shutdown controller closed clean=$clean elapsedMs=${(System.nanoTime() - teardownStarted) / 1_000_000L}") // CarLink
+            Log.i(TAG, "shutdown controller closed clean=$clean elapsedMs=${(System.nanoTime() - teardownStarted) / 1_000_000L}") // MobileCarConnect
             oldSink?.let(::closeRetiringSink)
             airPlayCommandExecutor.shutdown()
             if (terminateProcess) {
@@ -6446,7 +6446,7 @@ open class CarPlayHostActivity : ComponentActivity() {
             Log.i(TAG, "shutdown complete clean=$clean")
             applicationContext.stopService(Intent(applicationContext, DiPlaySessionService::class.java))
             teardownExecutor.shutdown()
-            mainHandler.post { HostSessions.teardownFinished(); completion() } // CarLink: teardown accounting
+            mainHandler.post { HostSessions.teardownFinished(); completion() } // MobileCarConnect: teardown accounting
             if (terminateProcess) Process.killProcess(Process.myPid())
         }
     }
@@ -6796,7 +6796,7 @@ open class CarPlayHostActivity : ComponentActivity() {
     }
 
     private fun shouldHideBydCallPopup(): Boolean =
-        com.shilapi.xcertplay.hud.VehicleIntegrations.enabled && // CarLink: BYD only
+        com.shilapi.xcertplay.hud.VehicleIntegrations.enabled && // MobileCarConnect: BYD only
         hostAppearanceResumed && callPopupSessionReady && !menuOpen && !shuttingDown.get() &&
             !handshakeResetInProgress && !reconnectScheduled && CarPlayBackgroundSession.active &&
             CarPlayBackgroundSession.isOwner(this) && AirPlayPersistence.loadHideBydCallPopup(this)
@@ -7052,7 +7052,7 @@ open class CarPlayHostActivity : ComponentActivity() {
         const val DISPLAY_CHANGE_DEBOUNCE_MILLIS = 500L
         const val CONFIGURATION_POLL_INTERVAL_MILLIS = 2_000L
         const val RECONNECT_DELAY_MILLIS = 2_000L
-        // CarLink: quick retries for an unanswered Bluetooth dial (isBluetoothDialFailure).
+        // MobileCarConnect: quick retries for an unanswered Bluetooth dial (isBluetoothDialFailure).
         const val BLUETOOTH_RETRY_DELAY_MILLIS = 1_500L
         const val BLUETOOTH_QUICK_RETRIES = 8
         const val IAP_TUNNEL_RECONNECT_DELAY_MILLIS = 15_000L

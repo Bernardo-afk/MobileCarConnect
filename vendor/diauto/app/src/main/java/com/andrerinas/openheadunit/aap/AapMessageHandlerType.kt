@@ -59,7 +59,7 @@ internal class AapMessageHandlerType(
 
         // 2. Try processing as Audio stream (Speech, System, Media)
         if (message.isAudio) {
-            // CarLink (open-headunit 293361c6): a media message owns one credit even when decoding
+            // MobileCarConnect (open-headunit 293361c6): a media message owns one credit even when decoding
             // or the PCM handoff throws. The reader catches the exception and moves on, so acking
             // only on success left the credit outstanding and the phone's audio window shrank.
             // The ACK retires receipt, not playback.

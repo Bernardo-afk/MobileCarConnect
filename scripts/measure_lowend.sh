@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Measures a CarLink release APK on one of CarLink's own low-end emulators
+# Measures a MobileCarConnect release APK on one of MobileCarConnect's own low-end emulators
 # (docs/LOW_END_PERFORMANCE.md, "Method"). Emulator only: refuses any device whose AVD name is not
-# carlink_lowend or carlink_uis8581.
+# mobilecarconnect_lowend or mobilecarconnect_uis8581.
 #
 #   scripts/measure_lowend.sh <serial> <apk> [label] [compile]
 #
 #   serial   e.g. emulator-5562
-#   apk      the release APK (built with -Pcarlink.emulatorAbi=true)
+#   apk      the release APK (built with -Pmobilecarconnect.emulatorAbi=true)
 #   label    a name for the output (default: run)
-#   CARLINK_RENDERING=Full|Lite  sets Settings › General › Visual effects before measuring
+#   MOBILECARCONNECT_RENDERING=Full|Lite  sets Settings › General › Visual effects before measuring
 #            (default: Automatic, what the device resolves it to)
 #   compile  speed-profile (default: the APK's baseline profile, as ProfileInstaller + background
 #            dexopt leave it) or verify (no AOT code: a fresh sideload before any dexopt)
@@ -17,23 +17,23 @@
 set -euo pipefail
 
 SERIAL="${1:?serial}"; APK="${2:?apk}"; LABEL="${3:-run}"; COMPILE="${4:-speed-profile}"
-PKG="${CARLINK_MEASURE_PKG:-com.carlink.app}"
+PKG="${MOBILECARCONNECT_MEASURE_PKG:-com.mobilecarconnect.app}"
 ADB="$HOME/android-sdk/platform-tools/adb"
 OUT="${OUT:-build/lowend/$LABEL}"
 mkdir -p "$OUT"
 a() { "$ADB" -s "$SERIAL" "$@"; }
 
 avd="$(a emu avd name 2>/dev/null | head -1 | tr -d '\r')"
-case "$avd" in carlink_lowend|carlink_uis8581) ;; *) echo "refusing $SERIAL (AVD '$avd' is not a CarLink low-end AVD)" >&2; exit 2 ;; esac
+case "$avd" in mobilecarconnect_lowend|mobilecarconnect_uis8581) ;; *) echo "refusing $SERIAL (AVD '$avd' is not a MobileCarConnect low-end AVD)" >&2; exit 2 ;; esac
 echo "device $SERIAL avd=$avd $(a shell wm size | tail -1 | tr -d '\r') $(a shell wm density | tail -1 | tr -d '\r')"
 
 # Taps the centre of the first node whose text or content description is exactly $1
 # (find_text only checks that it is on screen).
-find_text() { CARLINK_FIND_ONLY=1 tap_text "$1"; }
+find_text() { MOBILECARCONNECT_FIND_ONLY=1 tap_text "$1"; }
 tap_text() {
-  a shell uiautomator dump /sdcard/carlink-ui.xml >/dev/null 2>&1 || true
+  a shell uiautomator dump /sdcard/mobilecarconnect-ui.xml >/dev/null 2>&1 || true
   local xy
-  xy="$(a exec-out cat /sdcard/carlink-ui.xml | python3 -I -c '
+  xy="$(a exec-out cat /sdcard/mobilecarconnect-ui.xml | python3 -I -c '
 import re, sys
 want = sys.argv[1]
 xml = sys.stdin.read()
@@ -44,8 +44,8 @@ for m in re.finditer(r"<node [^>]*>", xml):
         b = re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", n)
         x1, y1, x2, y2 = map(int, b.groups()); print((x1 + x2) // 2, (y1 + y2) // 2); break
 ' "$1")"
-  [ -n "$xy" ] || { [ -n "${CARLINK_FIND_ONLY:-}" ] || echo "no node '$1' on screen" >&2; return 1; }
-  [ -n "${CARLINK_FIND_ONLY:-}" ] || a shell input tap $xy
+  [ -n "$xy" ] || { [ -n "${MOBILECARCONNECT_FIND_ONLY:-}" ] || echo "no node '$1' on screen" >&2; return 1; }
+  [ -n "${MOBILECARCONNECT_FIND_ONLY:-}" ] || a shell input tap $xy
 }
 
 frames() { # label: summary line from gfxinfo
@@ -64,15 +64,15 @@ PY
 
 a uninstall "$PKG" >/dev/null 2>&1 || true
 a install -g "$APK" | tail -1
-a shell am start -W -n "$PKG/com.carlink.app.ui.HomeActivity" >/dev/null
+a shell am start -W -n "$PKG/com.mobilecarconnect.app.ui.HomeActivity" >/dev/null
 sleep 4
 # First launch shows the setup over Home: skip it once, like a driver would.
 tap_text "Skip setup" 2>/dev/null && sleep 2 || true
-if [ -n "${CARLINK_RENDERING:-}" ]; then
+if [ -n "${MOBILECARCONNECT_RENDERING:-}" ]; then
   tap_text "Settings"; sleep 2; tap_text "General"; sleep 1.5; tap_text "Visual effects"; sleep 1.5
-  tap_text "$CARLINK_RENDERING"; sleep 1; a shell input keyevent KEYCODE_BACK; sleep 1
+  tap_text "$MOBILECARCONNECT_RENDERING"; sleep 1; a shell input keyevent KEYCODE_BACK; sleep 1
   a shell input keyevent KEYCODE_BACK; sleep 1; a shell input keyevent KEYCODE_BACK; sleep 1
-  echo "visual effects set to $CARLINK_RENDERING"
+  echo "visual effects set to $MOBILECARCONNECT_RENDERING"
 fi
 # What ProfileInstaller does on a sideloaded install, then what background dexopt does.
 a shell am broadcast -a androidx.profileinstaller.action.INSTALL_PROFILE -n "$PKG/androidx.profileinstaller.ProfileInstallReceiver" >/dev/null || true
@@ -85,7 +85,7 @@ a shell dumpsys package dexopt | grep -A3 "\[$PKG\]" | grep -o "status=[a-z-]*" 
 times=()
 for i in $(seq 1 10); do
   a shell am force-stop "$PKG"; sleep 2
-  t="$(a shell am start -W -S -n "$PKG/com.carlink.app.ui.HomeActivity" | tr -d '\r' | awk '/TotalTime/ {print $2}')"
+  t="$(a shell am start -W -S -n "$PKG/com.mobilecarconnect.app.ui.HomeActivity" | tr -d '\r' | awk '/TotalTime/ {print $2}')"
   times+=("$t")
 done
 echo "${times[*]}" > "$OUT/coldstart.txt"

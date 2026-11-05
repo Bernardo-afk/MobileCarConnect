@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CarLink logo generator.
+"""MobileCarConnect logo generator.
 
 Every concept is defined once, as a list of simple stroked/filled paths on the 108x108
 adaptive-icon canvas (safe zone 21..87). From that single definition this script writes:
@@ -20,7 +20,7 @@ import os
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # Preview-only wordmark font, referenced relative to design/logo/{concepts,previews}/.
-FONT_URL = "../../../app/src/main/res/font/carlink_inter_semibold.ttf"
+FONT_URL = "../../../app/src/main/res/font/mobilecarconnect_inter_semibold.ttf"
 
 # Graphite and Ion tokens (design/RESEARCH_PREMIUM_UX.md section 6.1)
 DARK = dict(bg="#0C1016", primary="#EEF2F6", accent="#5BD6F0", text="#EEF2F6", sub="#A9B3C0")
@@ -61,7 +61,7 @@ def rrect(x, y, w, h, r):
 
 def concept_orbit():
     # A heavy dial ring (the car: steering wheel / instrument dial) left open at 1-2 o'clock,
-    # where a solid node (the phone) docks. Reads as a "C" for CarLink.
+    # where a solid node (the phone) docks. Reads as a "C" for MobileCarConnect.
     cx, cy, r, w = 54, 54, 21.5, 10
     gap_c, gap = -45, 86            # gap centre angle and width (deg)
     a0 = gap_c + gap / 2
@@ -123,7 +123,7 @@ def concept_cast():
 CONCEPTS = [
     ("orbit", "Orbit", concept_orbit,
      "A heavy dial ring (the car: steering wheel, instrument dial) left open at the 1:30 position, "
-     "where a solid Ion node (the phone) docks. The ring also reads as a C for CarLink."),
+     "where a solid Ion node (the phone) docks. The ring also reads as a C for MobileCarConnect."),
     ("ligature", "CL Ligature", concept_ligature,
      "One continuous stroke: a C whose lower terminal runs out flat as an L. The curve is the car, "
      "the Ion run is the road and the link to the phone. A typemelt monogram."),
@@ -184,7 +184,7 @@ def svg_doc(body, vb="0 0 108 108", w=108, h=108, extra=""):
             f'{extra}  {body}\n</svg>\n')
 
 
-FONT_FACE = ('<defs><style>@font-face{font-family:"CarLinkInter";'
+FONT_FACE = ('<defs><style>@font-face{font-family:"MobileCarConnectInter";'
              f'src:url("{FONT_URL}") format("truetype");font-weight:600;}}</style></defs>\n')
 
 
@@ -192,8 +192,8 @@ def lockup(els, colors, bg=False):
     # icon mark (cropped region 21..87) + wordmark. Height 66 units.
     rect = f'<rect width="300" height="86" fill="{colors["bg"]}"/>\n  ' if bg else ""
     body = (rect + f'<g transform="translate(-11,-11)">\n  {svg_elements(els, colors)}\n  </g>\n  '
-            f'<text x="88" y="56" font-family="CarLinkInter, Inter, sans-serif" font-weight="600" '
-            f'font-size="40" letter-spacing="-0.6" fill="{colors["text"]}">CarLink</text>')
+            f'<text x="88" y="56" font-family="MobileCarConnectInter, Inter, sans-serif" font-weight="600" '
+            f'font-size="40" letter-spacing="-0.6" fill="{colors["text"]}">MobileCarConnect</text>')
     return svg_doc(body, vb="0 0 300 86", w=600, h=172, extra=FONT_FACE)
 
 
@@ -302,8 +302,8 @@ def board_html(cid, name, els, rationale):
     themed_html = "".join(masked(mono_svg(fg, bgc), 96, "circle") for bgc, fg in themed)
 
     return f"""<!doctype html><html><head><meta charset="utf-8"><style>
-@font-face{{font-family:"CarLinkInter";src:url("{FONT_URL}") format("truetype");font-weight:600}}
-body{{margin:0;background:#07090D;font-family:CarLinkInter,sans-serif;color:#EEF2F6;width:1600px;height:1000px;overflow:hidden}}
+@font-face{{font-family:"MobileCarConnectInter";src:url("{FONT_URL}") format("truetype");font-weight:600}}
+body{{margin:0;background:#07090D;font-family:MobileCarConnectInter,sans-serif;color:#EEF2F6;width:1600px;height:1000px;overflow:hidden}}
 .wrap{{display:grid;grid-template-columns:520px 1fr;height:1000px}}
 .l{{padding:48px;background:#0C1016;display:flex;flex-direction:column;gap:24px}}
 .r{{display:grid;grid-template-rows:1fr 1fr;}}
@@ -320,7 +320,7 @@ svg{{display:block}}
 .sbday{{background:#F7F8FA;color:#0D1117}}
 </style></head><body><div class="wrap">
 <div class="l">
-  <div class="cap">CarLink logo concept</div>
+  <div class="cap">MobileCarConnect logo concept</div>
   <h1>{name}</h1>
   <p>{rationale}</p>
   <div class="cell" style="align-items:flex-start"><div class="cap">Master, 108 canvas, safe zone 66 (dashed)</div>{scaled(safe, 300)}</div>
@@ -388,20 +388,20 @@ def main():
         write(os.path.join(ROOT, "previews", f"{cid}_board.html"), board_html(cid, name, els, why))
 
         a = os.path.join(ROOT, "android", cid)
-        write(f"{a}/carlink_icon_foreground.xml",
-              vec(els, f"CarLink mark '{name}': adaptive-icon foreground, 108dp canvas, mark inside the 66dp safe zone."))
-        write(f"{a}/carlink_icon_monochrome.xml",
-              vec(els, f"CarLink mark '{name}': themed-icon (monochrome) layer; only alpha is used.", mono="#FFFFFFFF"))
-        write(f"{a}/carlink_icon_legacy.xml", legacy(els, name))
+        write(f"{a}/mobilecarconnect_icon_foreground.xml",
+              vec(els, f"MobileCarConnect mark '{name}': adaptive-icon foreground, 108dp canvas, mark inside the 66dp safe zone."))
+        write(f"{a}/mobilecarconnect_icon_monochrome.xml",
+              vec(els, f"MobileCarConnect mark '{name}': themed-icon (monochrome) layer; only alpha is used.", mono="#FFFFFFFF"))
+        write(f"{a}/mobilecarconnect_icon_legacy.xml", legacy(els, name))
         sx0, sy0, sx1, sy1 = SB[cid]
         s = 108.0 / (sx1 - sx0)
         grp = (f'android:scaleX="{s:.4f}" android:scaleY="{s:.4f}" '
                f'android:translateX="{-sx0 * s:.3f}" android:translateY="{-sy0 * s:.3f}"')
-        write(f"{a}/ic_stat_carlink.xml",
-              vec(els, f"CarLink mark '{name}': status-bar icon, white silhouette fitted to 24dp.", size=24,
+        write(f"{a}/ic_stat_mobilecarconnect.xml",
+              vec(els, f"MobileCarConnect mark '{name}': status-bar icon, white silhouette fitted to 24dp.", size=24,
                   mono="#FFFFFFFF", group=grp))
         # In-app brand mark, cropped tight to the glyph and split in two tintable layers so Compose
-        # can colour it from the active day/night palette (see CarLinkMark in Components.kt).
+        # can colour it from the active day/night palette (see MobileCarConnectMark in Components.kt).
         half_m = max(x1 - x0, y1 - y0) / 2 * (1 + 1 / 24)
         mx0, my0 = (x0 + x1) / 2 - half_m, (y0 + y1) / 2 - half_m
         sm = 108.0 / (2 * half_m)
@@ -409,14 +409,14 @@ def main():
                  f'android:translateX="{-mx0 * sm:.3f}" android:translateY="{-my0 * sm:.3f}"')
         for role in ("primary", "accent"):
             part = [e for e in els if e[3] == role]
-            write(f"{a}/carlink_logo_mark_{role}.xml",
-                  vec(part, f"CarLink mark '{name}', {role} layer, cropped for in-app use; tinted in Compose.",
+            write(f"{a}/mobilecarconnect_logo_mark_{role}.xml",
+                  vec(part, f"MobileCarConnect mark '{name}', {role} layer, cropped for in-app use; tinted in Compose.",
                       size=24, mono="#FFFFFFFF", group=grp_m))
         print(cid, "bbox", (x0, y0, x1, y1), "center", ((x0 + x1) / 2, (y0 + y1) / 2), "status", SB[cid])
 
 
 def legacy(els, name):
-    s = VEC_HEAD.format(comment=f"CarLink mark '{name}': Android 7.1 launchers without adaptive icons "
+    s = VEC_HEAD.format(comment=f"MobileCarConnect mark '{name}': Android 7.1 launchers without adaptive icons "
                                  "(rounded square + mark).", size=108)
     s += f'    <path android:pathData="{rrect(8, 8, 92, 92, 22)}" android:fillColor="{ICON_BG}"/>\n'
     s += '    <group android:pivotX="54" android:pivotY="54" android:scaleX="1.22" android:scaleY="1.22">\n'
@@ -438,15 +438,15 @@ def overview():
         cols.append(f'<div class="c"><div class="cap">{i}. {name}</div>{m(200, "30%")}'
                     f'<div class="row">{m(96, "50%")}{m(48, "50%")}{m(24, "50%")}</div>{lock}</div>')
     html = f"""<!doctype html><html><head><meta charset="utf-8"><style>
-@font-face{{font-family:"CarLinkInter";src:url("{FONT_URL}") format("truetype");font-weight:600}}
-body{{margin:0;width:1600px;height:720px;overflow:hidden;font-family:CarLinkInter,sans-serif;color:#EEF2F6;
+@font-face{{font-family:"MobileCarConnectInter";src:url("{FONT_URL}") format("truetype");font-weight:600}}
+body{{margin:0;width:1600px;height:720px;overflow:hidden;font-family:MobileCarConnectInter,sans-serif;color:#EEF2F6;
 background:radial-gradient(120% 140% at 0% 0%,#2A3F57 0%,#121A24 55%,#07090D 100%)}}
 h1{{margin:48px 56px 0;font-size:40px;letter-spacing:-0.4px}}
 .g{{display:grid;grid-template-columns:repeat(4,1fr);padding:36px 40px;gap:24px}}
 .c{{display:flex;flex-direction:column;gap:30px;align-items:flex-start;padding:16px}}
 .cap{{font-size:15px;letter-spacing:1.6px;text-transform:uppercase;color:#A9B3C0;font-family:sans-serif}}
 .row{{display:flex;gap:18px;align-items:center}} .m{{overflow:hidden;line-height:0}} svg{{display:block}}
-</style></head><body><h1>CarLink logo concepts</h1><div class="g">{''.join(cols)}</div></body></html>"""
+</style></head><body><h1>MobileCarConnect logo concepts</h1><div class="g">{''.join(cols)}</div></body></html>"""
     write(os.path.join(ROOT, "previews", "overview_board.html"), html)
 
 
@@ -454,7 +454,7 @@ RECOMMENDED = "orbit"   # the concept shipped in app/src/main/res/drawable
 
 
 def alternates():
-    """carlink_logo_alt{n}_foreground/monochrome.xml for the concepts that are not shipped."""
+    """mobilecarconnect_logo_alt{n}_foreground/monochrome.xml for the concepts that are not shipped."""
     n = 0
     for cid, name, fn, why in CONCEPTS:
         if cid == RECOMMENDED:
@@ -462,9 +462,9 @@ def alternates():
         n += 1
         els = fn()
         a = os.path.join(ROOT, "android")
-        write(f"{a}/carlink_logo_alt{n}_foreground.xml",
+        write(f"{a}/mobilecarconnect_logo_alt{n}_foreground.xml",
               vec(els, f"Alternate {n}, '{name}': adaptive-icon foreground (108dp canvas)."))
-        write(f"{a}/carlink_logo_alt{n}_monochrome.xml",
+        write(f"{a}/mobilecarconnect_logo_alt{n}_monochrome.xml",
               vec(els, f"Alternate {n}, '{name}': themed-icon (monochrome) layer.", mono="#FFFFFFFF"))
         print(f"alt{n} = {cid}")
 

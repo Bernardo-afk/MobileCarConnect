@@ -1,6 +1,6 @@
 package com.andrerinas.openheadunit.aap
 
-// CarLink: ported from open-headunit 67bcae27, fbe128d0 and 754e257e.
+// MobileCarConnect: ported from open-headunit 67bcae27, fbe128d0 and 754e257e.
 
 import org.junit.Assert.*
 import org.junit.Test

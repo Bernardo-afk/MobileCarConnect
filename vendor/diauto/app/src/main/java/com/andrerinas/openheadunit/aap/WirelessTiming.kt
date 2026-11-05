@@ -1,6 +1,6 @@
 package com.andrerinas.openheadunit.aap
 
-// CarLink: new file. Always-on wireless bring-up timing (see docs/VENDOR_CHANGES.md).
+// MobileCarConnect: new file. Always-on wireless bring-up timing (see docs/VENDOR_CHANGES.md).
 
 import android.os.SystemClock
 import android.util.Log
@@ -24,7 +24,7 @@ class WirelessTimeline(
         CREDENTIALS("credentials"),
         POKE_START("poke-start"),
         POKE_CONNECTED("poke-connected"),
-        // CarLink: the hands-free service level connection (connection/HfpLink).
+        // MobileCarConnect: the hands-free service level connection (connection/HfpLink).
         HFP_SLC_START("hfp-slc-start"),
         HFP_SLC_DONE("hfp-slc-done"),
         HFP_SLC_FAILED("hfp-slc-failed"),
@@ -34,7 +34,7 @@ class WirelessTimeline(
         PHONE_JOINED("phone-joined"),
         TCP_ACCEPTED("tcp-accepted"),
         FIRST_FRAME("first-frame"),
-        // CarLink: the external Bluetooth module routes (connection/ExternalBtTransportPolicy).
+        // MobileCarConnect: the external Bluetooth module routes (connection/ExternalBtTransportPolicy).
         MODULE_REACHABLE("module-reachable"),
         MODULE_READY("module-ready"),
         MODULE_WAKE("module-wake"),
@@ -97,7 +97,7 @@ object WirelessTiming {
     }
 
     /**
-     * CarLink: a short, stable stand-in for a group owner's BSSID. The same address always gives
+     * MobileCarConnect: a short, stable stand-in for a group owner's BSSID. The same address always gives
      * the same value, so groups can be compared in the logs without writing the address itself.
      */
     fun maskBssid(bssid: String?): String {

@@ -1,7 +1,7 @@
-# CarLink v2: rebuild plan
+# MobileCarConnect v2: rebuild plan
 
 > **Status: current.** The connection layer described here is what the app runs
-> (`carlink-core/.../connection/`); milestone 4 (v1 removal, docs, skills) is done.
+> (`mobilecarconnect-core/.../connection/`); milestone 4 (v1 removal, docs, skills) is done.
 
 Status: approved direction (user, 2026-10-09: "first dissect both projects, understand them, then
 make the app; start from scratch if you have to"). Built on `docs/dissection/DIPLAY.md`,
@@ -31,7 +31,7 @@ phone's internet on Wi-Fi during wireless Android Auto (impossible for apps: DA�
 
 | | Android Auto | CarPlay |
 |---|---|---|
-| USB | Auto-start on attach; CarLink does the AOA switch; engine USB auto-switch off (DA§11.4) | Auto-start on attach; VPN consent collected in onboarding (DP F3) |
+| USB | Auto-start on attach; MobileCarConnect does the AOA switch; engine USB auto-switch off (DA§11.4) | Auto-start on attach; VPN consent collected in onboarding (DP F3) |
 | Wireless, AUTOMATIC | **Wi-Fi Direct** (stable group name) → car hotspot only if its credentials are known/readable and the AP is up | **Wi-Fi Direct** on tablets (proven on the user's tablet 12:38); on head units **car hotspot 5 GHz** when credentials are known, else Wi-Fi Direct |
 | Same Wi-Fi | Opt-in only (phone loses Wi-Fi internet; needs typed password + exact BSSID) | Opt-in; needs readable SSID (location on), password, WPA2 or mixed, a router that passes mDNS |
 | Fallback | Phone refuses the network (WifiConnectStatus ≠ 0) twice → Wi-Fi Direct | Only on `FIRST_TCP_TIMEOUT` after DiPlay's own retries; never on Bluetooth-stage failures; refusals expire (DP F1) |
@@ -40,7 +40,7 @@ phone's internet on Wi-Fi during wireless Android Auto (impossible for apps: DA�
 Vehicle profile (`GENERIC` default, `BYD_DILINK` opt-in or auto-detected via
 `BydOutputSettings.available()` / `BYD-AUTO/` fingerprint) gates every BYD item (DP§12, DA§12).
 
-## 4. Connection layer v2 (`carlink-core/.../connection/`)
+## 4. Connection layer v2 (`mobilecarconnect-core/.../connection/`)
 
 - `SessionManager` (main process, replaces EngineCoordinator): one state machine
   `Idle → Preflight → Starting(path) → Connecting(step) → Retrying(n, reason) → Connected →
@@ -65,7 +65,7 @@ Vehicle profile (`GENERIC` default, `BYD_DILINK` opt-in or auto-detected via
 
 ## 5. Vendor hooks (small, listed in docs/VENDOR_CHANGES.md)
 
-DiPlay: `waitingView` (CarLink renders waiting/failure inside the host window), `hasSession`,
+DiPlay: `waitingView` (MobileCarConnect renders waiting/failure inside the host window), `hasSession`,
 `stopSession(completion)`, host-state callback, `vehicleIntegrations` flag (gates
 `BydNavigationOutputs.start`, wheel codes 304/312, `WifiScanPause`), brand names for iAP2 /
 Bonjour / OEM label.
@@ -79,7 +79,7 @@ Wi-Fi Direct name, no group removal on start), gate `BydFullscreen` by profile, 
 
 1. Welcome → one permission flow (Bluetooth, Nearby, Location + location switch, mic,
    notifications, overlay, battery, VPN consent, local network).
-2. Car profile: Generic (default) / BYD; car name shown to phones (default "CarLink").
+2. Car profile: Generic (default) / BYD; car name shown to phones (default "MobileCarConnect").
 3. Pair a phone: the screen shows its Bluetooth name large and becomes discoverable; "On your
    phone open Bluetooth and tap <name>"; live detection of the bond; then "Accept Use CarPlay /
    Android Auto on your phone"; first connection runs and is confirmed.
@@ -88,10 +88,10 @@ Wi-Fi Direct name, no group removal on start), gate `BydFullscreen` by profile, 
 ## 7. UI
 
 Rebuilt after §4 works on the tablet, from a fresh design review against the research (premium
-in-car UIs; tablet 1458×911 dp as a primary target). The CarPlay waiting/failure UI is CarLink's
+in-car UIs; tablet 1458×911 dp as a primary target). The CarPlay waiting/failure UI is MobileCarConnect's
 own through the DiPlay `waitingView` hook, identical to Android Auto's.
 
-## 8. Verification gate (carlink-device skill)
+## 8. Verification gate (mobilecarconnect-device skill)
 
 Nothing is called working until this matrix passes on the user's tablet with logs:
 

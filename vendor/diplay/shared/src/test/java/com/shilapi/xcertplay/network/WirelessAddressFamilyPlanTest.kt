@@ -7,9 +7,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-// CarLink: Wi-Fi Direct tries IPv6 link-local first, with a quick fallback to IPv4.
+// MobileCarConnect: Wi-Fi Direct tries IPv6 link-local first, with a quick fallback to IPv4.
 class WirelessAddressFamilyPlanTest {
-    // The experiment is opt-in (CarLink); these tests cover its behaviour when switched on.
+    // The experiment is opt-in (MobileCarConnect); these tests cover its behaviour when switched on.
     @org.junit.Before fun enableGuess() { WirelessAddressFamilyPlan.ipv6Guess = true }
     @org.junit.After fun restore() { WirelessAddressFamilyPlan.ipv6Guess = false }
 

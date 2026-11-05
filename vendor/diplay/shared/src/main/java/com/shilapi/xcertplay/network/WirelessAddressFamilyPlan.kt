@@ -1,6 +1,6 @@
 package com.shilapi.xcertplay.network
 
-// CarLink: new file (see docs/VENDOR_CHANGES.md).
+// MobileCarConnect: new file (see docs/VENDOR_CHANGES.md).
 
 /**
  * Which address family the wireless endpoint advertises first, and how long it may wait for the
@@ -28,7 +28,7 @@ internal object WirelessAddressFamilyPlan {
     data class Choice(val preferredFamily: String?, val guessed: Boolean)
 
     /**
-     * CarLink: off by default. Measured on the Redmi Pad + iPhone 13 (2026-10-09): IPv6 made the
+     * MobileCarConnect: off by default. Measured on the Redmi Pad + iPhone 13 (2026-10-09): IPv6 made the
      * first TCP arrive in 2.0 s instead of 3.6-14.7 s, but the AirPlay handshake on it then took
      * 9.5 s with 4-5 s pauses (retransmission-like) instead of 1.9 s, so the picture came later.
      */

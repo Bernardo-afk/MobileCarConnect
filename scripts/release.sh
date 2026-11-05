@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Builds, checks and (optionally) publishes a CarLink release from THIS computer.
+# Builds, checks and (optionally) publishes a MobileCarConnect release from THIS computer.
 # Release APKs are never built by GitHub Actions: the signing key and the CarPlay accessory
-# identity live only in ~/.carlink-private. See docs/RELEASING.md.
+# identity live only in ~/.mobilecarconnect-private. See docs/RELEASING.md.
 #
 #   scripts/release.sh 1.0.0                         build and check; stops at dist/
 #   scripts/release.sh 1.0.0 --publish               ... then tag v1.0.0, push the tag and create the
@@ -9,7 +9,7 @@
 #   scripts/release.sh 1.0.0 --notes-file F --publish   ... with the release notes in F
 #
 # Every check stops the script with "release: ERROR: ...". Never run it in CI.
-# Rehearsal on another branch (never publishes): CARLINK_RELEASE_ALLOW_BRANCH=1 scripts/release.sh 1.0.0
+# Rehearsal on another branch (never publishes): MOBILECARCONNECT_RELEASE_ALLOW_BRANCH=1 scripts/release.sh 1.0.0
 set -euo pipefail
 
 die() { echo "release: ERROR: $*" >&2; exit 1; }
@@ -31,11 +31,11 @@ done
 [ -n "${CI:-}" ] && die "this script is for a release computer, not CI"
 [[ "$VERSION" =~ ^[0-9]{1,4}\.[0-9]{1,2}\.[0-9]{1,2}$ ]] || die "version must be X.Y.Z (minor and patch below 100), got '$VERSION'"
 TAG="v$VERSION"
-APK_NAME="CarLink-$VERSION.apk"
+APK_NAME="MobileCarConnect-$VERSION.apk"
 
-ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || die "not inside the CarLink repository"
+ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || die "not inside the MobileCarConnect repository"
 cd "$ROOT"
-[ -f app/build.gradle.kts ] && [ -f settings.gradle.kts ] || die "$ROOT is not the CarLink repository"
+[ -f app/build.gradle.kts ] && [ -f settings.gradle.kts ] || die "$ROOT is not the MobileCarConnect repository"
 if [ -n "$NOTES_FILE" ]; then
   NOTES_FILE="$(cd "$(dirname "$NOTES_FILE")" && pwd)/$(basename "$NOTES_FILE")" || die "notes file not found"
 fi
@@ -44,8 +44,8 @@ fi
 step "1/8 Repository state"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 if [ "$BRANCH" != main ]; then
-  if [ "${CARLINK_RELEASE_ALLOW_BRANCH:-}" = 1 ] && [ "$PUBLISH" = 0 ]; then
-    echo "rehearsal on branch '$BRANCH' (CARLINK_RELEASE_ALLOW_BRANCH=1); --publish is not allowed"
+  if [ "${MOBILECARCONNECT_RELEASE_ALLOW_BRANCH:-}" = 1 ] && [ "$PUBLISH" = 0 ]; then
+    echo "rehearsal on branch '$BRANCH' (MOBILECARCONNECT_RELEASE_ALLOW_BRANCH=1); --publish is not allowed"
   else
     die "releases are made from main; you are on '$BRANCH'"
   fi
@@ -56,7 +56,7 @@ GRADLE_VERSION="$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)".*/\1/p' app/b
 [ "$GRADLE_VERSION" = "$VERSION" ] || die "app/build.gradle.kts has versionName \"$GRADLE_VERSION\", not \"$VERSION\""
 IFS=. read -r MAJOR MINOR PATCH <<<"$VERSION"
 VERSION_CODE=$((10#$MAJOR * 10000 + 10#$MINOR * 100 + 10#$PATCH))
-PIN="$(sed -n 's/.*const val CERT_SHA256 = "\([0-9A-Fa-f:]*\)".*/\1/p' app/src/main/java/com/carlink/app/update/UpdateVerifier.kt)"
+PIN="$(sed -n 's/.*const val CERT_SHA256 = "\([0-9A-Fa-f:]*\)".*/\1/p' app/src/main/java/com/mobilecarconnect/app/update/UpdateVerifier.kt)"
 [ ${#PIN} -eq 95 ] || die "cannot read the pinned release certificate from update/UpdateVerifier.kt"
 PIN_NORM="$(echo "$PIN" | tr -d ':' | tr 'A-F' 'a-f')"
 git check-ignore -q dist/ || die "dist/ must be in .gitignore"
@@ -82,7 +82,7 @@ echo "version $VERSION (versionCode $VERSION_CODE), tag $TAG, commit $(git rev-p
 
 # ---- 2. Signing key (never echoed) -----------------------------------------------------------
 step "2/8 Release signing key"
-SIGNING_ENV="$HOME/.carlink-private/release/signing.env"
+SIGNING_ENV="$HOME/.mobilecarconnect-private/release/signing.env"
 [ -f "$SIGNING_ENV" ] || die "$SIGNING_ENV is missing (see docs/RELEASING.md)"
 set +x
 # shellcheck disable=SC1090
@@ -96,7 +96,7 @@ echo "signing key loaded"
 
 # ---- 3. CarPlay accessory identity -----------------------------------------------------------
 step "3/8 CarPlay authentication files"
-export DIPLAY_AUTH_ASSETS_DIR="$HOME/.carlink-private"
+export DIPLAY_AUTH_ASSETS_DIR="$HOME/.mobilecarconnect-private"
 [ -f "$DIPLAY_AUTH_ASSETS_DIR/offline-mfi/identity.pk8" ] || die "$DIPLAY_AUTH_ASSETS_DIR/offline-mfi/identity.pk8 is missing; CarPlay would not work"
 echo "found offline-mfi/"
 
@@ -105,7 +105,7 @@ export ANDROID_SDK_ROOT="$HOME/android-sdk"
 
 # ---- 4. Tests --------------------------------------------------------------------------------
 step "4/8 Unit tests"
-.claude/skills/carlink-dev/scripts/dev.sh test || die "tests failed"
+.claude/skills/mobilecarconnect-dev/scripts/dev.sh test || die "tests failed"
 
 # ---- 5. Release build ------------------------------------------------------------------------
 step "5/8 Release build (R8, lint vital)"
@@ -132,7 +132,7 @@ echo "contains assets/offline-mfi/"
 BADGING="$("$AAPT2" dump badging "$APK")" || die "aapt2 cannot read the APK"
 grep -q '^application-debuggable' <<<"$BADGING" && die "the APK is debuggable"
 PACKAGE_LINE="$(grep '^package:' <<<"$BADGING")"
-grep -q "name='com.carlink.app' " <<<"$PACKAGE_LINE" || die "unexpected package: $PACKAGE_LINE"
+grep -q "name='com.mobilecarconnect.app' " <<<"$PACKAGE_LINE" || die "unexpected package: $PACKAGE_LINE"
 grep -q "versionCode='$VERSION_CODE' " <<<"$PACKAGE_LINE" || die "expected versionCode $VERSION_CODE: $PACKAGE_LINE"
 grep -q "versionName='$VERSION'" <<<"$PACKAGE_LINE" || die "expected versionName $VERSION: $PACKAGE_LINE"
 echo "not debuggable; $PACKAGE_LINE"
@@ -153,7 +153,7 @@ fi
 
 # ---- 8. Publish ------------------------------------------------------------------------------
 step "8/8 Publishing $TAG"
-git tag -a "$TAG" -m "CarLink $VERSION" || die "cannot create tag $TAG"
+git tag -a "$TAG" -m "MobileCarConnect $VERSION" || die "cannot create tag $TAG"
 git push origin "refs/tags/$TAG" || die "cannot push tag $TAG (delete the local tag with: git tag -d $TAG)"
 # The release page: the changelog text (all the in-app popup shows), then "<!-- more -->" and
 # scripts/release-notes-footer.md (screenshots, install, checksums, notices) filled in.
@@ -170,6 +170,6 @@ PAGE_FILE="$(mktemp)"
 } > "$PAGE_FILE"
 grep -q '{{' "$PAGE_FILE" && die "release page still has an unfilled {{placeholder}}"
 gh release create "$TAG" "dist/$APK_NAME" "dist/$APK_NAME.sha256" \
-  --verify-tag --title "CarLink $VERSION" --notes-file "$PAGE_FILE" --latest \
+  --verify-tag --title "MobileCarConnect $VERSION" --notes-file "$PAGE_FILE" --latest \
   || die "gh release create failed; the tag $TAG is pushed, finish the release on GitHub or delete the tag"
 echo "published: $(gh release view "$TAG" --json url --jq .url)"

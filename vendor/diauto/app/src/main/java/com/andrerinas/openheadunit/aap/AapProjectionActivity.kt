@@ -669,7 +669,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                 Gravity.BOTTOM
             )
             container.addView(bar)
-            HostIntegration.styleChrome(bar, HostIntegration.Chrome.RENDERER_BANNER) // CarLink
+            HostIntegration.styleChrome(bar, HostIntegration.Chrome.RENDERER_BANNER) // MobileCarConnect
             rendererBanner = bar
             bar.bringToFront()
             // One-shot: offering the escape once is enough. Clearing the flag here (not only on
@@ -884,7 +884,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         overlayView.requestFocus()
         // DiLink (byd-freeform) hides the bottom ~96px of the window from the decor;
         // claim it back so projection is true fullscreen and bottom-bar touches land.
-        // CarLink: only where the host says a DiLink caption hides that area (DA§12 #8).
+        // MobileCarConnect: only where the host says a DiLink caption hides that area (DA§12 #8).
         if (com.andrerinas.openheadunit.HostIntegration.claimHiddenBottomStrip) {
             bydFullscreen.expand(this, container, overlayView)
         }
@@ -907,7 +907,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
 
         // Set up custom loading screen if configured
         setupCustomLoadingScreen()
-        HostIntegration.styleChrome(loadingOverlay, HostIntegration.Chrome.LOADING) // CarLink
+        HostIntegration.styleChrome(loadingOverlay, HostIntegration.Chrome.LOADING) // MobileCarConnect
 
         findViewById<Button>(R.id.disconnect_button)?.setOnClickListener {
             commManager.disconnect()
@@ -999,7 +999,9 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
 
 
         if (!isKeyEventReceiverRegistered) {
-            ContextCompat.registerReceiver(this, keyEventReceiver, IntentFilters.keyEvent, ContextCompat.RECEIVER_EXPORTED)
+            // MobileCarConnect: not exported. Every sender (CarKeyReceiver, RemoteControlReceiver) is this app,
+            // and an exported receiver let any installed app send keys to the phone.
+            ContextCompat.registerReceiver(this, keyEventReceiver, IntentFilters.keyEvent, ContextCompat.RECEIVER_NOT_EXPORTED)
             isKeyEventReceiverRegistered = true
         }
 
@@ -1062,7 +1064,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         detail?.text = getString(R.string.connection_interrupted_detail)
         detail?.visibility = View.VISIBLE
         button?.visibility = View.VISIBLE
-        HostIntegration.styleChrome(overlay, HostIntegration.Chrome.LOADING) // CarLink
+        HostIntegration.styleChrome(overlay, HostIntegration.Chrome.LOADING) // MobileCarConnect
     }
 
     private fun hideReconnectingOverlay() {
@@ -1301,7 +1303,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         findViewById<View>(R.id.loading_custom_text_overlay)?.visibility = View.GONE
         findViewById<View>(R.id.loading_default_content)?.visibility = View.VISIBLE
         findViewById<View>(R.id.loading_overlay)?.setBackgroundColor(Color.parseColor("#CC000000"))
-        HostIntegration.styleChrome(findViewById(R.id.loading_overlay), HostIntegration.Chrome.LOADING) // CarLink
+        HostIntegration.styleChrome(findViewById(R.id.loading_overlay), HostIntegration.Chrome.LOADING) // MobileCarConnect
     }
 
     private fun stopCustomLoadingMedia() {
@@ -1351,7 +1353,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
     }
 
     private data class ExitOption(val titleResId: Int, val iconResId: Int, val iconColor: Int,
-                                  val title: CharSequence? = null) // CarLink: title
+                                  val title: CharSequence? = null) // MobileCarConnect: title
 
     private fun showExitDialog() {
         val options = mutableListOf<ExitOption>()
@@ -1362,7 +1364,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         }
 
         options.add(ExitOption(R.string.exit_dialog_background, R.drawable.ic_home, Color.LTGRAY))
-        // CarLink: a host with its own settings screen offers its home instead of Quick Settings.
+        // MobileCarConnect: a host with its own settings screen offers its home instead of Quick Settings.
         val hostHomeLabel = HostIntegration.exitMenuHomeLabel
         if (hostHomeLabel == null) {
             options.add(ExitOption(R.string.exit_dialog_settings, R.drawable.ic_settings_quick, Color.LTGRAY))
@@ -1380,7 +1382,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                 val iconView = view.findViewById<android.widget.ImageView>(R.id.icon)
                 val textView = view.findViewById<android.widget.TextView>(R.id.text)
 
-                if (option.title != null) textView.text = option.title else textView.setText(option.titleResId) // CarLink
+                if (option.title != null) textView.text = option.title else textView.setText(option.titleResId) // MobileCarConnect
                 iconView.setImageResource(option.iconResId)
                 iconView.setColorFilter(option.iconColor)
 
@@ -1406,14 +1408,14 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                     R.string.exit_dialog_settings -> {
                         showQuickSettings()
                     }
-                    0 -> startActivity(Intent(this, HostIntegration.homeActivity) // CarLink
+                    0 -> startActivity(Intent(this, HostIntegration.homeActivity) // MobileCarConnect
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
                 }
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
 
-        HostIntegration.styleChrome(dialog.window?.decorView, HostIntegration.Chrome.EXIT_MENU) // CarLink
+        HostIntegration.styleChrome(dialog.window?.decorView, HostIntegration.Chrome.EXIT_MENU) // MobileCarConnect
         if (settings.hudMirroring) {
             val root = dialog.window?.findViewById<View>(android.R.id.content) ?: dialog.window?.decorView
             root?.scaleX = -1.0f

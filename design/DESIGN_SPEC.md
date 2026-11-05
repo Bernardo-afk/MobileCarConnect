@@ -1,14 +1,14 @@
-# CarLink UI Design Spec
+# MobileCarConnect UI Design Spec
 
 > **Status (2026-10-09): partly superseded; kept for reference.** Written for BYD DiLink head
 > units and the v1 app. The connection behaviour (state machine, stages, error handling) is
-> replaced by [REBUILD_V2.md](REBUILD_V2.md) and `carlink-core/.../connection/`; the look and the Home and
+> replaced by [REBUILD_V2.md](REBUILD_V2.md) and `mobilecarconnect-core/.../connection/`; the look and the Home and
 > Settings structure by [RESEARCH_HOME_V2.md](RESEARCH_HOME_V2.md) and
 > [HOME_V2_RATIONALE.md](HOME_V2_RATIONALE.md). Still useful for touch-target and text sizes,
 > canvas scaling and the driver-facing error wording.
 
 Status: v1.0, ready to build. Date: 2026-10-09.
-Scope: CarLink's own UI on BYD DiLink head units: Home, Connecting, Phone detail, Settings, Onboarding, Diagnostics and About.
+Scope: MobileCarConnect's own UI on BYD DiLink head units: Home, Connecting, Phone detail, Settings, Onboarding, Diagnostics and About.
 Out of scope: the projected CarPlay and Android Auto content. Those UIs belong to Apple and Google.
 
 The spec is opinionated on purpose. Where it says MUST, build it that way. Where it says SHOULD, deviate only with a measured reason, such as a frame-time trace or an in-car glance test.
@@ -19,7 +19,7 @@ The spec is opinionated on purpose. Where it says MUST, build it that way. Where
 
 1. **One screen, one question.** Home answers "Is my phone connected, and if not, what do I tap?" in a single 2-second glance. The status hero replaces the marketing headline ("A familiar drive.").
 2. **Auto-detect is the product.** The UI never asks whether the phone is an iPhone or an Android phone. It shows what it detected (phone type → engine, transport), then the five connection stages. Each failure gives one primary recovery action.
-3. **Car-grade sizing.** Touch targets are at least 76dp, primary buttons 96dp, and text at least 24sp (28sp or more on anything a driver reads in motion). CarLink uses one design canvas: **1440×810dp in landscape and 810×1440dp in portrait**, scaled from the screen's pixels, not from the head unit's often-wrong DPI.
+3. **Car-grade sizing.** Touch targets are at least 76dp, primary buttons 96dp, and text at least 24sp (28sp or more on anything a driver reads in motion). MobileCarConnect uses one design canvas: **1440×810dp in landscape and 810×1440dp in portrait**, scaled from the screen's pixels, not from the head unit's often-wrong DPI.
 4. **Dark by default; follows the car.** There is one accent (Link Cyan) plus semantic colors. CarPlay and Android Auto each get an identity tint, used only on their glyph badge. Every pair passes WCAG AA.
 5. **Settings are organized by driver goal** (the DiPlay rule, kept). Shared controls come first. Each category then has a **CarPlay** section and an **Android Auto** section. All changes auto-save (DiAuto's Save/Reset model is removed). Changes that need a reconnect say so and raise one "Reconnect now" bar.
 6. **Parked-only content** (text entry, Advanced, log viewer, report export) is locked while moving when the app can tell the car is moving.
@@ -30,14 +30,14 @@ The spec is opinionated on purpose. Where it says MUST, build it that way. Where
 
 ### 1.1 Official guidance (normative inputs)
 
-| Source | What it says | What CarLink does with it |
+| Source | What it says | What MobileCarConnect does with it |
 |---|---|---|
 | NHTSA Visual-Manual Driver Distraction Guidelines (2013), [Federal Register text](https://www.govinfo.gov/content/pkg/FR-2013-04-26/html/2013-09883.htm) | Tasks should be completable with off-road glances of **≤2 s each** and **≤12 s total** (TEORT). Occlusion test: 1.5 s glances, ≤12 s cumulative. Per-se lockouts: automatically scrolling text, manual text entry, reading of book or web-like text, video not related to driving. | Every in-motion task (connect, cancel, switch phone, retry) is **1 tap from Home**, at most 2. No auto-scrolling text anywhere (no marquee device names). The keyboard, log reading and long help text are parked-only. |
 | Android for Cars sizing ([AAOS](https://developers.google.com/cars/design/automotive-os/design-system/sizing), [Android Auto](https://developers.google.com/cars/design/android-auto/design-system/sizing)) | Minimum touch target **76×76dp**, "based on both the driver's distance from the head unit and the need to accommodate quick taps while driving." Icons: 44 / 36 / 24dp. Avatars: 56 / 76 / 96dp. Targets must not overlap, and content is centered in its target. | Touch-target floor is 76dp; there is no exception for "small" icon buttons. Icon tokens are 44 / 36 / 24dp. Phone avatars are 76dp on Home and 56dp in lists. |
 | AAOS typography ([developers.google.com](https://developers.google.com/cars/design/automotive-os/design-system/typography), moved to [docs.partner.android.com/drivingux](https://docs.partner.android.com/drivingux/automotive-os/design-system/typography)) | "The minimum type size for Android Automotive OS is **24dp**." Sizes come in 4dp increments. Use Medium weight sparingly and **avoid bold** ("less legible than medium"). Roboto, with Noto Sans as fallback. | Type floor is 24sp. The scale steps by 4sp. Only weights 400 and 500 are used. The fonts are Roboto and Noto. |
 | AAOS color ([developers.google.com](https://developers.google.com/cars/design/automotive-os/design-system/color)) | Text and icons need at least **4.5:1** contrast. The UI is "built from black," so day and night differ only slightly. There is one accent; other colors are used sparingly. White text opacities of 88 / 72 / 56 % create hierarchy. Full-contrast white should not be overused. | The scheme is based on near-black with a single accent. onSurface is #E8EDF3 (about 92 % white), not #FFFFFF. Three text levels map to 88/72/56. |
-| AAOS dual-pane Settings ([source.android.com](https://source.android.com/docs/automotive/hmi/car_settings/dual_pane)) | Dual pane (a static L0 menu on the left, content on the right) is used when the window is **≥1400dp** wide; narrower windows get a single pane. | CarLink's landscape canvas is 1440dp, so Settings uses two panes in landscape. Portrait (810dp) and split-screen use a single pane with drill-in. |
-| AAOS Car UX Restrictions ([source.android.com](https://source.android.com/docs/automotive/driver_distraction/car_uxr)) | Restriction flags include `no_keyboard`, `no_setup`/`no_config`, `no_video` and `fully_restricted`, with string-length and content-depth limits. | The same concepts drive CarLink's own "parked-only" gate (§3.5). |
+| AAOS dual-pane Settings ([source.android.com](https://source.android.com/docs/automotive/hmi/car_settings/dual_pane)) | Dual pane (a static L0 menu on the left, content on the right) is used when the window is **≥1400dp** wide; narrower windows get a single pane. | MobileCarConnect's landscape canvas is 1440dp, so Settings uses two panes in landscape. Portrait (810dp) and split-screen use a single pane with drill-in. |
+| AAOS Car UX Restrictions ([source.android.com](https://source.android.com/docs/automotive/driver_distraction/car_uxr)) | Restriction flags include `no_keyboard`, `no_setup`/`no_config`, `no_video` and `fully_restricted`, with string-length and content-depth limits. | The same concepts drive MobileCarConnect's own "parked-only" gate (§3.5). |
 | Apple CarPlay HIG ([developer.apple.com](https://developer.apple.com/design/human-interface-guidelines/carplay)) | "Never lock people out … because the connected iPhone requires input." "Report errors in CarPlay, not on the connected iPhone. Never direct people to pick up their iPhone." "Place the most important content and controls in the upper half of the screen." "Avoid using the same color for interactive and noninteractive elements." "Test … under a variety of lighting conditions in an actual car." Support light and dark. | Error copy never says "check your phone" while moving. It says what the car can do ("Retry", "Use cable"). Phone-side steps (for example "Allow CarPlay while locked") go into onboarding, which runs while parked. Interactive elements are the only things that use the accent. |
 | Material 3 window size classes ([developer.android.com](https://developer.android.com/develop/ui/compose/layouts/adaptive/use-window-size-classes)) | Width classes: Compact <600, Medium 600–839, Expanded 840–1199, Large 1200–1599, XL ≥1600dp. Height classes: Compact <480, Medium 480–899, Expanded ≥900dp. | Layouts are keyed to these classes. DiLink split-screen (⅓ / ⅔) lands in Compact or Expanded, so both layouts are specified. |
 | ISO 15008:2017 (in-vehicle display legibility; paywalled) | Sets character-size requirements as a visual angle. The commonly cited floor is about 20 arcmin character height. **This value is from memory and was not verified in the search; check the standard before citing it externally.** | Used only as a sanity check on the type scale (§5.2). The decisive floor is AAOS 24dp. |
@@ -45,16 +45,16 @@ The spec is opinionated on purpose. Where it says MUST, build it that way. Where
 ### 1.2 Production UIs
 
 - **Polestar / Android Automotive** ([Polestar UX statement via GearBrain review](https://www.gearbrain.com/amp/review-android-automotive-polestar-2-2646843862), [The Drive review](https://www.thedrive.com/car-reviews/polestar-2-android-automotive-os-infotainment-review-google-specs-system-tech-evs-electric-cars), [GoAuto on Polestar 3/4 HMI](https://goauto.com.au/amp/93827/polestar-details-hi-tech-hmi-for-3-and-4-suvs.html)). Polestar applies "Scandinavian minimalism … to both UI and UX." Home has four cards; developers praised the "fantastic, large icons." Polestar 3/4 menus are built to "stay navigable however deep a user goes into settings." *Takeaways:* a few big tiles; flat depth; a neutral palette with one accent (Polestar uses orange).
-- **Rivian** ([Rivian Vehicle OS, Matt Metropulos, Behance](https://www.behance.net/gallery/166386511/Rivian-Vehicle-OS); [Pentagram typeface work](https://www.pentagram.com/work/rivian); [Brian Lucas R1 UI](https://www.brianlucasdesign.com/project/rivian-ui)). "Color palettes … needed to work during the brightest and darkest lighting conditions … a high contrast palette … hints of warmness for daytime views and coolness for the night." Rivian uses custom display numerals adapted from Söhne. *Takeaways:* contrast first; day and night are temperature shifts, not different designs; numerals deserve care (CarLink uses tabular figures for timers and stats).
+- **Rivian** ([Rivian Vehicle OS, Matt Metropulos, Behance](https://www.behance.net/gallery/166386511/Rivian-Vehicle-OS); [Pentagram typeface work](https://www.pentagram.com/work/rivian); [Brian Lucas R1 UI](https://www.brianlucasdesign.com/project/rivian-ui)). "Color palettes … needed to work during the brightest and darkest lighting conditions … a high contrast palette … hints of warmness for daytime views and coolness for the night." Rivian uses custom display numerals adapted from Söhne. *Takeaways:* contrast first; day and night are temperature shifts, not different designs; numerals deserve care (MobileCarConnect uses tabular figures for timers and stats).
 - **Tesla V11/V12** ([TMC dark mode thread](https://teslamotorsclub.com/tmc/threads/dark-mode.252376/), [EVANNEX history](https://evannex.com/blogs/news/71958981-how-tesla-revolutionized-automotive-user-interface-design)). In V11, dark mode was "optimised for both day and night usage." The common critique is that later versions turned 1-touch actions into 2–3 touches, a "(poor) tablet app" feel. *Takeaways:* dark works in daytime when the contrast is right; never trade depth for minimalism on frequent tasks.
 - **BYD DiLink** ([BYD AU DiLink support](https://www.byd.com/au/support/dilink), [BYDMate project notes](https://github.com/AndyShaman/BYDMate)). There is a system light / dark / auto setting. Split-screen runs apps left and right (BYDMate documents ⅓ + ⅔). DiLink 5.0 runs on Android 12L, and an OTA "UI7" exists. *Takeaways:* follow the car's light/dark mode by default; Compact width (split-screen) must be a first-class layout.
 
 ### 1.3 Competitor and adjacent apps (what users complain about)
 
-- **Carlinkit AutoKit** ([Android Police 5.0 review](https://www.androidpolice.com/carlinkit-50-review/), [vendor settings guide](https://www.carlinkitfactory.com/explanation-of-autokit-app-options-settings-a-comprehensive-guide/), [AutoKit FAQ](https://carlinkitcarplay.com/pages/faq-en-autokit-for-aftermarket-android-screen-cars-version1-0)). Complaints: weak documentation; troubleshooting spread across "settings > environment testing", "three working modes" and "Sync mode"; resolution freezes that users must fix by trial and error; auto-start hidden. *CarLink response:* a single Diagnostics "Checks" list with pass/fail and a fix button per row; safe defaults; risky options behind Advanced with plain-language consequences.
-- **AAWireless app** ([Android Central](https://www.androidcentral.com/accessories/audio/aawireless-review), [Android Police](https://www.androidpolice.com/aawireless-review/), [Android Authority TWO](https://www.androidauthority.com/aawireless-two-review-3491590/)). Praised: an "app walked me through every step," with setup in about 3–10 minutes. Criticized: "advanced features … can be confusing"; users wish it "was easier to pick which UI display you wanted instead of having to randomly pick DPI"; auto-launch breaks silently. *CarLink response:* a guided onboarding; an "Interface size" control with a **live preview and named presets** instead of a raw DPI number; auto-start health shown in Checks.
-- **Headunit Reloaded** ([Play listing](https://play.google.com/store/apps/details?id=gb.xxy.hr&hl=en_US)). Users can't find how to disable speed-dependent volume, and the listing's black-screen fix is "enable software decoding." *CarLink response:* every behavior that changes audio or video has a findable, searchable setting, and a black screen offers "Try compatibility video mode" as a recovery action.
-- **DiPlay field feedback** ([issue #11](https://github.com/shihabal3amri/DiPlay/issues/11)). On BYD Han DiLink 4.0: a "USB permission prompt **appears on every plug-in**" (no "always allow"), and the wired "Connecting… screen stays up for roughly **15 to 25 seconds**." *CarLink response:* a staged progress timeline so a 20-second wait feels deterministic; a "Request USB access" stage that explains the system prompt *before* it appears; and an onboarding step that sets CarLink as the default USB handler where firmware allows it.
+- **Carlinkit AutoKit** ([Android Police 5.0 review](https://www.androidpolice.com/carlinkit-50-review/), [vendor settings guide](https://www.carlinkitfactory.com/explanation-of-autokit-app-options-settings-a-comprehensive-guide/), [AutoKit FAQ](https://carlinkitcarplay.com/pages/faq-en-autokit-for-aftermarket-android-screen-cars-version1-0)). Complaints: weak documentation; troubleshooting spread across "settings > environment testing", "three working modes" and "Sync mode"; resolution freezes that users must fix by trial and error; auto-start hidden. *MobileCarConnect response:* a single Diagnostics "Checks" list with pass/fail and a fix button per row; safe defaults; risky options behind Advanced with plain-language consequences.
+- **AAWireless app** ([Android Central](https://www.androidcentral.com/accessories/audio/aawireless-review), [Android Police](https://www.androidpolice.com/aawireless-review/), [Android Authority TWO](https://www.androidauthority.com/aawireless-two-review-3491590/)). Praised: an "app walked me through every step," with setup in about 3–10 minutes. Criticized: "advanced features … can be confusing"; users wish it "was easier to pick which UI display you wanted instead of having to randomly pick DPI"; auto-launch breaks silently. *MobileCarConnect response:* a guided onboarding; an "Interface size" control with a **live preview and named presets** instead of a raw DPI number; auto-start health shown in Checks.
+- **Headunit Reloaded** ([Play listing](https://play.google.com/store/apps/details?id=gb.xxy.hr&hl=en_US)). Users can't find how to disable speed-dependent volume, and the listing's black-screen fix is "enable software decoding." *MobileCarConnect response:* every behavior that changes audio or video has a findable, searchable setting, and a black screen offers "Try compatibility video mode" as a recovery action.
+- **DiPlay field feedback** ([issue #11](https://github.com/shihabal3amri/DiPlay/issues/11)). On BYD Han DiLink 4.0: a "USB permission prompt **appears on every plug-in**" (no "always allow"), and the wired "Connecting… screen stays up for roughly **15 to 25 seconds**." *MobileCarConnect response:* a staged progress timeline so a 20-second wait feels deterministic; a "Request USB access" stage that explains the system prompt *before* it appears; and an onboarding step that sets MobileCarConnect as the default USB handler where firmware allows it.
 
 ### 1.4 Visual inspiration (Dribbble and Behance)
 
@@ -95,7 +95,7 @@ The screenshots measure about 90px for a 68dp button on a 1920×1080 capture, so
 
 ### 2.1 What both apps do well (keep)
 
-- **The dark navy palette** (`#0C111B` background, `#151E2C` surface, `#A6C8FF` accent). It is calm, low-glare and already familiar to users. CarLink keeps the family resemblance but neutralizes it toward near-black (§5.1).
+- **The dark navy palette** (`#0C111B` background, `#151E2C` surface, `#A6C8FF` accent). It is calm, low-glare and already familiar to users. MobileCarConnect keeps the family resemblance but neutralizes it toward near-black (§5.1).
 - **A large, full-width primary button** for the main action, with the icon placed before the text.
 - **`accessibilityLiveRegion="polite"`** on the DiAuto status text.
 - **DiPlay's settings information architecture by driver goal** (`SettingsCategory`: Connection, Display, Audio, Navigation, Vehicle, Diagnostics, Advanced). These rules carry over: one category per setting, `(experimental)` suffix conventions, a "Reconnect now" bar, and no dropped session without consent. These are mature and tested (`SettingsLayoutPolicyTest`).
@@ -105,7 +105,7 @@ The screenshots measure about 90px for a 68dp button on a 1920×1080 capture, so
 
 ### 2.2 Home (both apps; nearly identical layouts)
 
-| Problem | Evidence | Fix in CarLink |
+| Problem | Evidence | Fix in MobileCarConnect |
 |---|---|---|
 | The prime top-left area holds a slogan ("YOUR PHONE. YOUR DRIVE. / A familiar drive.", 42sp) while the real status ("Ready when you are", 24sp) sits second, inside a card. | home.png ×2 | The **status hero** owns the top-left. The brand shrinks to a 36dp mark in the top bar. |
 | No phone identity. The user can't see *which* phone will connect or whether it's present. | — | A **Phones** list with type, last transport and presence. |
@@ -131,14 +131,14 @@ The screenshots measure about 90px for a 68dp button on a 1920×1080 capture, so
 
 ### 2.4 Projection (DiAuto `projection-music.png`)
 
-This is not in scope, but it shows the app's edge. The engine draws its own left rail. CarLink adds **no chrome over projection**: no floating buttons and no badges. The way back to CarLink is the engine's own exit (CarPlay's "back to car" or Android Auto's "Exit"), plus the configurable wheel key or gesture already in DiPlay (`settings_gesture_fingers`).
+This is not in scope, but it shows the app's edge. The engine draws its own left rail. MobileCarConnect adds **no chrome over projection**: no floating buttons and no badges. The way back to MobileCarConnect is the engine's own exit (CarPlay's "back to car" or Android Auto's "Exit"), plus the configurable wheel key or gesture already in DiPlay (`settings_gesture_fingers`).
 
 ---
 
 ## 3. Design principles
 
 1. **Glance in two seconds, finish in twelve.** Each screen has one primary question and one primary action. Any in-motion task must finish within 12 s total eyes-off-road and use at most 2 taps. If it doesn't fit, it is parked-only.
-2. **Detect, don't ask.** CarLink infers the phone type, engine and transport. The UI *states* what it detected ("iPhone 15 · USB → CarPlay") so the driver can trust it, and allows an override only in Phone detail.
+2. **Detect, don't ask.** MobileCarConnect infers the phone type, engine and transport. The UI *states* what it detected ("iPhone 15 · USB → CarPlay") so the driver can trust it, and allows an override only in Phone detail.
 3. **Zero-tap is the goal; one tap is the fallback.** Auto-connect is on by default after onboarding. The Home primary button is the fallback. Cancel is always one tap.
 4. **Every error has a way out.** An error shows *what failed*, in the driver's words, and **one** primary recovery action, plus at most one secondary action. Never just "Error -32." Technical detail goes to Diagnostics.
 5. **Big, few, flat.** Touch targets are ≥76dp, text ≥24sp and navigation depth ≤2 (Home → Settings category). No hamburger menus and no hidden gestures for anything essential.
@@ -187,7 +187,7 @@ The locked state is a row that keeps its normal look at 56 % emphasis, adds a `l
 
 - **Back** always goes up one level. From Home, back goes to the car's launcher (the old "Car home" action).
 - There is no bottom navigation, because the app has only one hub. Settings is reached with one tap from Home's top bar.
-- While a session is live, opening CarLink (from the launcher or the exit gesture) shows **Home in "Connected" state** with a big "Return to CarPlay" primary.
+- While a session is live, opening MobileCarConnect (from the launcher or the exit gesture) shows **Home in "Connected" state** with a big "Return to CarPlay" primary.
 
 ### 4.2 Connection model and auto-detection states
 
@@ -199,7 +199,7 @@ The locked state is a row that keeps its normal look at 56 % emphasis, adds a `l
 | USB attach, another VID, AOA-capable | Android phone → **Android Auto** |
 | Bluetooth-paired device that advertises the iAP2 / CarPlay UUID | iPhone → CarPlay (wireless) |
 | Bluetooth-paired device that advertises the Android Auto RFCOMM service | Android → Android Auto (wireless) |
-| Both or neither | Unknown. Show it as "Phone" and probe; if both engines fail, show an error with "Tell CarLink what this phone is" (parked-only). |
+| Both or neither | Unknown. Show it as "Phone" and probe; if both engines fail, show an error with "Tell MobileCarConnect what this phone is" (parked-only). |
 
 **Global connection state** (one source of truth, `ConnectionUiState`):
 
@@ -229,7 +229,7 @@ Error(phone?, engine?, transport?, failedStage, cause, recoveries[])
 | E-NO-PAIRED | No phone paired yet | Pair your phone in the car's Bluetooth settings. | **Open Bluetooth settings** | Use a cable |
 | E-NOT-IN-RANGE | {Phone} isn't nearby | Make sure its Bluetooth and Wi-Fi are on. | **Try again** | Choose another phone |
 | E-ID | Couldn't identify this phone | Unplug it, wait a moment, then plug it in again. | **Try again** | Open diagnostics |
-| E-USB-DENIED | USB access was declined | CarLink needs USB access to talk to your phone. | **Ask again** | How to stop this prompt *(parked)* |
+| E-USB-DENIED | USB access was declined | MobileCarConnect needs USB access to talk to your phone. | **Ask again** | How to stop this prompt *(parked)* |
 | E-USB-CHARGE | Cable can't carry data | This cable or port only charges. Try another port or cable. | **Try again** | — |
 | E-WIFI | Phone didn't join the car's Wi-Fi | The car's hotspot may be off. | **Turn on hotspot** (if ADB automation is available) / **Try again** | Use a cable |
 | E-AUTH | {CarPlay/Android Auto} didn't start | The phone stopped the connection. Unlock it once, then try again. *(parked copy only; moving copy: "Try again or use a cable.")* | **Try again** | Use a cable |
@@ -257,12 +257,12 @@ The rail order matches the frequency of use. Shared controls come first. Each ca
 Contents: a connection readiness card (from Checks), quick settings (max 4: Theme, Auto-connect, Interface size, Audio stream), and "Open {category}" links.
 
 **1. Connection** (`link`)
-- *Shared:* Auto-connect on start [default on] · Start with the car (boot / screen-on / Bluetooth / USB triggers; replaces DiAuto Auto-start + DiPlay automatic connection) · Reopen after reconnection · Preferred phones (order) · Wireless method: Car hotspot / Wi-Fi Direct (Auto · 5 GHz / Auto · 2.4 GHz band) [N] · Wait for Wi-Fi before connecting (timeout) · USB: "Make CarLink the default for phones" helper (opens the system dialog or ADB fix) · Bluetooth adapter (only if more than one) · Permissions status → Onboarding permissions step.
+- *Shared:* Auto-connect on start [default on] · Start with the car (boot / screen-on / Bluetooth / USB triggers; replaces DiAuto Auto-start + DiPlay automatic connection) · Reopen after reconnection · Preferred phones (order) · Wireless method: Car hotspot / Wi-Fi Direct (Auto · 5 GHz / Auto · 2.4 GHz band) [N] · Wait for Wi-Fi before connecting (timeout) · USB: "Make MobileCarConnect the default for phones" helper (opens the system dialog or ADB fix) · Bluetooth adapter (only if more than one) · Permissions status → Onboarding permissions step.
 - *CarPlay:* Choose iPhone · Car hotspot automation [ADB] · Hotspot join controls.
 - *Android Auto:* Native AP transport (Hotspot / Wi-Fi Direct) [N] · Static BSSID [P] · Wi-Fi version exchange [X] · Server mode (Auto / Manual) · Hotspot SSID/password overrides [P].
 
 **2. Display** (`display_settings`)
-- *Shared:* Theme: Follow car (default) / Dark / Light · Full screen (hide system bars) · Interface size of CarLink's own UI (90 / 100 / 115 / 130 %) · Driving side (LHD/RHD; moved here from Vehicle because it changes layout for both engines) [N].
+- *Shared:* Theme: Follow car (default) / Dark / Light · Full screen (hide system bars) · Interface size of MobileCarConnect's own UI (90 / 100 / 115 / 130 %) · Driving side (LHD/RHD; moved here from Vehicle because it changes layout for both engines) [N].
 - *CarPlay:* Icon and text size (presets with preview) [R] · Resolution [N] · Frame rate (30 / 60) [N] · Dock position.
 - *Android Auto:* Resolution (presets; "Recommended" badge from the high-bandwidth check) [N] · Interface density (named presets with preview, plus a "Custom DPI" disclosure) [N] · Frame rate [N] · View mode (Surface / Texture / GLES) [N] · Safe area & insets editor [P] · Stretch to fill · Pixel aspect ratio [P].
 
@@ -303,7 +303,7 @@ A caution banner ("Change with care. These can break sound, video or the connect
 
 ### 5.0 Canvas and scaling (read this first)
 
-Head-unit DPI reporting is unreliable. DiLink 1920×1080 units report densities that render CarLink's UI at very different physical sizes, and the old apps worked around this with DPI settings. CarLink **overrides `LocalDensity`** so that the layout is always designed against a fixed canvas:
+Head-unit DPI reporting is unreliable. DiLink 1920×1080 units report densities that render MobileCarConnect's UI at very different physical sizes, and the old apps worked around this with DPI settings. MobileCarConnect **overrides `LocalDensity`** so that the layout is always designed against a fixed canvas:
 
 ```
 shortSidePx = min(widthPx, heightPx)
@@ -323,7 +323,7 @@ Apply the override at the root:
 ```kotlin
 val cfg = LocalConfiguration.current; val dm = LocalContext.current.resources.displayMetrics
 val base = min(dm.widthPixels, dm.heightPixels) / 810f
-CompositionLocalProvider(LocalDensity provides Density(base * uiScale, fontScale = LocalDensity.current.fontScale.coerceIn(1f, 1.3f))) { CarLinkApp() }
+CompositionLocalProvider(LocalDensity provides Density(base * uiScale, fontScale = LocalDensity.current.fontScale.coerceIn(1f, 1.3f))) { MobileCarConnectApp() }
 ```
 
 **Size classes** (computed from the canvas dp):
@@ -371,7 +371,7 @@ The design builds from near-black, uses one interactive accent, and gives each e
 | `errorContainer` / `onErrorContainer` | `#4A1512` / `#FFDAD6` | Error card in Connecting | 11.6 |
 | `scrim` | `#000000` @ 60 % | Behind side sheets and dialogs | — |
 
-\* These are custom extension tokens (`CarLinkColors`) provided via a `CompositionLocal` next to `MaterialTheme.colorScheme`.
+\* These are custom extension tokens (`MobileCarConnectColors`) provided via a `CompositionLocal` next to `MaterialTheme.colorScheme`.
 
 The fact that success and the CarPlay tint share a hue is intentional and harmless: CarPlay's tint appears only as a glyph next to the word "CarPlay," and success always carries a check icon.
 
@@ -534,7 +534,7 @@ Use **Material Symbols Rounded**, weight 400, fill 0 (fill 1 for selected and ac
 | Concept | Symbol |
 |---|---|
 | iPhone / Android phone / unknown phone | `phone_iphone` / `phone_android` / `smartphone` |
-| CarPlay / Android Auto engine glyph | Not in Material Symbols. Use a **neutral CarLink glyph** inside an engine-tinted badge plus the **word** "CarPlay" / "Android Auto". Do not use Apple's or Google's logos unless legal clears it (trademark), which is also why identity is by word, not logo. Fallback symbol: `directions_car` in the engine tint. |
+| CarPlay / Android Auto engine glyph | Not in Material Symbols. Use a **neutral MobileCarConnect glyph** inside an engine-tinted badge plus the **word** "CarPlay" / "Android Auto". Do not use Apple's or Google's logos unless legal clears it (trademark), which is also why identity is by word, not logo. Fallback symbol: `directions_car` in the engine tint. |
 | USB / wireless / Bluetooth / hotspot / Wi-Fi Direct | `usb` / `wifi` / `bluetooth` / `wifi_tethering` / `p2p` (or `devices`) |
 | Bluetooth off / Wi-Fi off / USB off | `bluetooth_disabled` / `wifi_off` / `usb_off` |
 | Connect / connected / disconnect | `link` / `check_circle` / `link_off` |
@@ -562,7 +562,7 @@ The wireframes use the dp canvas (§5.0). For 1920×1080 px, multiply by 1.333. 
 ```
  0                                                                                    1440
  ┌──────────────────────────────────────────────────────────────────────────────────────┐
- │ ◆ CarLink        (bluetooth On) (wifi_tethering Hotspot) (usb Ready)      [⚙]   [⌂]  │ 96  top bar
+ │ ◆ MobileCarConnect        (bluetooth On) (wifi_tethering Hotspot) (usb Ready)      [⚙]   [⌂]  │ 96  top bar
  ├──────────────────────────────────────────────────────┬───────────────────────────────┤
  │ ┌──────────────────────────────────────────────────┐ │ Phones                         │
  │ │  ┌────┐                                           │ │ ┌───────────────────────────┐ │
@@ -583,7 +583,7 @@ The wireframes use the dp canvas (§5.0). For 1920×1080 px, multiply by 1.333. 
    margins 32 · gutter 24 · hero card radius 28 · surfaceContainer
 ```
 
-- **Top bar (96dp):** brand mark (36dp) + "CarLink" (`headlineSmall`). Status chips (non-interactive, `labelMedium`) show only *relevant* radios: Bluetooth, Wi-Fi mode, and USB when a cable is present. A chip turns `warning` plus a `bluetooth_disabled` icon when that blocks the current phone's preferred path. Settings and Home are 76dp icon buttons with content descriptions. The Home button exits to the car launcher.
+- **Top bar (96dp):** brand mark (36dp) + "MobileCarConnect" (`headlineSmall`). Status chips (non-interactive, `labelMedium`) show only *relevant* radios: Bluetooth, Wi-Fi mode, and USB when a cable is present. A chip turns `warning` plus a `bluetooth_disabled` icon when that blocks the current phone's preferred path. Settings and Home are 76dp icon buttons with content descriptions. The Home button exits to the car launcher.
 - **Hero card:** this is the state machine's face. The table below defines its content per state. The phone avatar is 76dp with the phone-type glyph; the engine badge is a 48dp chip with an engine-tinted glyph and the engine name.
 - **Phones panel:** `LazyColumn`, max 4 visible rows, scrollable (no auto-scroll). The row tap **connects that phone** (when idle) or **switches to it** (when another is live, after the confirm in §6.1.4). A long-press, or the trailing `more_vert` 76dp target, opens Phone detail. Row order: live > in range > others. The presence dot is 16dp, `success`, and paired with the text "In range" (never color alone).
 - **Empty phones state:** "No phones yet", a "Plug in a phone or pair one in the car's Bluetooth settings." body, and a `[Open Bluetooth settings]` tonal button.
@@ -596,7 +596,7 @@ The wireframes use the dp canvas (§5.0). For 1920×1080 px, multiply by 1.333. 
 | Idle, no phone present | Waiting for your phone | Turn on its Bluetooth, or plug it in. | 🔄 Look again | Use a cable |
 | WaitingForPhone (auto-connect armed) | Looking for {phone}… | It connects by itself when it's nearby. | ✕ Stop looking | — |
 | Connecting | → navigates to **Connecting** screen (§6.2); Home never shows a spinner-only hero. | | | |
-| Live (user returned to CarLink) | Connected | {Engine} is running · {transport} · {mm:ss} | ▶ Return to {Engine} | ⏏ Disconnect |
+| Live (user returned to MobileCarConnect) | Connected | {Engine} is running · {transport} · {mm:ss} | ▶ Return to {Engine} | ⏏ Disconnect |
 | Error (from auto-connect while on Home) | Error title (§4.2) | Error body | Error primary | Error secondary |
 | Bluetooth off (blocks wireless) | Bluetooth is off | Turn it on for wireless, or plug in a cable. | Turn on Bluetooth | Use a cable |
 
@@ -606,7 +606,7 @@ The hero is in the upper half (Apple guidance), and the primary button sits at t
 
 ```
  ┌──────────────────────────────────────────┐
- │ ◆ CarLink                     [⚙]  [⌂]   │ 96
+ │ ◆ MobileCarConnect                     [⚙]  [⌂]   │ 96
  │ (bluetooth On) (wifi_tethering) (usb)     │ 64  chips row (wraps)
  ├──────────────────────────────────────────┤
  │ ┌──────────────────────────────────────┐ │
@@ -637,7 +637,7 @@ The hero is in the upper half (Apple guidance), and the primary button sits at t
 
 ```
  ┌──────────────────────────┐
- │ ◆ CarLink     [⚙]  [⌂]   │ 96
+ │ ◆ MobileCarConnect     [⚙]  [⌂]   │ 96
  ├──────────────────────────┤
  │ 📱 Sara's iPhone          │ 76 avatar + name (1 line)
  │ (CarPlay)                │
@@ -707,7 +707,7 @@ Chips are hidden in Compact. Their blocking states surface as the hero subtitle 
  │       (avatar, phone name, chips)       │  ✓  Identified as iPhone → CarPlay          │
  │                                         │ ┌────────────────────────────────────────┐ │
  │  ⚠ USB access was declined  headlineMed │ │⛔ USB access                            │ │ errorContainer
- │  CarLink needs USB access to talk to    │ │   Declined                              │ │
+ │  MobileCarConnect needs USB access to talk to    │ │   Declined                              │ │
  │  your phone.                 bodyLarge  │ └────────────────────────────────────────┘ │
  │ ┌════════════════════════┐ ┌──────────┐ │  ○  Secure handshake                        │
  │ ║ 🔄  Ask again           ║ │ Help ▸   │ │  ○  Starting picture                        │
@@ -808,7 +808,7 @@ Level 0 is the category list (88dp rows with icon, title and a one-line summary 
 
 Onboarding runs on first launch and from Settings > Connection > "Run setup again." It is **parked-only**; if the car moves, a "Continue when parked" overlay appears and progress is kept. It has five steps; DiPlay's `SetupGuide` STEP_CAR / CONNECTION / IPHONE / FEATURES / DONE are generalized as follows.
 
-1. **Welcome & safety:** "Set up CarLink while parked. It takes about 3 minutes." [Start] (primary). The safety disclaimer is inline (no extra dialog), and the start button acknowledges it.
+1. **Welcome & safety:** "Set up MobileCarConnect while parked. It takes about 3 minutes." [Start] (primary). The safety disclaimer is inline (no extra dialog), and the start button acknowledges it.
 2. **Your car:** detected DiLink generation, Android version and screen. Checks are auto-run with ✓/⚠. "Looks good" or specific fixes. This is where the user picks "Start with the car" (default on) and gets the USB default-handler fix.
 3. **Permissions:** a checklist with one row per permission, each with its own **[Allow]** button. Required items come first; optional ones are labeled "Optional · {benefit}".
 
@@ -818,33 +818,33 @@ Onboarding runs on first launch and from Settings > Connection > "Run setup agai
    | Location (precise) | Required for wireless (Wi-Fi Direct/hotspot) | Needed by Android to set up the car's Wi-Fi link. |
    | Microphone | Required | Siri and Google Assistant hear you. |
    | Notifications (Android 13+) | Recommended | Shows connection status in the car's shade. |
-   | Display over other apps | Optional | Lets CarLink return you to CarPlay or Android Auto quickly. |
-   | Battery optimization exemption / autostart | Recommended | Keeps CarLink ready when the car wakes. |
+   | Display over other apps | Optional | Lets MobileCarConnect return you to CarPlay or Android Auto quickly. |
+   | Battery optimization exemption / autostart | Recommended | Keeps MobileCarConnect ready when the car wakes. |
    | ADB access (BYD) | Optional | Dashboard & HUD turn guidance, car hotspot automation. |
 
    Each row: avatar icon 56, title, description, and a trailing [Allow] (76dp tonal), which becomes `check_circle` "Allowed" once granted. If a permission was denied twice, the button becomes [Open settings]. **[Continue]** is enabled once the required items are granted. Users can skip optional items.
-4. **Connect your phone:** two large choice cards (each about 600×320dp): **iPhone** and **Android phone**. This is the only place CarLink asks the phone type, and only to show the right phone-side instructions; detection still happens on connect. Each card leads to 3 numbered steps with an illustration:
+4. **Connect your phone:** two large choice cards (each about 600×320dp): **iPhone** and **Android phone**. This is the only place MobileCarConnect asks the phone type, and only to show the right phone-side instructions; detection still happens on connect. Each card leads to 3 numbered steps with an illustration:
    - iPhone: (1) Pair the iPhone in the car's Bluetooth settings, or plug it in. (2) On iPhone: Settings › General › CarPlay › {car} › Allow CarPlay While Locked. (3) Tap "Connect now."
    - Android: (1) Pair in the car's Bluetooth settings, or plug in. (2) On the phone, Android Auto settings › Start Android Auto automatically / Wireless Android Auto. (3) Tap "Connect now."
 
    [Connect now] (primary) runs a *real* connection inline using a compact timeline. Success goes to step 5; failure shows the error with recovery actions and "Skip for now."
-5. **Done:** "You're set. CarLink connects {phone} automatically." [Go to Home].
+5. **Done:** "You're set. MobileCarConnect connects {phone} automatically." [Go to Home].
 
 **Landscape layout:** a 360dp step list on the left (numbered, ✓ for done, current step in `primaryContainer`; tappable only for completed steps). The content on the right has `displaySmall` titles and the primary button bottom-end, sticky. **Portrait:** a top 5-segment progress bar with "Step 2 of 5", content, then a sticky bottom button bar holding Back (text) and Continue (primary).
 
 ```
  ┌──────────────────────────────────────────────────────────────────────────────────────┐
- │ ◆ Set up CarLink                                                          [Skip setup]│ 96
+ │ ◆ Set up MobileCarConnect                                                          [Skip setup]│ 96
  ├────────────────────────┬─────────────────────────────────────────────────────────────┤
  │ ✓ 1 Welcome            │  Allow access                                 displaySmall   │
- │ ✓ 2 Your car           │  CarLink needs these to connect your phone.   bodyLarge      │
+ │ ✓ 2 Your car           │  MobileCarConnect needs these to connect your phone.   bodyLarge      │
  │█ 3 Permissions ████████│  ┌───────────────────────────────────────────────────────┐  │
  │   4 Connect phone      │  │ 🔵 Nearby devices                         [ Allow ]   │  │ 112
  │   5 Done               │  │    Find and connect to your phone wirelessly.          │  │
  │                        │  │ 📍 Location                           ✓ Allowed       │  │ 112
  │                        │  │ 🎤 Microphone                             [ Allow ]   │  │ 112
  │                        │  │ 🔔 Notifications · Recommended            [ Allow ]   │  │ 112
- │                        │  │ 🔋 Keep CarLink ready · Recommended       [ Allow ]   │  │ 112
+ │                        │  │ 🔋 Keep MobileCarConnect ready · Recommended       [ Allow ]   │  │ 112
  │                        │  └───────────────────────────────────────────────────────┘  │
  │                        │                                    ┌══════════════════════┐ │
  │                        │                                    ║  Continue  →          ║ │ 96
@@ -897,7 +897,7 @@ Onboarding runs on first launch and from Settings > Connection > "Run setup agai
  │ [←]  About                                                                           │
  ├───────────────────────────────────┬──────────────────────────────────────────────────┤
  │        ◆  (96dp mark)             │ Version 1.0.0 (1234) · Up to date        [Check]  │ 112
- │        CarLink      displaySmall  │ CarPlay engine · DiPlay core 0.4.2               │ 88
+ │        MobileCarConnect      displaySmall  │ CarPlay engine · DiPlay core 0.4.2               │ 88
  │  CarPlay and Android Auto for     │ Android Auto engine · DiAuto core 2.1.0          │ 88
  │  your BYD.             bodyLarge  │ Head unit · DiLink 4.0 · Android 10 · 1920×1080  │ 88
  │                                   │ Open-source licenses (AGPL-3.0 and others)     ▸ │ 88 🔒
@@ -954,7 +954,7 @@ BYD units have a center joystick on some models, steering-wheel keys and occasio
 - Use full-width punctuation in copy; never concatenate strings with "·" in code. Use format strings with placeholders so translators control order (for example `settings_value_format = "%1$s · %2$s"` is *removed*; title and value render on separate lines).
 
 ### 7.6 Process
-- All new UI strings get a `carlink_` prefix (the existing `settings_` prefix is kept for migrated strings). A `TranslationsTest` (as DiPlay's `SettingsTranslationsTest`) fails on missing locales.
+- All new UI strings get a `mobilecarconnect_` prefix (the existing `settings_` prefix is kept for migrated strings). A `TranslationsTest` (as DiPlay's `SettingsTranslationsTest`) fails on missing locales.
 - Union of the locale sets from both apps: **ar, cs, de, es, es-ES, hu, it, ja, ka, ko, nl, pl, pt-BR, ro, ru, tr, uk, vi, zh-CN, zh-TW** (DiPlay currently has ar, es, ru, uk, zh-CN, zh-TW; the DiPlay-only strings need back-fill for the others).
 - Pseudolocales `en-XA` (accented, +30 %) and `ar-XB` (RTL) are turned on in debug builds and covered by screenshot tests at 1440×810, 810×1440 and 480×810.
 
@@ -963,8 +963,8 @@ BYD units have a center joystick on some models, steering-wheel keys and occasio
 ## 8. Compose implementation sketch
 
 ```kotlin
-// theme/CarLinkTokens.kt
-object CarLinkDark {
+// theme/MobileCarConnectTokens.kt
+object MobileCarConnectDark {
     val scheme = darkColorScheme(
         primary = Color(0xFF5CCFE6), onPrimary = Color(0xFF00222A),
         primaryContainer = Color(0xFF0E3A45), onPrimaryContainer = Color(0xFFB8EEFA),
@@ -981,13 +981,13 @@ object CarLinkDark {
         errorContainer = Color(0xFF4A1512), onErrorContainer = Color(0xFFFFDAD6),
         scrim = Color(0xFF000000),
     )
-    val ext = CarLinkExtColors(
+    val ext = MobileCarConnectExtColors(
         onSurfaceTertiary = Color(0xFF8A95A3), success = Color(0xFF6EDC8C),
         warning = Color(0xFFFFC46B), warningContainer = Color(0xFF3D2A00), onWarningContainer = Color(0xFFFFE2B3),
         engineCarPlay = Color(0xFF6EDC8C), engineAndroidAuto = Color(0xFF8AB4F8),
     )
 }
-object CarLinkLight {
+object MobileCarConnectLight {
     val scheme = lightColorScheme(
         primary = Color(0xFF006273), onPrimary = Color.White,
         primaryContainer = Color(0xFFC9EEF6), onPrimaryContainer = Color(0xFF002A33),
@@ -1004,14 +1004,14 @@ object CarLinkLight {
         errorContainer = Color(0xFFFFDAD6), onErrorContainer = Color(0xFF410002),
         scrim = Color(0xFF000000),
     )
-    val ext = CarLinkExtColors(
+    val ext = MobileCarConnectExtColors(
         onSurfaceTertiary = Color(0xFF55606D), success = Color(0xFF176B34),
         warning = Color(0xFF8A5000), warningContainer = Color(0xFFFFE2B3), onWarningContainer = Color(0xFF2B1700),
         engineCarPlay = Color(0xFF176B34), engineAndroidAuto = Color(0xFF1D58B8),
     )
 }
 
-val CarLinkTypography = Typography(
+val MobileCarConnectTypography = Typography(
     displayLarge  = TextStyle(fontSize = 64.sp, lineHeight = 72.sp, fontWeight = FontWeight.Normal),
     displayMedium = TextStyle(fontSize = 56.sp, lineHeight = 64.sp, fontWeight = FontWeight.Normal),
     displaySmall  = TextStyle(fontSize = 48.sp, lineHeight = 56.sp, fontWeight = FontWeight.Normal),
@@ -1029,7 +1029,7 @@ val CarLinkTypography = Typography(
     labelSmall    = TextStyle(fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.2.sp),
 ).let { t -> /* apply LineHeightStyle(Center, Trim.None) + platformStyle(includeFontPadding=false except ar) to all */ t }
 
-val CarLinkShapes = Shapes(
+val MobileCarConnectShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp), small = RoundedCornerShape(12.dp),
     medium = RoundedCornerShape(20.dp), large = RoundedCornerShape(28.dp), extraLarge = RoundedCornerShape(36.dp),
 )

@@ -1,5 +1,5 @@
-// CarLink: DiAuto's former :app module, built as the Android Auto engine library.
-// The APK, its applicationId, signing and shrinking now live in CarLink's :app module.
+// MobileCarConnect: DiAuto's former :app module, built as the Android Auto engine library.
+// The APK, its applicationId, signing and shrinking now live in MobileCarConnect's :app module.
 // Kotlin is compiled by AGP's built-in Kotlin support (no kotlin-android/kapt plugins);
 // the Glide and lifecycle annotation processors were unused (no @GlideModule/@OnLifecycleEvent).
 
@@ -7,10 +7,10 @@ plugins {
     alias(libs.plugins.android.library)
 }
 
-// Shared with CarLink's :app so engine code that needs the host package (Shizuku user
+// Shared with MobileCarConnect's :app so engine code that needs the host package (Shizuku user
 // service, signature permission names) resolves to the merged APK.
-val carlinkApplicationId = providers.gradleProperty("carlink.applicationId").get()
-val carlinkDebugSuffix = providers.gradleProperty("carlink.debugApplicationIdSuffix").get()
+val mobilecarconnectApplicationId = providers.gradleProperty("mobilecarconnect.applicationId").get()
+val mobilecarconnectDebugSuffix = providers.gradleProperty("mobilecarconnect.debugApplicationIdSuffix").get()
 
 android {
     compileSdk = 36
@@ -29,7 +29,7 @@ android {
         }
     }
 
-    // DiAuto's CHANGELOG/LICENSE live in the subtree root, not the CarLink root.
+    // DiAuto's CHANGELOG/LICENSE live in the subtree root, not the MobileCarConnect root.
     val copyRootAssets = tasks.register<Copy>("copyRootAssets") {
         from(file("../CHANGELOG.md"), file("../LICENSE"))
         into("${project.layout.buildDirectory.get().asFile}/generated/assets/root")
@@ -75,7 +75,7 @@ android {
         consumerProguardFiles("proguard-project.txt")
 
         // Library BuildConfig has no application/version fields; the engine reads these.
-        buildConfigField("String", "APPLICATION_ID", "\"$carlinkApplicationId\"")
+        buildConfigField("String", "APPLICATION_ID", "\"$mobilecarconnectApplicationId\"")
         buildConfigField("String", "VERSION_NAME", "\"0.3.12\"")
         buildConfigField("int", "VERSION_CODE", "112")
 
@@ -101,7 +101,7 @@ android {
 
     buildTypes {
         getByName("debug") {
-            buildConfigField("String", "APPLICATION_ID", "\"$carlinkApplicationId$carlinkDebugSuffix\"")
+            buildConfigField("String", "APPLICATION_ID", "\"$mobilecarconnectApplicationId$mobilecarconnectDebugSuffix\"")
         }
     }
 
@@ -122,14 +122,14 @@ android {
     }
 }
 
-// CarLink ships the github distribution only (the playstore flavor never compiled:
+// MobileCarConnect ships the github distribution only (the playstore flavor never compiled:
 // VpnControl.kt lives solely in src/github).
 androidComponents {
     beforeVariants(selector().withFlavor("distribution" to "playstore")) { it.enable = false }
 }
 
 dependencies {
-    // Conscrypt 2.6.1 is 16 KB page aligned; CarLink's minSdk 25 no longer needs 2.5.3.
+    // Conscrypt 2.6.1 is 16 KB page aligned; MobileCarConnect's minSdk 25 no longer needs 2.5.3.
     implementation("org.conscrypt:conscrypt-android:2.6.1")
 
     implementation("com.google.protobuf:protobuf-java:3.25.1")

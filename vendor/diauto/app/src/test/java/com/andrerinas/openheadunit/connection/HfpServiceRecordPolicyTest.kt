@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 80057795 (AGPL-3.0), HfpServiceRecordPolicyTest.kt.
+// MobileCarConnect: ported from open-headunit 80057795 (AGPL-3.0), HfpServiceRecordPolicyTest.kt.
 package com.andrerinas.openheadunit.connection
 
 import com.andrerinas.openheadunit.aap.BluetoothWakePolicy
@@ -75,7 +75,7 @@ class HfpServiceRecordPolicyTest {
         // report its profiles.
         for (link in BluetoothWakePolicy.HandsFreeLink.entries) {
             assertEquals(
-                BluetoothWakePolicy.shouldPoke(link), // CarLink: DiAuto's poke guard
+                BluetoothWakePolicy.shouldPoke(link), // MobileCarConnect: DiAuto's poke guard
                 opens(link = link)
             )
         }

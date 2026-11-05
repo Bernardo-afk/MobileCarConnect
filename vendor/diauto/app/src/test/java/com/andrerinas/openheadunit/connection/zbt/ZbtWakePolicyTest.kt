@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), app/src/test/.../nativeaa/zbt/ZbtWakePolicyTest.kt
+// MobileCarConnect: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), app/src/test/.../nativeaa/zbt/ZbtWakePolicyTest.kt
 package com.andrerinas.openheadunit.connection.zbt
 
 import org.junit.Assert.assertEquals

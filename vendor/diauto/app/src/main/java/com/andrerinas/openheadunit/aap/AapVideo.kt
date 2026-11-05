@@ -241,7 +241,7 @@ internal class AapVideo(
 
         val decision = assembler.onMessage(
             flags = flags,
-            // CarLink (open-headunit d88b28d4): only the offset the message type allows.
+            // MobileCarConnect (open-headunit d88b28d4): only the offset the message type allows.
             payloadStartsAt10 = !hideStartCode &&
                 VideoFragmentAssembler.typeAllows(flags, message.type, VideoFragmentAssembler.OFFSET_TIMESTAMP_INDICATION) &&
                 payloadStartsAt(buf, VideoFragmentAssembler.OFFSET_TIMESTAMP_INDICATION, len),

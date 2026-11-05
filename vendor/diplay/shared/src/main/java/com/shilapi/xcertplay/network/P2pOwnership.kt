@@ -15,7 +15,7 @@ internal object P2pOwnership {
         isOwner && !ssid.isNullOrBlank() &&
             (ssid == recorded || (ssid.startsWith(prefix) &&
                 ssid.removePrefix(prefix).matches(Regex("[A-Za-z0-9]{4}"))) ||
-                // CarLink: the stable identity ends with the car's name instead (P2pStableIdentity.kt).
+                // MobileCarConnect: the stable identity ends with the car's name instead (P2pStableIdentity.kt).
                 P2pStableIdentityPolicy.isNamespaceName(ssid, prefix))
 }
 

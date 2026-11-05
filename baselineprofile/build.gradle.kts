@@ -1,5 +1,5 @@
-// Generates CarLink's baseline and startup profiles and measures them with Macrobenchmark
-// (docs/LOW_END_PERFORMANCE.md "Round 2"). Runs against the release build on one of CarLink's
+// Generates MobileCarConnect's baseline and startup profiles and measures them with Macrobenchmark
+// (docs/LOW_END_PERFORMANCE.md "Round 2"). Runs against the release build on one of MobileCarConnect's
 // emulators; set ANDROID_SERIAL so Gradle uses only that device:
 //
 //   ANDROID_SERIAL=emulator-5562 ./gradlew :app:generateReleaseBaselineProfile      (API 30 needs `adb root`)
@@ -10,7 +10,7 @@ plugins {
 }
 
 android {
-    namespace = "com.carlink.baselineprofile"
+    namespace = "com.mobilecarconnect.baselineprofile"
     compileSdk {
         version = release(37)
     }
@@ -20,7 +20,7 @@ android {
         minSdk = 28
         targetSdk = 37
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        // CarLink's measuring devices are emulators (no low-end phone is attached to this PC).
+        // MobileCarConnect's measuring devices are emulators (no low-end phone is attached to this PC).
         testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR"
         missingDimensionStrategy("distribution", "github")
     }

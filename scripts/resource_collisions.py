@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Report Android resource names defined by more than one CarLink module.
+"""Report Android resource names defined by more than one MobileCarConnect module.
 
 Libraries merged into one APK share a single resource table, so a name defined by both
 engines is silently resolved to one definition. Run from the repository root:
@@ -15,7 +15,7 @@ from pathlib import Path
 
 MODULES = {
     "app": Path("app/src/main/res"),
-    "carlink-core": Path("carlink-core/src/main/res"),
+    "mobilecarconnect-core": Path("mobilecarconnect-core/src/main/res"),
     "carplay-common": Path("vendor/diplay/common/src/main/res"),
     "carplay-shared": Path("vendor/diplay/shared/src/main/res"),
     "androidauto": Path("vendor/diauto/app/src/main/res"),
@@ -24,7 +24,7 @@ MODULES = {
 }
 # Modules belonging to the same engine may legitimately override each other.
 ENGINE = {
-    "app": "app", "carlink-core": "app",
+    "app": "app", "mobilecarconnect-core": "app",
     "carplay-common": "carplay", "carplay-shared": "carplay",
     "androidauto": "androidauto", "androidauto-github": "androidauto",
     "androidauto-contract": "androidauto",

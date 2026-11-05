@@ -3,7 +3,7 @@ package com.shilapi.xcertplay.transport
 import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDeviceConnection
 
-// CarLink: new file. Bounded in-session recovery from transient USB request failures.
+// MobileCarConnect: new file. Bounded in-session recovery from transient USB request failures.
 
 /**
  * Counts consecutive transient USB failures (a reap that returned no request, a refused queue).

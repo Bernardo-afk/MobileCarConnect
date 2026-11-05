@@ -1,12 +1,12 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/carlink-mark-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/carlink-mark-light.svg">
-  <img alt="CarLink logo" src="docs/assets/carlink-mark-light.svg" width="120">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/mobilecarconnect-mark-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/mobilecarconnect-mark-light.svg">
+  <img alt="MobileCarConnect logo" src="docs/assets/mobilecarconnect-mark-light.svg" width="120">
 </picture>
 
-# CarLink
+# MobileCarConnect
 
 **CarPlay and Android Auto in one app, for any Android car stereo or tablet.**
 
@@ -21,12 +21,12 @@
 
 </div>
 
-Install CarLink on an Android car stereo, or on an Android tablet or phone used as the car's
+Install MobileCarConnect on an Android car stereo, or on an Android tablet or phone used as the car's
 display. Plug in or connect your phone: an **iPhone gets CarPlay**, an **Android phone gets
-Android Auto**, by cable (USB) or wirelessly. CarLink works out which phone it is; there is
+Android Auto**, by cable (USB) or wirelessly. MobileCarConnect works out which phone it is; there is
 nothing to choose.
 
-CarLink is generic: it is meant for any Android head unit or tablet, not one car brand. It
+MobileCarConnect is generic: it is meant for any Android head unit or tablet, not one car brand. It
 combines two open-source engines, imported with their full history: **DiPlay** (CarPlay) and
 **DiAuto** (Android Auto), both written for BYD DiLink head units; their BYD-only features stay
 off unless you pick BYD as the car brand.
@@ -64,10 +64,10 @@ screens with sample data, not captured from a phone. Every screen and state, on 
   the phone's Bluetooth services. Nothing to choose.
 - **USB and wireless.** Wireless uses Wi-Fi Direct by default (no router or hotspot needed); the
   car's own hotspot and the same Wi-Fi network are options.
-- **Plug and play.** Plugging in starts at once; the last phone reconnects by itself when CarLink
+- **Plug and play.** Plugging in starts at once; the last phone reconnects by itself when MobileCarConnect
   comes to the front.
 - **Switch phones.** A second phone asks "Switch to &lt;phone&gt;?" instead of taking over, and a
-  floating switcher over CarPlay and Android Auto changes phones or returns to CarLink.
+  floating switcher over CarPlay and Android Auto changes phones or returns to MobileCarConnect.
 - **Simple by default, complete when you need it.** Home shows one status and one action, with a
   one-tap fix when something is wrong; **Show advanced** in Settings has every engine option.
 - **Any Android head unit or tablet**, with car-display and phone/tablet layouts, dark and light.
@@ -80,7 +80,7 @@ screens with sample data, not captured from a phone. Every screen and state, on 
 ## Requirements
 
 - **The display:** Android 7.1 or newer on ARM (`arm64-v8a` or `armeabi-v7a`): a car stereo, a
-  tablet or a phone used as the car's display. Install CarLink there, not on your phone.
+  tablet or a phone used as the car's display. Install MobileCarConnect there, not on your phone.
 - **iPhone (CarPlay)** or **Android phone (Android Auto)**, with a USB cable, or with Bluetooth and
   Wi-Fi on for wireless. Wireless needs pairing once, started from the phone.
 
@@ -88,14 +88,14 @@ screens with sample data, not captured from a phone. Every screen and state, on 
 
 1. Open [Releases](https://github.com/F-e-n-y-x/CarLink/releases/latest) on the display (or on a
    computer, then copy the file over by USB stick or cable).
-2. Download `CarLink-X.Y.Z.apk`. To check the file, compare its SHA-256 with the
-   `CarLink-X.Y.Z.apk.sha256` file of the same release (`sha256sum -c CarLink-X.Y.Z.apk.sha256`).
+2. Download `MobileCarConnect-X.Y.Z.apk`. To check the file, compare its SHA-256 with the
+   `MobileCarConnect-X.Y.Z.apk.sha256` file of the same release (`sha256sum -c MobileCarConnect-X.Y.Z.apk.sha256`).
 3. Open the APK. Android asks you to allow installing apps from the browser or file manager you
    used ("Install unknown apps" › **Allow from this source**). Allow it, go back and tap
    **Install**.
-4. Open CarLink and follow the first-time setup.
+4. Open MobileCarConnect and follow the first-time setup.
 
-**Add to Obtainium.** [Obtainium](https://github.com/ImranR98/Obtainium) can track CarLink's GitHub
+**Add to Obtainium.** [Obtainium](https://github.com/ImranR98/Obtainium) can track MobileCarConnect's GitHub
 releases and install each new one: in Obtainium tap **Add app** and paste
 `https://github.com/F-e-n-y-x/CarLink`, or open `obtainium://add/https://github.com/F-e-n-y-x/CarLink`
 on a device that has Obtainium ([deep links](https://wiki.obtainium.imranr.dev/deep_links/)).
@@ -103,7 +103,7 @@ on a device that has Obtainium ([deep links](https://wiki.obtainium.imranr.dev/d
 Each [release page](https://github.com/F-e-n-y-x/CarLink/releases) repeats these steps with the
 APK's own SHA-256 and the signing certificate.
 
-The release's package is `com.carlink.app`. It is signed with CarLink's own release key
+The release's package is `com.mobilecarconnect.app`. It is signed with MobileCarConnect's own release key
 (certificate SHA-256
 `03:74:68:CA:5B:EB:70:EA:5F:68:54:33:29:B0:33:68:24:7D:FB:39:3D:3F:62:6A:6B:47:2D:10:E5:65:7D:21`;
 how to check it with `apksigner`: [user guide](docs/USER_GUIDE.md#install)). An APK signed with
@@ -111,7 +111,7 @@ another key is not an official build and cannot update it.
 
 ## First-time setup
 
-1. **Allow access.** CarLink asks for what it needs (Bluetooth, nearby Wi-Fi devices, location,
+1. **Allow access.** MobileCarConnect asks for what it needs (Bluetooth, nearby Wi-Fi devices, location,
    microphone, notifications, display over other apps) with one **Allow all**.
 2. **Choose your car.** Pick its brand, or Other. Only BYD changes anything.
 3. **Pair from the phone.** On the phone, open Bluetooth settings and tap this display's name. A
@@ -124,7 +124,7 @@ Details: [user guide › First-time setup](docs/USER_GUIDE.md#first-time-setup).
 
 ## Updates
 
-CarLink checks this repository's Releases at most **every 6 hours**, only while its own screen is
+MobileCarConnect checks this repository's Releases at most **every 6 hours**, only while its own screen is
 open and **no phone is connecting or connected**, and asks before downloading. Before installing,
 it checks the download's SHA-256, package, version and signing key, and deletes it if any check
 fails. **Settings › About** has **Check for updates** and turns the automatic checks off. Only
@@ -133,7 +133,7 @@ Details: [user guide › Updates](docs/USER_GUIDE.md#updates).
 
 ## What works and what's tested
 
-What CarLink supports:
+What MobileCarConnect supports:
 
 | | Over USB | Wirelessly |
 |---|---|---|
@@ -158,14 +158,14 @@ other head units are very welcome.
 ## FAQ
 
 **Which phone gets what?** An iPhone always gets CarPlay and an Android phone Android Auto.
-CarLink decides from the USB vendor ID or the phone's Bluetooth services, and remembers it.
+MobileCarConnect decides from the USB vendor ID or the phone's Bluetooth services, and remembers it.
 
 **Do I need a router or the car's hotspot for wireless?** No. Wi-Fi Direct links the phone and the
 display directly. During wireless Android Auto the phone's apps use mobile data, because that link
 has no internet.
 
 **Why doesn't my phone connect by itself when I get in?** A tablet is not a Bluetooth car kit, so
-the phone never connects to it on its own; CarLink starts the last phone when its Home comes to
+the phone never connects to it on its own; MobileCarConnect starts the last phone when its Home comes to
 the front. A car head unit with hands-free roles is reconnected by the phone itself.
 
 **Home says "Your iPhone couldn't reach this screen".** Your Wi-Fi router blocks the link CarPlay
@@ -188,9 +188,9 @@ issue with the version, the screen, the error and a log excerpt filled in, and y
 ## CarPlay notice
 
 > [!WARNING]
-> CarLink is **not an Apple-certified product**. As in DiPlay's releases, the release APK bundles
+> MobileCarConnect is **not an Apple-certified product**. As in DiPlay's releases, the release APK bundles
 > an experimental accessory identity recovered from public Carlinkit firmware, not a newly
-> provisioned MFi identity for CarLink. A bundled private key is extractable. Acceptance after
+> provisioned MFi identity for MobileCarConnect. A bundled private key is extractable. Acceptance after
 > future iOS updates, reliability across head units and suitability of that identity for general
 > distribution are unresolved: **there is no guarantee that CarPlay keeps working after an iOS
 > update.** Builds from this source contain no accessory identity
@@ -199,7 +199,7 @@ issue with the version, the screen, the error and a log excerpt filled in, and y
 
 ## For developers
 
-Building, architecture, the reusable `:carlink-core` library (for a launcher or another app),
+Building, architecture, the reusable `:mobilecarconnect-core` library (for a launcher or another app),
 releasing and the engine changes are in the [documentation index](docs/README.md):
 [building](docs/BUILDING.md) · [architecture](docs/ARCHITECTURE.md) ·
 [integration](docs/INTEGRATION.md) · [releasing](docs/RELEASING.md) ·
@@ -209,7 +209,7 @@ every release.
 
 ## Credits
 
-CarLink is built on two engines, both by [shihabal3amri](https://github.com/shihabal3amri), kept
+MobileCarConnect is built on two engines, both by [shihabal3amri](https://github.com/shihabal3amri), kept
 with their full history:
 
 - **[DiPlay](https://github.com/shihabal3amri/DiPlay)** (CarPlay), based on
@@ -218,13 +218,13 @@ with their full history:
   [Open Headunit](https://github.com/andreknieriem/open-headunit), based on Headunit Revived and
   [Michael Reid's headunit](https://github.com/mikereidis/headunit): `vendor/diauto`.
 
-Thank you to the authors of both engines and of the projects they build on. CarLink's About
+Thank you to the authors of both engines and of the projects they build on. MobileCarConnect's About
 screen lists the other components and shows the full license texts.
 
 ## License
 
-CarLink as a whole is distributed under the **GNU Affero General Public License v3.0**
-([LICENSE](LICENSE)). If you distribute CarLink, or let people use it over a network, you must
+MobileCarConnect as a whole is distributed under the **GNU Affero General Public License v3.0**
+([LICENSE](LICENSE)). If you distribute MobileCarConnect, or let people use it over a network, you must
 offer its complete source code; every release is tagged in this repository (`vX.Y.Z`).
 
 The engines keep their own licenses: DiPlay is GNU GPL v3.0 (`vendor/diplay/LICENSE`, as is
@@ -233,6 +233,6 @@ GPL-3.0 and AGPL-3.0 code; the combination is distributed under the AGPL-3.0.
 
 ## Trademarks
 
-CarLink is not affiliated with or endorsed by Apple, Google or BYD. CarPlay is a trademark of
+MobileCarConnect is not affiliated with or endorsed by Apple, Google or BYD. CarPlay is a trademark of
 Apple Inc.; Android Auto is a trademark of Google LLC. BYD and DiLink belong to their owner. Other
 car makes are named only to identify the car.

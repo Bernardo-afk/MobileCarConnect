@@ -7,7 +7,7 @@ import com.shilapi.xcertplay.iap2.wire.Iap2Frame
 object BydNavigationOutputs {
     /** Recover a journaled interrupted output when the app opens, even before a phone reconnects. */
     fun onAppOpened(context: Context) {
-        if (!VehicleIntegrations.enabled) return // CarLink
+        if (!VehicleIntegrations.enabled) return // MobileCarConnect
         BydBluetoothSuspend.onAppOpened(context)
         BydOemClusterNavi.restoreIfNeeded(context)
         BydDiLink3ClusterOutput.restoreIfNeeded(context)
@@ -69,7 +69,7 @@ object BydNavigationOutputs {
     fun parked(context: Context): Boolean? = BydParkedState.parked(context.applicationContext)
 
     fun start(context: Context) {
-        if (!VehicleIntegrations.enabled) return // CarLink: no SOME/IP binds or tickers on generic cars
+        if (!VehicleIntegrations.enabled) return // MobileCarConnect: no SOME/IP binds or tickers on generic cars
         val app = context.applicationContext
         useStandalone = BydStandaloneHudOutput.available(app)
         if (useStandalone) standalone.start { BydStandaloneNavigationBridge.initialize(app) }
@@ -145,7 +145,7 @@ object BydNavigationOutputs {
     fun carPlayCallsChanged(enabled: Boolean) = BydCarPlayCall.settingChanged(enabled)
 
     /** A CarPlay session became active; ready the call card so calls show without the watcher's start delay. */
-    fun carPlaySessionStarted() { if (VehicleIntegrations.enabled) BydCarPlayCall.sessionStarted() } // CarLink
+    fun carPlaySessionStarted() { if (VehicleIntegrations.enabled) BydCarPlayCall.sessionStarted() } // MobileCarConnect
 
     /** The iPhone's current call, for the steering wheel's call keys. */
     fun carPlayCall(): CarPlayCallCard? = BydCarPlayCall.current()
@@ -158,7 +158,7 @@ object BydNavigationOutputs {
 
     /** Best effort while alive; Android does not guarantee callbacks before force-stop. */
     fun endNow(preserveTurnOverlay: Boolean = false) {
-        if (!VehicleIntegrations.enabled) return // CarLink: nothing was started (see start)
+        if (!VehicleIntegrations.enabled) return // MobileCarConnect: nothing was started (see start)
         standalone.clear(); hud.clear(); cluster.clear(); fceCluster.clear(); BydClusterSong.end(); BydCarPlayCall.end()
         // Only a wireless session replacement retains the card. Explicit controller close
         // and wired disconnect still clear it immediately.

@@ -1,4 +1,4 @@
-# CarLink: premium UX research and direction
+# MobileCarConnect: premium UX research and direction
 
 > **Status (2026-10-09): superseded for the visual direction** by
 > [RESEARCH_HOME_V2.md](RESEARCH_HOME_V2.md) and [HOME_V2_RATIONALE.md](HOME_V2_RATIONALE.md)
@@ -6,7 +6,7 @@
 > structure, head-unit constraints) is kept and still cited.
 
 Status: research and recommendations, 2026-10-09. No code changes.
-Audience: whoever rebuilds the CarLink UI after the rejection of the Material 3 settings-style attempt.
+Audience: whoever rebuilds the MobileCarConnect UI after the rejection of the Material 3 settings-style attempt.
 User-chosen direction: **"Premium dashboard": Tesla/Rivian-like, full-bleed, large hero imagery of the phone/car, glass cards, bold type.**
 Companion document: `design/DESIGN_SPEC.md`, which stays valid for **behavior** (connection state machine, error catalog, stage timeouts, 76dp targets, canvas scaling, parked-only gate). Where this document conflicts with it on **look and settings structure**, this document wins (see §10).
 
@@ -16,10 +16,10 @@ Companion document: `design/DESIGN_SPEC.md`, which stays valid for **behavior** 
 
 1. **Premium in cars comes from restraint, scale and light, not from effects.** Every reference studied (Tesla, Polestar, Rivian, Lucid, NIO) uses a near-black base, one accent, few elements, very large type or imagery for the one thing that matters, and depth from imagery and light falloff instead of shadows or chrome. Reproduce that and the app looks expensive even on an Adreno-610-class GPU.
 2. **Home is a stage, not a dashboard.** A full-bleed dark "atmosphere" with one hero object (the phone, rendered large), one headline that answers "what is happening", and one primary action. Status details live in at most three glass chips. No lists on Home.
-3. **Glass without blur.** Real-time backdrop blur is off the table (minSdk 25; `RenderEffect` is API 31+; DiLink GPUs are mid-range). Because the hero background is a *static* bitmap, CarLink ships (or computes once) a pre-blurred copy and draws the matching crop inside each card. The result looks exactly like frosted glass and costs one bitmap draw per frame.
-4. **Imagery: generic device renders, never the car.** CarLink can't know which car it is in, and a wrong car render looks cheaper than none. Use two bundled, stylized phone renders (an "island" phone and a "punch-hole" phone, neither a trademarked device) plus Compose-drawn light effects (connection beam, glow). The atmosphere background is a bundled WebP with baked-in noise to stop banding.
-5. **Type: one neo-grotesk, bold only at display sizes.** Tesla (Universal Sans), Rivian (Söhne-derived) and Polestar (Unica77) all use neo-grotesks. CarLink bundles **Inter** (OFL), subset to Latin, Cyrillic and Greek, with a budget of ≤400 KB. Hero statements are 64–96sp SemiBold. Anything ≤32sp stays Regular or Medium, per AAOS guidance that bold is less legible at reading sizes.
-6. **Zero-config is the product.** No first-run wizard. CarLink starts in "Ready", asks for one permission bundle with one inline card when needed, and picks the transport automatically in the order **same Wi-Fi → car hotspot / Wi-Fi Direct → USB**. When phone and car share a Wi-Fi network, Home says so with a green "Same Wi-Fi · fastest" chip.
+3. **Glass without blur.** Real-time backdrop blur is off the table (minSdk 25; `RenderEffect` is API 31+; DiLink GPUs are mid-range). Because the hero background is a *static* bitmap, MobileCarConnect ships (or computes once) a pre-blurred copy and draws the matching crop inside each card. The result looks exactly like frosted glass and costs one bitmap draw per frame.
+4. **Imagery: generic device renders, never the car.** MobileCarConnect can't know which car it is in, and a wrong car render looks cheaper than none. Use two bundled, stylized phone renders (an "island" phone and a "punch-hole" phone, neither a trademarked device) plus Compose-drawn light effects (connection beam, glow). The atmosphere background is a bundled WebP with baked-in noise to stop banding.
+5. **Type: one neo-grotesk, bold only at display sizes.** Tesla (Universal Sans), Rivian (Söhne-derived) and Polestar (Unica77) all use neo-grotesks. MobileCarConnect bundles **Inter** (OFL), subset to Latin, Cyrillic and Greek, with a budget of ≤400 KB. Hero statements are 64–96sp SemiBold. Anything ≤32sp stays Regular or Medium, per AAOS guidance that bold is less legible at reading sizes.
+6. **Zero-config is the product.** No first-run wizard. MobileCarConnect starts in "Ready", asks for one permission bundle with one inline card when needed, and picks the transport automatically in the order **same Wi-Fi → car hotspot / Wi-Fi Direct → USB**. When phone and car share a Wi-Fi network, Home says so with a green "Same Wi-Fi · fastest" chip.
 7. **Settings: "Essentials" by default, plus an inline "Show advanced" switch, plus a hidden Lab tier.** Essentials covers about 12 settings that a beginner can't break. "Show advanced" (the Plex / UniFi pattern) reveals advanced rows *inside the same categories* and is parked-only. Lab (experimental and debug) unlocks by tapping the version 7 times (the Android Developer options pattern).
 8. **One settings set for both engines: "intent, translated."** Every user-facing setting expresses intent ("Interface size: Large", "Video: Smooth") and each engine translates it into its own parameters (AA DPI, CarPlay display size hint, resolution, fps, codec). Per-engine values exist only as **overrides in Advanced** ("Override for Android Auto"), never as two parallel pages. The segmented filter (All / CarPlay / Android Auto) from DESIGN_SPEC is dropped.
 
@@ -49,7 +49,7 @@ Companion document: `design/DESIGN_SPEC.md`, which stays valid for **behavior** 
 3. **One saturated accent, used only for action** (Tesla blue, Polestar orange, NIO's "purer, clearer" accent).
 4. **A custom-feeling neo-grotesk with tabular numerals** (Universal Sans, Söhne-derived, Unica77).
 5. **Depth from imagery and translucency, not shadows** (the Tesla token analyses; Rivian's 3D artists).
-6. **Calm, purposeful motion.** Rivian staffs motion designers. Kinex, which runs on the same class of hardware as CarLink, deliberately avoids heavy animation.
+6. **Calm, purposeful motion.** Rivian staffs motion designers. Kinex, which runs on the same class of hardware as MobileCarConnect, deliberately avoids heavy animation.
 
 Anti-patterns seen in the references: functions buried under extra taps (Tesla v11, Polestar 4), contrast regressions at night (Tesla), and real-time 3D that weak hardware can't carry (Kinex's own notes).
 
@@ -64,10 +64,10 @@ Dribbble and Behance return HTTP 403 to automated fetching, so these were judged
 | [Jonathan Larradet: HMI EV dashboard, Polestar](https://dribbble.com/shots/16689571-HMI-UI-Electric-car-dashboard-Polestar) | Monochrome with one accent | High |
 | [Luca Lombardi: split-screen concept](https://dribbble.com/shots/18128789-Car-interactive-split-screen-concept) | Behavior in DiLink's ⅓ and ⅔ split | Medium |
 | [Collection: "Car UI" (TsaiLueng)](https://dribbble.com/TsaiLueng/collections/5034375-car-ui) | Dark dashboards and cluster motion | Medium |
-| [Collection: "Auto" (anw)](https://dribbble.com/anw/collections/6953541-Auto) and [Automotive (apostol)](https://dribbble.com/apostol/collections/6668468-Automotive) | "Automotive dashboard cubic style HMI … 3D animation EV" shots | Medium (mood only; full 3D is too heavy for CarLink) |
+| [Collection: "Auto" (anw)](https://dribbble.com/anw/collections/6953541-Auto) and [Automotive (apostol)](https://dribbble.com/apostol/collections/6668468-Automotive) | "Automotive dashboard cubic style HMI … 3D animation EV" shots | Medium (mood only; full 3D is too heavy for MobileCarConnect) |
 | [Elementz UX (kurtcepe)](https://dribbble.com/kurtcepe) | Minimal single-display HMI | Medium |
 
-No Dribbble shot specific to "CarPlay connect screen" turned up in search. The closest real-world pattern is Apple's AirPods/iPhone proximity setup card (big device render, one sentence, one button), which is the model for CarLink's "phone detected" moment (§7.2).
+No Dribbble shot specific to "CarPlay connect screen" turned up in search. The closest real-world pattern is Apple's AirPods/iPhone proximity setup card (big device render, one sentence, one button), which is the model for MobileCarConnect's "phone detected" moment (§7.2).
 
 ---
 
@@ -82,10 +82,10 @@ No Dribbble shot specific to "CarPlay connect screen" turned up in search. The c
 | **Ottocast U2 family** | Pair "AUTO-xxxx" over Bluetooth, then accept the CarPlay prompt. Settings in a web page or vendor app. | — | Wireless AA needs 5 GHz; full screen depends on the factory head unit | [Ottocast FAQ](https://www.ottocast.com/pages/faqs), [addcarwidgets review](https://addcarwidgets.com/blog/ottocast-review-2026), [NerdTechy](https://nerdtechy.com/ottocast-review) |
 | **Headunit Reloaded / Revived** | Classic flow: phone hotspot plus a "WiFi Launcher" app. Revived adds **Wi-Fi Direct and a "shared Wi-Fi on the same router"** mode, with auto-scan or manual IP. | Free, flexible | Black screens fixed with "software decoding"; hotspot juggling. Since **AA 17.4, wireless start without Bluetooth or Headunit Server was removed**. | [Play listing](https://play.google.com/store/apps/details?id=gb.xxy.hr&hl=en_US), [open-headunit wiki: Wireless](https://github.com/andreknieriem/open-headunit/wiki/Wireless), [headunit-revived](https://github.com/andreknieriem/headunit-revived), [wireless-helper wiki](https://github.com/andreknieriem/wireless-helper/wiki) |
 
-**What this means for CarLink:**
-- No competitor has a *beautiful* waiting or connecting state. They show a spinner, a logo or a settings list. That is CarLink's opening.
+**What this means for MobileCarConnect:**
+- No competitor has a *beautiful* waiting or connecting state. They show a spinner, a logo or a settings list. That is MobileCarConnect's opening.
 - The two biggest pain points are **unpredictable connect time** and **raw technical knobs** (DPI numbers, decoder modes). The answers are a staged progress line with honest timing, and intent-based presets with a live preview.
-- Shared Wi-Fi is a real, supported topology in open-source head-unit emulators (Revived). It still depends on Bluetooth or Headunit Server to *trigger* AA on current Android Auto versions, so CarLink must keep Bluetooth as the wake-up channel even when video goes over the shared LAN. This is a technical constraint to verify; this document doesn't settle it.
+- Shared Wi-Fi is a real, supported topology in open-source head-unit emulators (Revived). It still depends on Bluetooth or Headunit Server to *trigger* AA on current Android Auto versions, so MobileCarConnect must keep Bluetooth as the wake-up channel even when video goes over the shared LAN. This is a technical constraint to verify; this document doesn't settle it.
 
 ---
 
@@ -99,12 +99,12 @@ No Dribbble shot specific to "CarPlay connect screen" turned up in search. The c
 | **Tesla Controls vs. Service Mode** | Normal Controls for everyone. Service Mode requires a long press on the model badge plus a code, adds a **red border** and a red wrench in the dock, and says "Do NOT drive" | A strong visual "you are in danger mode" signal | Not for end users | [Not a Tesla App: Service Mode](https://www.notateslaapp.com/news/2046/tesla-service-mode-how-to-access-it-and-what-it-does) |
 | **Progressive disclosure (NN/g lineage)** | Show essentials; make the hidden layer discoverable with an explicit "Advanced" affordance; keep it to 2–3 levels; never hide consequences | "Novices learn faster and err less, while experts pay 1 click" | — | [Jakob Nielsen: Progressive Disclosure](https://jakobnielsenphd.substack.com/p/progressive-disclosure), [UXPin overview](https://www.uxpin.com/studio/?p=41489) |
 
-### 3.1 Recommendation for CarLink: "Essentials / Advanced / Lab"
+### 3.1 Recommendation for MobileCarConnect: "Essentials / Advanced / Lab"
 
 1. **Essentials (default).** About 12 settings (hard cap 14) in total across all categories. Each is safe: no setting in Essentials can produce a black screen, no audio or a failed connection. Defaults are labeled with a small "Recommended" pill.
 2. **Advanced (one global switch, parked-only).** The switch lives at the **top of the Settings root** (the UniFi model: one switch, not per page), as a large glass toggle row: "Show advanced settings. For experienced users. Some options can affect sound or picture." When it's on, advanced rows appear **inline in their own category** (the Plex model: findable where you'd expect them), with a subtle `ADVANCED` tag. The switch is remembered. Turning it off hides the rows but **keeps their values**, and a banner at the top of Essentials says "3 advanced settings are changed · Review" so a beginner who inherited a tweaked head unit can see why things differ.
 3. **Lab (hidden).** Tap the version row in About 7 times, with a countdown toast (the Android pattern). Lab holds experimental (`[X]`) and debug items such as fault injection, the FPS counter, view mode and libusb. While Lab is on, Settings gets a **thin amber frame** (the Tesla Service Mode cue) so a screenshot sent to support shows it immediately.
-4. **Safety nets at every tier.** Every category has "Reset this section to recommended". Any changed-from-default row shows a small dot. Changes that need a reconnect raise the single "Reconnect now" bar (kept from DESIGN_SPEC). If the next connection after an Advanced change fails twice, CarLink offers "Undo recent changes" as the error's secondary action. This is the cheapest protection against the AutoKit-style "resolution froze, now what" trap.
+4. **Safety nets at every tier.** Every category has "Reset this section to recommended". Any changed-from-default row shows a small dot. Changes that need a reconnect raise the single "Reconnect now" bar (kept from DESIGN_SPEC). If the next connection after an Advanced change fails twice, MobileCarConnect offers "Undo recent changes" as the error's secondary action. This is the cheapest protection against the AutoKit-style "resolution froze, now what" trap.
 
 ---
 
@@ -162,7 +162,7 @@ UI rules:
 
 ### 5.1 Constraints
 
-- **Blur.** Compose `Modifier.blur` blurs only the composable's *own* content, not what is behind it, and needs API 31+ (`RenderEffect`). Backdrop blur needs a library such as Haze, which falls back to RenderScript below API 31 with known stale-sample bugs. Haze's own benchmarks show progressive blur at about 1.25× frame cost, and a shader recompilation bug cost 20–45 ms of GPU time on transitions until it was fixed. CarLink's `minSdk` is 25 and DiLink runs Android 10 to 12L. Sources: [Haze 1.0 post](https://chrisbanes.me/posts/haze-1.0/), [Haze issue #1366](https://github.com/chrisbanes/haze/issues/1366), [Haze issue #77](https://github.com/chrisbanes/haze/issues/77), [Haze PR #1351](https://github.com/chrisbanes/haze/pull/1351), [Canopas: RenderEffect](https://canopas.com/how-to-use-render-effects-in-jetpack-compose-for-stunning-visuals-01287d7f00db). **Verdict: no runtime blur.**
+- **Blur.** Compose `Modifier.blur` blurs only the composable's *own* content, not what is behind it, and needs API 31+ (`RenderEffect`). Backdrop blur needs a library such as Haze, which falls back to RenderScript below API 31 with known stale-sample bugs. Haze's own benchmarks show progressive blur at about 1.25× frame cost, and a shader recompilation bug cost 20–45 ms of GPU time on transitions until it was fixed. MobileCarConnect's `minSdk` is 25 and DiLink runs Android 10 to 12L. Sources: [Haze 1.0 post](https://chrisbanes.me/posts/haze-1.0/), [Haze issue #1366](https://github.com/chrisbanes/haze/issues/1366), [Haze issue #77](https://github.com/chrisbanes/haze/issues/77), [Haze PR #1351](https://github.com/chrisbanes/haze/pull/1351), [Canopas: RenderEffect](https://canopas.com/how-to-use-render-effects-in-jetpack-compose-for-stunning-visuals-01287d7f00db). **Verdict: no runtime blur.**
 - **GPU class.** BYD DiLink units reportedly use Snapdragon 660-class SoCs, and many aftermarket units use a QCM6125 / Adreno 610. Both are mid-range from around 2018–2019 ([42how](https://en.42how.com/?p=7094), [android-headunits: Adreno 610](https://android-headunits.com/adreno-610-gpu/)). Kinex's notes confirm that 3D on DiLink is "limited by hardware" ([Kinex](https://kinex.lexwah.com/)).
 - **Vectors.** Each VectorDrawable has one bitmap cache per instance. A size change (rotation, split screen) forces a re-raster, and complex paths have a first-draw cost ([Android VectorDrawable reference](https://developer.android.com/reference/kotlin/android/graphics/drawable/VectorDrawable), [Styling Android](https://blog.stylingandroid.com/vectordrawables-part-1/), [42gears](https://techblogs.42gears.com/optimize-vector-drawable-path/)). Vectors suit icons. Large illustrative art is better as bitmaps.
 
@@ -255,7 +255,7 @@ Rules: one accent; accent never on headings or illustrations; status colors alwa
 ### 6.4 Imagery
 
 - **Do: generic phone renders.** Commission or produce in Blender two stylized, unbranded handsets: "Island" (stands in for an iPhone) and "Punch-hole" (stands in for Android). Both are graphite, at a three-quarter angle with a soft rim light, and the **screen area is left as a separate layer** so Compose can draw state onto it (an engine glyph, a pulsing ring). Export as WebP (lossy q≈85 with alpha) at 2 sizes, with a baked contact shadow.
-- **Don't: car renders.** CarLink runs in any BYD model and on generic tablets, so a wrong car is worse than no car. Kinex solves this by making users pick their model and then fights the GPU to render it in 3D. CarLink's hero is the *phone*, which is what the user actually brought.
+- **Don't: car renders.** MobileCarConnect runs in any BYD model and on generic tablets, so a wrong car is worse than no car. Kinex solves this by making users pick their model and then fights the GPU to render it in 3D. MobileCarConnect's hero is the *phone*, which is what the user actually brought.
 - **Optional later:** a "dash silhouette" line illustration (vector, about 20 paths) for onboarding only.
 - **Engine marks:** CarPlay and Android Auto logos are trademarks. Use them only as their brand guidelines allow (as identifying badges), never recolored into the accent. Verify both guidelines before shipping.
 - **Icons:** Material Symbols Rounded at weight 300, 44/36/24dp sizes (the AAOS icon sizes).
@@ -279,7 +279,7 @@ Respect the system animator duration scale. If it is 0, swap to cross-fades only
 
 ### 7.1 Principles
 
-1. **No setup wizard.** First launch lands on Home in *Ready*. Permissions (Bluetooth, nearby devices, location for Wi-Fi SSID) are requested by **one inline glass card**, "Allow CarLink to find your phone · Allow", which opens the system dialogs in sequence. Phone-side steps (enable wireless CarPlay, AA settings) appear only as contextual help when a step fails (DESIGN_SPEC error catalog).
+1. **No setup wizard.** First launch lands on Home in *Ready*. Permissions (Bluetooth, nearby devices, location for Wi-Fi SSID) are requested by **one inline glass card**, "Allow MobileCarConnect to find your phone · Allow", which opens the system dialogs in sequence. Phone-side steps (enable wireless CarPlay, AA settings) appear only as contextual help when a step fails (DESIGN_SPEC error catalog).
 2. **Auto everything.** Engine (by phone type), transport (same Wi-Fi → hotspot/Direct → USB) and picture (per head-unit probe) are all chosen automatically, and the choice is *shown* in a chip, never asked about.
 3. **One primary action per state**, Ion-filled, 96dp tall, on the driver side (follows Driving side).
 4. **Hand off and get out of the way.** When the stream is live, projection is full screen. Home is only seen again when the user comes back to it, and then it offers "Return to CarPlay".
@@ -288,7 +288,7 @@ Respect the system animator duration scale. If it is 0, swap to cross-fades only
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│  CarLink                                              (gear) Settings        │ ← 64dp top bar, transparent
+│  MobileCarConnect                                              (gear) Settings        │ ← 64dp top bar, transparent
 │                                                                              │
 │   READY                          ░░░░ atmosphere light ░░░░                  │
 │   Plug in or bring                         ┌────────┐                        │
@@ -319,7 +319,7 @@ Left 55%: text column (eyebrow, display headline, body). Right 45%: hero phone. 
 
 ### 7.4 Shared Wi-Fi (the best-case path)
 
-- **Detection.** If the head unit is connected to Wi-Fi as a client, CarLink reads its SSID/BSSID. When a phone is seen over Bluetooth, CarLink checks for it on the LAN through mDNS / the engine's discovery. If found, the transport is **Same Wi-Fi**.
+- **Detection.** If the head unit is connected to Wi-Fi as a client, MobileCarConnect reads its SSID/BSSID. When a phone is seen over Bluetooth, MobileCarConnect checks for it on the LAN through mDNS / the engine's discovery. If found, the transport is **Same Wi-Fi**.
 - **Presentation.** The Network chip shows "Same Wi-Fi · {SSID} · fastest" with a green dot. No hotspot UI appears at all. When not on a shared network, the chip shows "Car Wi-Fi" (hotspot / Direct) neutrally. If wireless isn't possible, it shows "Cable" with a one-line hint.
 - **Bluetooth stays the doorbell.** Current Android Auto needs Bluetooth (or Headunit Server) to *start* wireless sessions ([wireless-helper wiki](https://github.com/andreknieriem/wireless-helper/wiki)), so the chip must never imply that Wi-Fi alone suffices. If Bluetooth is off, the Connection chip shows the fix.
 - **Settings.** Connection method stays at "Auto" for beginners. Advanced adds "Prefer: Same Wi-Fi / Car Wi-Fi" and the Wi-Fi band.
@@ -344,10 +344,10 @@ Left 55%: text column (eyebrow, display headline, body). Right 45%: hero phone. 
 | **Display** | Interface size (preset + live preview) · Picture (Auto/Sharpest/Smoothest/Compatibility) · Projection theme · Driving side | Video decoder · Safe area editor · Custom DPI (AA) · HEVC (CarPlay) · Full screen · Visual effects (Auto/Full/Lite) | View mode · Pixel aspect · FPS overlay |
 | **Sound & voice** | Sound through · Microphone · Voice button | Volume offset · Ducking · Separate streams · Echo cancellation · Test tone | Audio queue · AAC · Latency multiplier · Sample rate |
 | **Car** | — (empty in Essentials; hidden until Advanced, or shown with a "Steering-wheel keys" row if keys are detected) | Steering-wheel keys · Share car location · Cluster/HUD guidance [ADB] | Fake speed |
-| **General** | Theme of CarLink (Follow car) · Language | Backup / restore · Reset all · Diagnostics | Log level · Fault injection |
+| **General** | Theme of MobileCarConnect (Follow car) · Language | Backup / restore · Reset all · Diagnostics | Log level · Fault injection |
 | **About** | Version (7-tap → Lab), licenses | — | — |
 
-Essentials total: 13 controls (Preferred phone, Connect automatically, Start with the car, Connection method, Interface size, Picture, Projection theme, Driving side, Sound through, Microphone, Voice button, Theme, Language). Projection theme defaults to "Same as CarLink", so a beginner effectively decides 12 things or fewer. Hard cap: 14.
+Essentials total: 13 controls (Preferred phone, Connect automatically, Start with the car, Connection method, Interface size, Picture, Projection theme, Driving side, Sound through, Microphone, Voice button, Theme, Language). Projection theme defaults to "Same as MobileCarConnect", so a beginner effectively decides 12 things or fewer. Hard cap: 14.
 
 ### 8.3 Row anatomy
 
@@ -361,7 +361,7 @@ Title (28sp Medium), description (24sp `textSecondary`, one line, plain conseque
 |---|---|---|---|---|
 | 1 | **Tesla Model 3/Y main screen (v11/v12)**: car visualization left, map right | The full-bleed hero object; achromatic and one blue; no card chrome | Burying frequent actions (the v11 backlash) | [Not a Tesla App v11 first look](https://www.notateslaapp.com/news/663/first-look-at-tesla-s-new-v11-ui) |
 | 2 | **Rivian R1 home and drive modes** (Behance case study) | Day/night temperature shift; numerals as heroes; 3D-artist-grade imagery | — | [Behance: Rivian Vehicle OS](https://www.behance.net/gallery/166386511/Rivian-Vehicle-OS), [Pentagram](https://www.pentagram.com/work/rivian/story) |
-| 3 | **Rivian R2 "floating island" status** | Status as one rounded floating element, which is CarLink's chip row | — | [R2 capture thread](https://www.rivianforums.com/future-r1-software-updates-preview-captured-from-r2/) |
+| 3 | **Rivian R2 "floating island" status** | Status as one rounded floating element, which is MobileCarConnect's chip row | — | [R2 capture thread](https://www.rivianforums.com/future-r1-software-updates-preview-captured-from-r2/) |
 | 4 | **Lucid Air Glass Cockpit** | Sparse, warm gradient backgrounds as the atmosphere layer | — | [Jalopnik](https://www.jalopnik.com/lucid-airs-user-interface-has-four-screens-some-button-1846975789/) |
 | 5 | **NIO Aspen 3.0 home** | A black main tone with a high-saturation accent; half-screen cards; Mini mode | Real-time 3D scenes | [Glen Gao on Medium](https://medium.com/@glengao/nio-aspen-3-0-uiux-design-341b38df3656) |
 | 6 | **MBUX zero layer** | The Home surfaces the *one* contextual action ("Connect Ayush's iPhone?") with no menu | AI suggestion clutter | [Mercedes-Benz Group](https://group.mercedes-benz.com/innovation/digitalisation/connectivity/mbux-hyperscreen.html) |
@@ -390,7 +390,7 @@ Everything else in DESIGN_SPEC stays: canvas scaling (§5.0), 76dp/96dp targets,
 ## 11. Open questions to verify
 
 1. Inter's subset size after `pyftsubset` for Latin + Cyrillic + Greek + Vietnamese (target ≤400 KB).
-2. CarPlay over an infrastructure LAN (versus the accessory's own AP) in CarLink's engine; Android Auto's Bluetooth-trigger requirement on the current AA version.
+2. CarPlay over an infrastructure LAN (versus the accessory's own AP) in MobileCarConnect's engine; Android Auto's Bluetooth-trigger requirement on the current AA version.
 3. CarPlay and Android Auto logo usage rules for third-party receivers.
 4. The real GPU in the target DiLink units, measured on device (renderer string and a frame-time trace of the faux-glass Home). Build the Lite tier before you need it.
 5. The ISO 15008 character-size floor (noted as unverified in DESIGN_SPEC).

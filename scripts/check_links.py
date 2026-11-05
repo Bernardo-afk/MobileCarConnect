@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check relative links and image paths in CarLink's Markdown docs.
+"""Check relative links and image paths in MobileCarConnect's Markdown docs.
 
 Usage: python3 scripts/check_links.py [FILE.md ...]
 

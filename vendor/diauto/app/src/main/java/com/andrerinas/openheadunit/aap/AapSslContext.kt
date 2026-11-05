@@ -2,7 +2,7 @@ package com.andrerinas.openheadunit.aap
 
 import com.andrerinas.openheadunit.aap.protocol.messages.Messages
 import com.andrerinas.openheadunit.connection.AccessoryConnection
-import com.andrerinas.openheadunit.connection.SocketAccessoryConnection // CarLink
+import com.andrerinas.openheadunit.connection.SocketAccessoryConnection // MobileCarConnect
 import com.andrerinas.openheadunit.ssl.ConscryptInitializer
 import com.andrerinas.openheadunit.ssl.NoCheckTrustManager
 import com.andrerinas.openheadunit.ssl.SingleKeyKeyManager
@@ -26,7 +26,7 @@ class AapSslContext(keyManager: SingleKeyKeyManager): AapSsl {
         // Buffer for unencrypted TLS records extracted from AAP messages.
         // We use a local queue or buffer to keep track of bytes ready for the SSLEngine.
         var pendingTlsData = ByteArray(0)
-        // CarLink (open-headunit 67bcae27): whole envelopes by their declared length, with the
+        // MobileCarConnect (open-headunit 67bcae27): whole envelopes by their declared length, with the
         // same bounded reader as the version exchange.
         val frames = HandshakeFrameReader(android.os.SystemClock::elapsedRealtime,
             if (connection !is SocketAccessoryConnection && !connection.isSingleMessage) 100 else 1) { bytes, length, timeout ->
@@ -81,7 +81,7 @@ class AapSslContext(keyManager: SingleKeyKeyManager): AapSsl {
                 SSLEngineResult.HandshakeStatus.NEED_WRAP -> {
                     val handshakeData = handshakeRead()
                     val bio = Messages.createRawMessage(0, 3, 3, handshakeData)
-                    if (connection.sendBlocking(bio, bio.size, 2000) != bio.size) { // CarLink (open-headunit 67bcae27): a short write too
+                    if (connection.sendBlocking(bio, bio.size, 2000) != bio.size) { // MobileCarConnect (open-headunit 67bcae27): a short write too
                         AppLog.e("SSL Handshake: Send failed")
                         return false
                     }
@@ -108,7 +108,7 @@ class AapSslContext(keyManager: SingleKeyKeyManager): AapSsl {
     }
 
     /**
-     * CarLink (open-headunit 67bcae27): the next TLS record's AAP payload. Late answers to a
+     * MobileCarConnect (open-headunit 67bcae27): the next TLS record's AAP payload. Late answers to a
      * retried version request are skipped (the SSLEngine would fail on them); anything else that
      * is not a channel 0 SSL_HANDSHAKE message ends the handshake.
      */

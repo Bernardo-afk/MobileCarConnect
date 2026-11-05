@@ -1,6 +1,6 @@
 package com.shilapi.xcertplay.orchestration
 
-// CarLink: new file. Always-on, INFO-level wireless bring-up timing (see docs/VENDOR_CHANGES.md).
+// MobileCarConnect: new file. Always-on, INFO-level wireless bring-up timing (see docs/VENDOR_CHANGES.md).
 
 /**
  * Records each wireless phase once per bring-up and reports it as one line:
@@ -61,7 +61,7 @@ class WirelessStartupTimeline(
             }
         }
         runCatching { sink(line) }
-        runCatching { milestoneListener?.invoke(phase) } // CarLink
+        runCatching { milestoneListener?.invoke(phase) } // MobileCarConnect
         return line
     }
 
@@ -79,7 +79,7 @@ class WirelessStartupTimeline(
 
     companion object {
         /**
-         * CarLink: every phase the first time it is marked in a bring-up, on the marking thread.
+         * MobileCarConnect: every phase the first time it is marked in a bring-up, on the marking thread.
          * A host shows the Wi-Fi details and the first AirPlay TCP as progress (RELIABILITY_AUDIT K4).
          */
         @Volatile
@@ -87,7 +87,7 @@ class WirelessStartupTimeline(
         var milestoneListener: ((Phase) -> Unit)? = null
 
         /**
-         * CarLink: six hex digits of SHA-256 of [address] (a BSSID), so logs show whether it changed
+         * MobileCarConnect: six hex digits of SHA-256 of [address] (a BSSID), so logs show whether it changed
          * between sessions without the address itself; `unknown` when Android hides it.
          */
         @JvmStatic

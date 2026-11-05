@@ -2,11 +2,11 @@ package com.andrerinas.openheadunit.aap
 
 import kotlin.random.Random
 
-// CarLink: ported from open-headunit (andreknieriem/open-headunit) P2pGroupIdentityPolicy and
+// MobileCarConnect: ported from open-headunit (andreknieriem/open-headunit) P2pGroupIdentityPolicy and
 // P2pIdentityRotationPolicy.readsExistingGroup, as merged with PR #1006 ("Native AA: reconnect to a
 // network that is still there, instead of rebuilding it every time"). Upstream measured 1.1 s to SSL
 // when the phone rejoined a kept group against 8.9-9.5 s when the group was recreated under a new
-// name (PR #1006, issue #976). Differences from upstream are marked "CarLink" below.
+// name (PR #1006, issue #976). Differences from upstream are marked "MobileCarConnect" below.
 
 /** The identity a Native AA P2P group is asked for. */
 data class P2pGroupIdentity(
@@ -53,7 +53,7 @@ object P2pGroupIdentityPolicy {
     )
 
     /**
-     * @param deviceName the name the group is suffixed with. CarLink: the car name the host shows
+     * @param deviceName the name the group is suffixed with. MobileCarConnect: the car name the host shows
      *   the phone (DiAuto's `vehicle-display-name`), not the P2P device name or "HeadUnit".
      */
     fun decide(
@@ -83,7 +83,7 @@ object P2pGroupIdentityPolicy {
         val why = when {
             stored == null -> ""
             !isValid(stored) -> " (the stored one was not usable)"
-            // CarLink: the car was renamed. Name and passphrase are replaced together.
+            // MobileCarConnect: the car was renamed. Name and passphrase are replaced together.
             else -> " (the car's name changed from the stored ${stored.networkName})"
         }
         return Choice(
@@ -131,7 +131,7 @@ object P2pGroupIdentityPolicy {
     fun isValid(stored: StoredP2pIdentity): Boolean =
         isValidName(stored.networkName) && isValidPassphrase(stored.passphrase)
 
-    /** CarLink: whether [stored] still carries the suffix [deviceName] would give it. */
+    /** MobileCarConnect: whether [stored] still carries the suffix [deviceName] would give it. */
     private fun matchesName(stored: StoredP2pIdentity, deviceName: String?): Boolean {
         val code = codeOf(stored.networkName) ?: return false
         return stored.networkName == networkName(code, deviceName)
@@ -143,7 +143,7 @@ object P2pGroupIdentityPolicy {
      *
      * From [NAMED_CREATE_SDK] the whole pair is the test, not just the name: a survivor matched on
      * name alone served the phone the old passphrase after the stored one changed. Below it the
-     * platform names the group, so upstream reads any group this unit owns. CarLink: below it, only
+     * platform names the group, so upstream reads any group this unit owns. MobileCarConnect: below it, only
      * a group whose name this engine recorded ([ownedByThisEngine]), never another app's group.
      */
     fun readsExistingGroup(

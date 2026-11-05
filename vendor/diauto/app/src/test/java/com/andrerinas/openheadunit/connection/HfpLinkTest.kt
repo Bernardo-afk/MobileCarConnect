@@ -1,4 +1,4 @@
-// CarLink: the hands-free AT exchange over fake streams (connection/HfpLink).
+// MobileCarConnect: the hands-free AT exchange over fake streams (connection/HfpLink).
 package com.andrerinas.openheadunit.connection
 
 import kotlinx.coroutines.Dispatchers

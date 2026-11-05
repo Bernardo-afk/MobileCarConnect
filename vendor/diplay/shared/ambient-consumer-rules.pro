@@ -9,7 +9,7 @@
     public static void main(java.lang.String[]);
 }
 
-# CarLink: rules for R8 in CarLink's release build (DiPlay itself ships unshrunk).
+# MobileCarConnect: rules for R8 in MobileCarConnect's release build (DiPlay itself ships unshrunk).
 # The other app_process entry points: started by class name from a shell, never called in-app.
 -keep class com.shilapi.xcertplay.network.HotspotJoinRepairMain {
     public static void main(java.lang.String[]);
@@ -26,18 +26,18 @@
 -keep class com.shilapi.xcertplay.mfi.LocalMfiProbe {
     public static void main(java.lang.String[]);
 }
-# CarLink (0.2.19+): the Wi-Fi scan pause and car-hotspot start helpers, same app_process pattern.
+# MobileCarConnect (0.2.19+): the Wi-Fi scan pause and car-hotspot start helpers, same app_process pattern.
 -keep class com.shilapi.xcertplay.network.WifiScanPauseMain {
     public static void main(java.lang.String[]);
 }
 -keep class com.shilapi.xcertplay.network.CarHotspotStartMain {
     public static void main(java.lang.String[]);
 }
-# CarLink (0.2.21+): the car music rhythm helper, same app_process pattern.
+# MobileCarConnect (0.2.21+): the car music rhythm helper, same app_process pattern.
 -keep class com.shilapi.xcertplay.hud.BydCarMusicRhythmTool {
     public static void main(java.lang.String[]);
 }
-# CarLink: linux_i2c_jni.c throws this from native code (FindClass + <init>(int, String)).
+# MobileCarConnect: linux_i2c_jni.c throws this from native code (FindClass + <init>(int, String)).
 -keep class com.shilapi.xcertplay.transport.LinuxI2cNativeException {
     <init>(int, java.lang.String);
 }

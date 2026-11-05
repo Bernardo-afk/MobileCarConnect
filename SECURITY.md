@@ -1,6 +1,6 @@
 # Security policy
 
-How to report a security problem in CarLink, and what is known and intended about the app's
+How to report a security problem in MobileCarConnect, and what is known and intended about the app's
 security.
 
 ## Supported versions
@@ -15,7 +15,7 @@ Please do not open a public issue for a security problem. Report it privately th
 ([direct link](https://github.com/F-e-n-y-x/CarLink/security/advisories/new)). If that is not
 available, open an issue that asks for a private contact, without any details.
 
-Include the CarLink version, the device and Android version, what an attacker can do and the
+Include the MobileCarConnect version, the device and Android version, what an attacker can do and the
 steps to reproduce. Do not include Wi-Fi or hotspot passwords or other personal data.
 
 This is a volunteer project: reports are answered as time allows, and fixes ship as a new
@@ -29,8 +29,8 @@ release.
   and a report that it can be extracted is not a vulnerability. Builds from source contain no
   identity ([docs/BUILDING.md](docs/BUILDING.md#carplay-authentication-files-not-in-git)).
 - **Updates are verified before they are installed.** The updater only runs in the release
-  package `com.carlink.app` signed with CarLink's key, and installs a download only when its
-  SHA-256 matches the release's `.sha256` file, it is `com.carlink.app` with a higher version,
+  package `com.mobilecarconnect.app` signed with MobileCarConnect's key, and installs a download only when its
+  SHA-256 matches the release's `.sha256` file, it is `com.mobilecarconnect.app` with a higher version,
   and its only signer is the pinned certificate
   ([docs/RELEASING.md › What the app checks](docs/RELEASING.md#what-the-app-checks)). A way
   around any of these checks is a vulnerability.
@@ -41,6 +41,6 @@ release.
   through it before you post it publicly.
 - **Report on GitHub posts in public.** The button opens a new issue on this public repository
   with a log excerpt, the device and the phone's name filled in. Anyone can read a submitted
-  issue. CarLink removes hardware addresses and Wi-Fi or hotspot passwords before the browser
+  issue. MobileCarConnect removes hardware addresses and Wi-Fi or hotspot passwords before the browser
   opens, and nothing is sent until you tap Submit; edit out anything else you do not want to
   publish.

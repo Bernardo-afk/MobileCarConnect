@@ -1,6 +1,6 @@
 package com.andrerinas.openheadunit.connection
 
-// CarLink: new file, ported from open-headunit's EarlyWakePolicy (PR #958, commit b5617bd5; see
+// MobileCarConnect: new file, ported from open-headunit's EarlyWakePolicy (PR #958, commit b5617bd5; see
 // docs/VENDOR_CHANGES.md).
 
 /** When a credential delivery restarts the wake-poke loop, and how long the loop waits first. */

@@ -46,7 +46,7 @@ plug with "Cable" / "USB", or the wireless path's glyph with "Wireless · Wi-Fi 
 The research (§4) scaled only Home's stage by `min(long/1100dp, short/690dp)`, clamped to 1–1.35×,
 and left sheets unscaled. In the gallery, the Phones and Network sheets then looked miniature over a
 1.32× stage, and Settings, Diagnostics and About kept phone-sized type on a 1460dp-wide tablet,
-which is the "off" layout the user complained about. The scale now lives in `CarLinkTheme`
+which is the "off" layout the user complained about. The scale now lives in `MobileCarConnectTheme`
 (`largeHandheldScale`) and applies to every screen, sheet and dialog on the HANDHELD profile. The
 Redmi Pad gets 1.32×, an 800×1280dp tablet gets 1.16×, phones stay at 1×, and the car profile is
 unchanged. The window is measured rather than the panel, so a split-screen tablet window shrinks
@@ -57,7 +57,7 @@ back towards 1×.
 - **One sheet** (`premium/GlassSheet.kt`): graphite, a slim handle, and the same header for
   Settings choices, Phones and Network. Diagnostics and About side sheets use the same graphite.
 - **Icon tiles everywhere**: setting rows, preset tiles, the Phones list, Diagnostics checks and its
-  summary use the rounded tile from Home's status cells instead of circles, so every list in CarLink
+  summary use the rounded tile from Home's status cells instead of circles, so every list in MobileCarConnect
   reads alike.
 - **Hairline token** for dividers inside glass. On the day palette, glass gets a faint graphite
   lower edge so white cards keep their outline without shadows.

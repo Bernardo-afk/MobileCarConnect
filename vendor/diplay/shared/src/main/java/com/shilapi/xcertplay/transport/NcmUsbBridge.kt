@@ -28,8 +28,8 @@ class NcmUsbBridge internal constructor(
     private val claimedInterfaces: List<UsbInterface>,
     descriptorHostMac: ByteArray?,
     private val onDiagnostic: (String) -> Unit = {},
-    private val onLinkEvent: (NcmLinkEvent) -> Unit = {}, // CarLink
-    private val isDeviceAlive: () -> Boolean = { usbDeviceResponds(connection) }, // CarLink
+    private val onLinkEvent: (NcmLinkEvent) -> Unit = {}, // MobileCarConnect
+    private val isDeviceAlive: () -> Boolean = { usbDeviceResponds(connection) }, // MobileCarConnect
 ) : Closeable {
     private val descriptorMac = descriptorHostMac?.copyOf()
     val hostMac: ByteArray? get() = descriptorMac?.copyOf()
@@ -65,7 +65,7 @@ class NcmUsbBridge internal constructor(
     private val readQueuePolicy = UsbReadQueuePolicy.forCurrentPlatform()
     private val readRequests = UsbRequestQueue(connection, "ncm-read-reaper")
     private val traffic = NcmTrafficCounter()
-    // CarLink: the interrupt (status) endpoint is read continuously by a second persistent async
+    // MobileCarConnect: the interrupt (status) endpoint is read continuously by a second persistent async
     // request on the same connection, reaped by the NCM reader's requestWait(). Upstream polled it
     // with a 20 ms bulkTransfer every 500 ms and only logged the first notification.
     private val statusBuffer = statusEndpoint?.let {
@@ -75,9 +75,9 @@ class NcmUsbBridge internal constructor(
     private var statusQueued = false
     private var statusDisabled = statusEndpoint == null
     private var emptyStatusCompletions = 0
-    private val nullReaps = UsbTransientFailureBudget() // CarLink
+    private val nullReaps = UsbTransientFailureBudget() // MobileCarConnect
 
-    // CarLink: bulk-out is owned by one writer thread fed from a bounded queue (see NcmOutbound.kt).
+    // MobileCarConnect: bulk-out is owned by one writer thread fed from a bounded queue (see NcmOutbound.kt).
     private val outLock = Object()
     private val outbound = NcmOutboundQueue()
     private val pacing = NcmOutboundPacing()
@@ -92,7 +92,7 @@ class NcmUsbBridge internal constructor(
     /**
      * Wraps one Ethernet frame in one NTB16 block and queues it for bulk OUT.
      *
-     * CarLink: upstream wrote synchronously and dropped the frame when the phone did not accept it
+     * MobileCarConnect: upstream wrote synchronously and dropped the frame when the phone did not accept it
      * within [timeoutMillis]. The block now waits in a bounded queue until the phone accepts it, so
      * the first replies after link-up are not lost. When the queue is full this waits up to
      * [timeoutMillis] for room (upstream's backpressure), then drops the oldest block.
@@ -126,9 +126,9 @@ class NcmUsbBridge internal constructor(
         }
     }
 
-    // CarLink
+    // MobileCarConnect
     private fun runWriter() = try {
-        // CarLink: every wired byte (video, audio, touch acks) funnels through the NCM threads;
+        // MobileCarConnect: every wired byte (video, audio, touch acks) funnels through the NCM threads;
         // at default priority a busy little core delayed them behind the stereo's own services.
         runCatching { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY) }
         writeLoop()
@@ -159,8 +159,8 @@ class NcmUsbBridge internal constructor(
             synchronized(outLock) {
                 if (transferred == block.size) {
                     outbound.removeHead()
-                    traffic.sent() // CarLink: upstream counted in its synchronous send()
-                    if (linkOpenedAtNanos == null) linkOpenedAtNanos = System.nanoTime() // CarLink: upstream set it in send()
+                    traffic.sent() // MobileCarConnect: upstream counted in its synchronous send()
+                    if (linkOpenedAtNanos == null) linkOpenedAtNanos = System.nanoTime() // MobileCarConnect: upstream set it in send()
                     event = pacing.onAccepted()
                 } else {
                     // Before StartCarPlaySession, and until the phone's NCM link is up, the phone
@@ -175,7 +175,7 @@ class NcmUsbBridge internal constructor(
         }
     }
 
-    // CarLink: waits before the next attempt, but wakes at once on a link signal or close.
+    // MobileCarConnect: waits before the next attempt, but wakes at once on a link signal or close.
     private fun pauseAfterRefusal() = synchronized(outLock) {
         val signals = linkSignals
         val deadline = System.nanoTime() + pacing.pauseAfterRefusalMillis() * NANOS_PER_MILLISECOND
@@ -190,7 +190,7 @@ class NcmUsbBridge internal constructor(
         outLock.wait(nanos / NANOS_PER_MILLISECOND, (nanos % NANOS_PER_MILLISECOND).toInt())
     }
 
-    // CarLink
+    // MobileCarConnect
     private fun onStatusNotification(bytes: ByteArray) {
         val events = NcmNotificationParser.parse(bytes)
         Log.i(
@@ -258,7 +258,7 @@ class NcmUsbBridge internal constructor(
             closed = true
             readRequest to statusRequest
         }
-        // CarLink: stop the bulk-out writer; its attempts are short unless the link was ready.
+        // MobileCarConnect: stop the bulk-out writer; its attempts are short unless the link was ready.
         writerRunning.set(false)
         synchronized(outLock) {
             outbound.clear()
@@ -266,7 +266,7 @@ class NcmUsbBridge internal constructor(
         }
         // Wakes a reader blocked in requestWait(); it then observes the closed state.
         runCatching { requestToClose?.cancel() }
-        runCatching { statusToClose?.cancel() } // CarLink
+        runCatching { statusToClose?.cancel() } // MobileCarConnect
         if (Thread.currentThread() !== writerThread) {
             try {
                 writerThread.join(WRITER_JOIN_MILLIS)
@@ -284,11 +284,11 @@ class NcmUsbBridge internal constructor(
         readRequests.close()
         connection.close()
         runCatching { requestToClose?.close() }
-        runCatching { statusToClose?.close() } // CarLink
+        runCatching { statusToClose?.close() } // MobileCarConnect
     }
 
     /**
-     * CarLink: keeps one status (interrupt-IN) request queued. Call under [stateLock]. A status
+     * MobileCarConnect: keeps one status (interrupt-IN) request queued. Call under [stateLock]. A status
      * endpoint Android will not read is logged once and skipped; it never fails the data path.
      */
     private fun queueStatusLocked() = try {
@@ -456,7 +456,7 @@ class NcmUsbBridge internal constructor(
                     readQueued = true
                     if (queued.fallbackBytes != null) acceptedFallback = queued
                 }
-                queueStatusLocked() // CarLink
+                queueStatusLocked() // MobileCarConnect
                 current
             }
         } catch (error: RuntimeException) {
@@ -473,7 +473,7 @@ class NcmUsbBridge internal constructor(
             }
         }
         try {
-            // CarLink: the status request completes on this connection too, and a null reap is
+            // MobileCarConnect: the status request completes on this connection too, and a null reap is
             // retried while the phone still answers (see UsbTransientRetry.kt).
             val deadline = System.nanoTime() + timeoutMillis.coerceAtLeast(1) * NANOS_PER_MILLISECOND
             var completed: UsbRequest
@@ -523,7 +523,7 @@ class NcmUsbBridge internal constructor(
             if (transferred <= 0) return null
             directReadBuffer.flip()
             directReadBuffer.get(readBuffer, 0, transferred)
-            rearmRead() // CarLink
+            rearmRead() // MobileCarConnect
             return transferred
         } catch (error: IphoneUsbException) {
             throw error
@@ -533,7 +533,7 @@ class NcmUsbBridge internal constructor(
     }
 
     /**
-     * CarLink: queues bulk IN again as soon as the last completion's bytes are copied out, so the
+     * MobileCarConnect: queues bulk IN again as soon as the last completion's bytes are copied out, so the
      * phone can send the next NTB while this thread hands the current frames to the tun (upstream
      * re-queued only once every frame was delivered, leaving the pipe unarmed meanwhile; Linux
      * usbnet keeps its RX URBs queued). Best effort: on a failure readQueued stays false and the
@@ -560,7 +560,7 @@ class NcmUsbBridge internal constructor(
         synchronized(stateLock) { checkOpenLocked() }
     }
 
-    private fun isClosed(): Boolean = synchronized(stateLock) { closed } // CarLink
+    private fun isClosed(): Boolean = synchronized(stateLock) { closed } // MobileCarConnect
 
     private fun checkOpenLocked() {
         failure?.let { throw it }
@@ -579,7 +579,7 @@ class NcmUsbBridge internal constructor(
     companion object {
         private const val READ_CHUNK_BYTES = 32 * 1024
         private const val USB_PACKET_SIZE = 512
-        // CarLink: the status poll constants are gone (continuous async read); writer settings.
+        // MobileCarConnect: the status poll constants are gone (continuous async read); writer settings.
         private const val STATUS_BUFFER_BYTES = 64
         private const val MAX_EMPTY_STATUS_COMPLETIONS = 8
         private const val DEFAULT_WRITE_TIMEOUT_MILLIS = 2_000
@@ -615,7 +615,7 @@ class NcmUsbBridge internal constructor(
             connection: UsbDeviceConnection,
             function: NcmFunctionDiscovery.NcmFunction,
             onDiagnostic: (String) -> Unit = {},
-            onLinkEvent: (NcmLinkEvent) -> Unit = {}, // CarLink
+            onLinkEvent: (NcmLinkEvent) -> Unit = {}, // MobileCarConnect
         ): NcmUsbBridge {
             val claimed = ArrayList<UsbInterface>(2)
             try {
@@ -679,7 +679,7 @@ class NcmUsbBridge internal constructor(
                     claimed,
                     descriptorHostMac,
                     onDiagnostic,
-                    onLinkEvent, // CarLink
+                    onLinkEvent, // MobileCarConnect
                 )
             } catch (error: Throwable) {
                 for (usbInterface in claimed.asReversed()) {

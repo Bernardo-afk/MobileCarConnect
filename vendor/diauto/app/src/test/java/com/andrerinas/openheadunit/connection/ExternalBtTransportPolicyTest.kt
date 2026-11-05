@@ -1,4 +1,4 @@
-// CarLink: route selection for the external Bluetooth module routes; cases adapted from
+// MobileCarConnect: route selection for the external Bluetooth module routes; cases adapted from
 // open-headunit 1c1b5b72 (v.3.5.0) ExternalBtTransportPolicyTest to this policy's inputs.
 package com.andrerinas.openheadunit.connection
 

@@ -4,11 +4,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// CarLink: ported with upstream's EarlyWakePolicy (open-headunit PR #958).
+// MobileCarConnect: ported with upstream's EarlyWakePolicy (open-headunit PR #958).
 class PokeLoopPolicyTest {
     private val empty = Triple("", "", "")
-    private val creds = Triple("DIRECT-ab-CarLink", "192.168.49.1", "aa:bb:cc:dd:ee:ff")
-    private val other = Triple("DIRECT-cd-CarLink", "192.168.49.1", "aa:bb:cc:dd:ee:00")
+    private val creds = Triple("DIRECT-ab-MobileCarConnect", "192.168.49.1", "aa:bb:cc:dd:ee:ff")
+    private val other = Triple("DIRECT-cd-MobileCarConnect", "192.168.49.1", "aa:bb:cc:dd:ee:00")
 
     @Test fun noRunningLoopAlwaysStarts() {
         assertTrue(PokeLoopPolicy.shouldRestartLoop(false, creds, creds))

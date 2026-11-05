@@ -4,20 +4,21 @@ import com.shilapi.xcertplay.orchestration.WirelessStartupTimeline
 import org.junit.Assert.*
 import org.junit.Test
 
-// CarLink: tests for P2pStableIdentity.kt.
+// MobileCarConnect: tests for P2pStableIdentity.kt.
 class P2pStableIdentityTest {
-    private val prefix = P2pOwnership.prefix("com.carlink.app", "device-user-signing-key-id")
+    private val prefix = P2pOwnership.prefix("com.mobilecarconnect.app", "device-user-signing-key-id")
     private var draws = 0
     private fun passphrase() = "Passphrase${++draws}xyzA"
 
-    private fun decide(stored: P2pIdentity?, carName: String? = "CarLink", enabled: Boolean = true, sdk: Int = 33) =
+    private fun decide(stored: P2pIdentity?, carName: String? = "MobileCarConnect", enabled: Boolean = true, sdk: Int = 33) =
         P2pStableIdentityPolicy.decide(enabled, sdk, stored, prefix, carName, ::passphrase)
 
     @Test fun firstUseDrawsAPairInTheOwnershipNamespaceAndStoresIt() {
         val choice = decide(null)
         assertEquals(P2pIdentityOutcome.NEW, choice.outcome)
         assertEquals("first_use", choice.reason)
-        assertEquals(prefix + "CarLink", choice.identity!!.ssid)
+        // The 22-character namespace leaves 10 bytes of the 32-byte SSID for the car's name.
+        assertEquals(prefix + "MobileCarC", choice.identity!!.ssid)
         assertEquals(choice.identity, choice.toStore)
         assertTrue(P2pStableIdentityPolicy.isValidPassphrase(choice.identity!!.passphrase))
     }
@@ -62,26 +63,26 @@ class P2pStableIdentityTest {
         assertEquals(prefix + "CarPlay", P2pStableIdentityPolicy.networkName(prefix, "ü é"))
         assertEquals(prefix + "CarPlay", P2pStableIdentityPolicy.networkName(prefix, null))
         // WifiP2pConfig.Builder.setNetworkName: DIRECT- and two alphanumerics.
-        assertTrue(P2pStableIdentityPolicy.networkName(prefix, "CarLink").matches(Regex("^DIRECT-[a-zA-Z0-9]{2}.*")))
+        assertTrue(P2pStableIdentityPolicy.networkName(prefix, "MobileCarConnect").matches(Regex("^DIRECT-[a-zA-Z0-9]{2}.*")))
     }
 
-    @Test fun nameStaysRecognisableByDiPlayAndCarLinkButNeverByAndroidAuto() {
-        val name = P2pStableIdentityPolicy.networkName(prefix, "CarLink")
+    @Test fun nameStaysRecognisableByDiPlayAndMobileCarConnectButNeverByAndroidAuto() {
+        val name = P2pStableIdentityPolicy.networkName(prefix, "MobileCarConnect")
         // DiPlay's reclaim check, even after a reinstall lost the recorded name.
         assertTrue(P2pOwnership.canReclaim(true, name, null, prefix))
         assertFalse(P2pOwnership.canReclaim(false, name, null, prefix))
-        assertFalse(P2pOwnership.canReclaim(true, name, null, P2pOwnership.prefix("com.carlink.app", "other-device")))
-        // CarLink's LeftoverGroupPolicy.CARPLAY_GROUP (app/…/aa/AaStartPolicy.kt).
+        assertFalse(P2pOwnership.canReclaim(true, name, null, P2pOwnership.prefix("com.mobilecarconnect.app", "other-device")))
+        // MobileCarConnect's LeftoverGroupPolicy.CARPLAY_GROUP (app/…/aa/AaStartPolicy.kt).
         assertTrue(name.matches(Regex("^DIRECT-dp[0-9a-f]{12}-.*")))
         // DiAuto names its group DIRECT-<two of A-Z, 0-9>-<car>: never "dp".
         assertFalse(name.matches(Regex("^DIRECT-[A-Z0-9]{2}-.*")))
-        assertFalse(P2pStableIdentityPolicy.isNamespaceName("DIRECT-Y1-CarLink", prefix))
+        assertFalse(P2pStableIdentityPolicy.isNamespaceName("DIRECT-Y1-MobileCarConnect", prefix))
         assertFalse(P2pStableIdentityPolicy.isNamespaceName(prefix, prefix))
         assertFalse(P2pStableIdentityPolicy.isNamespaceName(prefix + "Car-Link", prefix))
     }
 
     @Test fun liveGroupIsReadOnlyWhenOwnedWithTheWholePairOnAFittingChannel() {
-        val identity = P2pIdentity(prefix + "CarLink", "Passphrase1xyzA")
+        val identity = P2pIdentity(prefix + "MobileCarConnect", "Passphrase1xyzA")
         fun reads(owner: Boolean = true, name: String? = identity.ssid, pass: String? = identity.passphrase,
                   frequency: Int = 5180, fits: (Int) -> Boolean = { true }) =
             P2pStableIdentityPolicy.readsLiveGroup(identity, owner, name, pass, frequency, fits)
@@ -115,7 +116,7 @@ class P2pStableIdentityTest {
     }
 
     @Test fun passphraseNeverPrints() {
-        assertFalse(P2pIdentity("DIRECT-dpX-CarLink", "secret-value").toString().contains("secret-value"))
+        assertFalse(P2pIdentity("DIRECT-dpX-MobileCarConnect", "secret-value").toString().contains("secret-value"))
     }
 
     @Test fun bssidHashIsShortStableAndHidesTheAddress() {

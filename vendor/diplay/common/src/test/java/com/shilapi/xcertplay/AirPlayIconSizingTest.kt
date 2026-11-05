@@ -37,11 +37,11 @@ class AirPlayIconSizingTest {
         assertTrue("${bytes.size} >= ${large.size}", bytes.size < large.size)
     }
 
-    // CarLink: a non-BYD car gets CarLink's icon, a valid opaque square sent as it is.
-    @Test fun onlyBydGetsTheBydLogoAndCarLinksIconIsSentUnchanged() {
+    // MobileCarConnect: a non-BYD car gets MobileCarConnect's icon, a valid opaque square sent as it is.
+    @Test fun onlyBydGetsTheBydLogoAndMobileCarConnectsIconIsSentUnchanged() {
         assertEquals(R.raw.ic_car_home, AirPlayIconSizing.packagedIcon(vehicleIntegrations = true))
-        assertEquals(R.raw.ic_carlink_home, AirPlayIconSizing.packagedIcon(vehicleIntegrations = false))
-        val icon = java.io.File("src/main/res/raw/ic_carlink_home.png").readBytes()
+        assertEquals(R.raw.ic_mobilecarconnect_home, AirPlayIconSizing.packagedIcon(vehicleIntegrations = false))
+        val icon = java.io.File("src/main/res/raw/ic_mobilecarconnect_home.png").readBytes()
         val (size, bytes) = AirPlayIconSizing.fit(icon)!!
         assertEquals(AirPlayIconSizing.MAX_PIXELS, size)
         assertSame(icon, bytes)

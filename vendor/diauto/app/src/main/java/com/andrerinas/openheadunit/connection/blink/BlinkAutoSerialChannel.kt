@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/blink/BlinkAutoSerialChannel.kt
+// MobileCarConnect: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/blink/BlinkAutoSerialChannel.kt
 // (see docs/VENDOR_CHANGES.md).
 package com.andrerinas.openheadunit.connection.blink
 
@@ -214,7 +214,7 @@ class BlinkAutoSerialChannel internal constructor(
             sink.write(line.toByteArray(Charsets.US_ASCII))
             sink.flush()
         }
-        // CarLink: size only; WifiInfoResponse carries the Wi-Fi password.
+        // MobileCarConnect: size only; WifiInfoResponse carries the Wi-Fi password.
         AppLog.d("NativeAA: [BLINK] [TX] frame of ${frame.size} bytes")
     }
 

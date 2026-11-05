@@ -16,9 +16,9 @@ metadata:
   - aot-compilation
 ---
 
-> **CarLink note.** The hot paths are Home's first frame and the first connection in both processes
-> (main and `:aa`), not a scrolling list. `:carlink-core` ships its own `baseline-prof.txt`. Run on
-> the user's tablet (`192.168.10.103:5555`) only with the carlink-device skill's rules; no emulator
+> **MobileCarConnect note.** The hot paths are Home's first frame and the first connection in both processes
+> (main and `:aa`), not a scrolling list. `:mobilecarconnect-core` ships its own `baseline-prof.txt`. Run on
+> the user's tablet (`192.168.10.103:5555`) only with the mobilecarconnect-device skill's rules; no emulator
 > unless needed. Startup profiles need R8 enabled first.
 
 # Generating Baseline Profiles — ship the AOT compilation hint list and prove it moved the needle

@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 80057795 (AGPL-3.0; c86332be, 6885df91, 7899e35d, c3b58e61), connection/wifi/modes/nativeaa/HfpServiceRecordPolicy.kt (see docs/VENDOR_CHANGES.md).
+// MobileCarConnect: ported from open-headunit 80057795 (AGPL-3.0; c86332be, 6885df91, 7899e35d, c3b58e61), connection/wifi/modes/nativeaa/HfpServiceRecordPolicy.kt (see docs/VENDOR_CHANGES.md).
 package com.andrerinas.openheadunit.connection
 
 import com.andrerinas.openheadunit.aap.BluetoothWakePolicy

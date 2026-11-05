@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/blink/BlinkRefusal.kt
+// MobileCarConnect: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/blink/BlinkRefusal.kt
 // (see docs/VENDOR_CHANGES.md).
 package com.andrerinas.openheadunit.connection.blink
 
@@ -8,7 +8,7 @@ package com.andrerinas.openheadunit.connection.blink
  * The log alone is not enough: while the carrier is refused the connection pill would otherwise
  * keep saying the phone is being woken, and nothing on screen would name the cause.
  */
-enum class BlinkRefusal(val message: String) { // CarLink: English text, not upstream's string resources
+enum class BlinkRefusal(val message: String) { // MobileCarConnect: English text, not upstream's string resources
     /** The stock Car Link app is installed and enabled, and reads the same port. */
     STOCK_CLIENT_ENABLED("the stereo's own Car Link app (com.syu.carlink) is enabled and reads the same port; disable it first"),
 

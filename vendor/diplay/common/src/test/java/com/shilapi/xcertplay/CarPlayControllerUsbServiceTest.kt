@@ -142,7 +142,7 @@ class CarPlayControllerUsbServiceTest {
 
         // Then the iPhone: found as before.
         shadowOf(usb).addOrUpdateUsbDevice(usbDevice(0x05ac, 0x12a8, "/dev/bus/usb/001/004"), false)
-        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(6)) // CarLink: plus the 2 s default-grant wait
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(6)) // MobileCarConnect: plus the 2 s default-grant wait
         assertEquals("wired iPhone discovered vid=0x5ac pid=0x12a8", logs.filter { it.startsWith("wired iPhone") }[2])
         assertTrue(statuses.contains(CarPlayStatus.RequestingIphonePermission))
     }
@@ -186,7 +186,7 @@ class CarPlayControllerUsbServiceTest {
 
         val iphone = usbDevice(0x05ac, 0x12a8, "/dev/bus/usb/001/004")
         shadowOf(usb).addOrUpdateUsbDevice(iphone, false)
-        looper.idleFor(Duration.ofSeconds(4)) // CarLink: plus the 2 s default-grant wait
+        looper.idleFor(Duration.ofSeconds(4)) // MobileCarConnect: plus the 2 s default-grant wait
         assertTrue(statuses.contains(CarPlayStatus.RequestingIphonePermission))
         shadowOf(usb).removeUsbDevice(iphone)
         ReflectionHelpers.callInstanceMethod<Unit>(controller, "startIphone")

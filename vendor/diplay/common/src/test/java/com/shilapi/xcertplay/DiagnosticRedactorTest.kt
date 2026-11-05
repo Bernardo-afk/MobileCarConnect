@@ -104,7 +104,7 @@ class DiagnosticRedactorTest {
                     it.append("password=secret")
                 }
             }
-            // CarLink: history is kept by size, so ten short runs all survive.
+            // MobileCarConnect: history is kept by size, so ten short runs all survive.
             val history = SessionLogFile.REPORT_NAMES.map { folder.resolve(it) }.filter { it.exists() }.map { it.readText() }
             assertEquals(10, folder.listFiles()!!.size)
             assertTrue(history.first().contains("session=0"))
@@ -113,7 +113,7 @@ class DiagnosticRedactorTest {
             assertFalse(history.any { it.contains("secret") })
         } finally { folder.deleteRecursively() }
     }
-    // CarLink: the oldest runs expire once the archives exceed their size budget.
+    // MobileCarConnect: the oldest runs expire once the archives exceed their size budget.
     @Test fun oldestHistoryExpiresBySize() {
         val folder = Files.createTempDirectory("diplay-budget-test").toFile()
         try {

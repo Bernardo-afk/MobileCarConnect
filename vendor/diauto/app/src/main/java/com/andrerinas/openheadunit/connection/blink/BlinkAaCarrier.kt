@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/blink/BlinkAaCarrier.kt
+// MobileCarConnect: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/blink/BlinkAaCarrier.kt
 // (see docs/VENDOR_CHANGES.md).
 package com.andrerinas.openheadunit.connection.blink
 
@@ -35,12 +35,12 @@ import java.util.concurrent.atomic.AtomicReference
  * the stock client answers; [BlinkAutoLine.idleReply] does the same while no handshake owns it.
  */
 class BlinkAaCarrier(
-    // CarLink: one hooks object instead of upstream's separate lambdas.
+    // MobileCarConnect: one hooks object instead of upstream's separate lambdas.
     private val hooks: ExternalBtTransportPolicy.Hooks,
     packageManager: PackageManager?,
     /** Called with the reason whenever it changes, and with null once the port is open again. */
     private val onRefusalChanged: (BlinkRefusal?) -> Unit = { refusal ->
-        // CarLink: the host fails the session and tells the driver what to do (disable the stock
+        // MobileCarConnect: the host fails the session and tells the driver what to do (disable the stock
         // app, or use USB). The carrier keeps retrying until the host stops the engine.
         if (refusal != null) ExternalBtTransportPolicy.reportUnavailable(ExternalBtTransportPolicy.Route.BLINK,
             "${refusal.name}: ${refusal.message}")
@@ -87,7 +87,7 @@ class BlinkAaCarrier(
     /** The module wakes the phone itself; nothing is sent. */
     override suspend fun run() {
         carrierJob = currentCoroutineContext()[Job]
-        // CarLink: the first step in the shared log, so a report shows where the route stopped.
+        // MobileCarConnect: the first step in the shared log, so a report shows where the route stopped.
         ExternalBtTransportPolicy.step(WirelessTimeline.Phase.MODULE_REACHABLE,
             "blink ${BlinkAutoSerialChannel.PORT} exists=${runCatching { java.io.File(BlinkAutoSerialChannel.PORT).exists() }.getOrDefault(false)}" +
                 " stock=${StockCarLink.PACKAGE}:${stockClient()}")

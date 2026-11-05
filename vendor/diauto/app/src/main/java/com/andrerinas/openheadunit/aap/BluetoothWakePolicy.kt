@@ -41,15 +41,15 @@ object BluetoothWakePolicy {
      * would answer every command with an error, reach a false "established" on those errors alone,
      * and then poll a channel that cannot answer it every two seconds.
      */
-    // CarLink: ported from open-headunit c86332be.
+    // MobileCarConnect: ported from open-headunit c86332be.
     fun carriesServiceLevelConnection(uuid: UUID): Boolean = uuid == HFP_AG_UUID
 
-    /** CarLink: iAP2 over Bluetooth, published only by Apple devices (as CarLink's PhoneClassifier). */
+    /** MobileCarConnect: iAP2 over Bluetooth, published only by Apple devices (as MobileCarConnect's PhoneClassifier). */
     val IAP2_UUID: UUID = UUID.fromString("00000000-deca-fade-deca-deafdecacafe")
 
     /**
-     * CarLink: whether a paired device is an iPhone or iPad, by its cached iAP2 record or its name
-     * (the same evidence CarLink's PhoneClassifier uses). An iPhone is CarPlay's, so Android Auto
+     * MobileCarConnect: whether a paired device is an iPhone or iPad, by its cached iAP2 record or its name
+     * (the same evidence MobileCarConnect's PhoneClassifier uses). An iPhone is CarPlay's, so Android Auto
      * never pokes it and never takes its hands-free link.
      */
     fun looksLikeApple(uuids: Collection<UUID>?, name: String?): Boolean {
@@ -59,8 +59,8 @@ object BluetoothWakePolicy {
     }
 
     /**
-     * CarLink: whether this app may complete the hands-free link a phone opened to the stand-in
-     * record. Only for the phone this session pokes ([pokeTargets], which CarLink sets to exactly the
+     * MobileCarConnect: whether this app may complete the hands-free link a phone opened to the stand-in
+     * record. Only for the phone this session pokes ([pokeTargets], which MobileCarConnect sets to exactly the
      * chosen phone; empty means DiAuto pokes every paired device, so any), and never for an Apple
      * device: a completed link routes that phone's calls to an app that cannot play them.
      */
@@ -75,7 +75,7 @@ object BluetoothWakePolicy {
     }
 
     /**
-     * CarLink: whether a hands-free link in the *gateway* role (`BluetoothProfile.HEADSET`, this
+     * MobileCarConnect: whether a hands-free link in the *gateway* role (`BluetoothProfile.HEADSET`, this
      * unit acting as a phone) stands a poke to [pokedAddress] down.
      *
      * A poke connects to the phone's audio-gateway record, so it can only displace a link to that

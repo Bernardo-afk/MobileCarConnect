@@ -1,6 +1,6 @@
 package com.andrerinas.openheadunit.aap
 
-// CarLink: ported from open-headunit 67bcae27 (docs/VENDOR_CHANGES.md).
+// MobileCarConnect: ported from open-headunit 67bcae27 (docs/VENDOR_CHANGES.md).
 
 /** Classifies complete cleartext handshake frames: channel, flags, length (2), type (2), payload. */
 internal object HandshakeMessagePolicy {
@@ -18,7 +18,7 @@ internal object HandshakeMessagePolicy {
             (frame[4] == 0.toByte() && frame[5] == 15.toByte()))
 
     /**
-     * CarLink (open-headunit 68c2bbb5): TCP delivers a request or drops the link, so a resend there
+     * MobileCarConnect (open-headunit 68c2bbb5): TCP delivers a request or drops the link, so a resend there
      * reaches the peer only as a duplicate, and after one Android Auto's head unit server stops
      * answering. USB can lose a request, so it keeps its retries.
      */

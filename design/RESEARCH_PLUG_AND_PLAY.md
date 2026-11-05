@@ -2,7 +2,7 @@
 
 > **Status: current** research behind [REBUILD_V2.md](REBUILD_V2.md).
 
-Research for CarLink's connection redesign, 2026-10-09. Sources are linked; vendor pages and
+Research for MobileCarConnect's connection redesign, 2026-10-09. Sources are linked; vendor pages and
 forum posts are practical guidance, not specifications.
 
 ## The common model
@@ -28,7 +28,7 @@ Every product looked at uses the same three-part model:
    car starts; reported times 15–30 s. The phone keeps using mobile data for internet; the
    car link is local only.
 
-## Lessons for CarLink
+## Lessons for MobileCarConnect
 
 - Default wireless path = the receiver's own link (Wi-Fi Direct, or the car's hotspot when the
   firmware exposes it). Same Wi-Fi is an advanced option, offered only where it is proven.
@@ -40,6 +40,6 @@ Every product looked at uses the same three-part model:
   exactly why the phone-initiated pairing is the norm.
 - Common failure causes the products' FAQs name: stale Bluetooth pairings (fix: forget and
   re-pair), the phone already tied to another car/adapter, interference on the chosen channel,
-  phone OS quirks (Samsung One UI), weak USB power. CarLink's recovery screens should map to
+  phone OS quirks (Samsung One UI), weak USB power. MobileCarConnect's recovery screens should map to
   these.
 - Keep the phone unlocked during the first connection; later connections work locked.

@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/zbt/ZbtAaCarrier.kt
+// MobileCarConnect: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/zbt/ZbtAaCarrier.kt
 // (see docs/VENDOR_CHANGES.md).
 package com.andrerinas.openheadunit.connection.zbt
 
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicLong
  *   `handleHandshake`, whose `finally` does the closing.
  */
 class ZbtAaCarrier(
-    // CarLink: one hooks object instead of upstream's separate lambdas; no module-address seeding
+    // MobileCarConnect: one hooks object instead of upstream's separate lambdas; no module-address seeding
     // and no join-refusal widening (neither exists in this DiAuto).
     private val hooks: ExternalBtTransportPolicy.Hooks,
     private val openChannel: (
@@ -134,7 +134,7 @@ class ZbtAaCarrier(
                             "Wireless will not connect over Bluetooth on this unit; use USB, or a WiFi mode " +
                             "that needs no Bluetooth handshake. (${e.message})"
                     )
-                    // CarLink: the host fails the session and tells the driver to use USB.
+                    // MobileCarConnect: the host fails the session and tells the driver to use USB.
                     if (!reportedUnavailable) {
                         reportedUnavailable = true
                         ExternalBtTransportPolicy.reportUnavailable(ExternalBtTransportPolicy.Route.ZBT,
@@ -190,7 +190,7 @@ class ZbtAaCarrier(
             // A connect proves something listens; only a frame proves it will carry Android Auto,
             // and a daemon busy with another client accepts the socket and answers nothing.
             if (pumped == ZbtByteChannel.Pump.FRAME && !answered) {
-                answered = true // CarLink: the daemon took RequestInit and answered
+                answered = true // MobileCarConnect: the daemon took RequestInit and answered
                 ExternalBtTransportPolicy.step(WirelessTimeline.Phase.MODULE_READY, "zbt daemon answered")
             }
 
@@ -268,7 +268,7 @@ class ZbtAaCarrier(
      * that cannot reach this phone. Only records the request: the carrier's own thread sends it,
      * because a caller may be the main thread and the channel is a socket. Safe from any thread.
      *
-     * CarLink: every request takes upstream's "user asked" path: it is recorded, and
+     * MobileCarConnect: every request takes upstream's "user asked" path: it is recorded, and
      * [sendPendingWake] sends it when [ZbtWakePolicy.pending] allows, so the pacing stays.
      */
     override fun requestWake() {
@@ -397,7 +397,7 @@ class ZbtLink(
     }
 }
 
-/** CarLink: the module's separator-less address as `AA:BB:CC:DD:EE:FF`, or null (upstream's BluetoothHelper.normalizeMacAddress). */
+/** MobileCarConnect: the module's separator-less address as `AA:BB:CC:DD:EE:FF`, or null (upstream's BluetoothHelper.normalizeMacAddress). */
 internal fun canonicalMac(raw: String?): String? {
     val hex = raw?.filter { it.isLetterOrDigit() }?.uppercase() ?: return null
     if (hex.length != 12 || hex.any { Character.digit(it, 16) < 0 }) return null

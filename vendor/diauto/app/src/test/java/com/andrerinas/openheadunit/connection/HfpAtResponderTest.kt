@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit c86332be (AGPL-3.0), HfpAtResponderTest.kt.
+// MobileCarConnect: ported from open-headunit c86332be (AGPL-3.0), HfpAtResponderTest.kt.
 package com.andrerinas.openheadunit.connection
 
 import org.junit.Assert.assertEquals

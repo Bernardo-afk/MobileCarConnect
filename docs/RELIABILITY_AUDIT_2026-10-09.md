@@ -4,7 +4,7 @@
 **Paths tested:** USB directly and through a USB-C dock, and wireless over Wi-Fi Direct.
 **Evidence:** `.claude/device-logs/2026-10-09/`:
 
-- `carlink.log`, 16:02:55 to 17:30:15;
+- `mobilecarconnect.log`, 16:02:55 to 17:30:15;
 - DiAuto journal, 12:30 to 17:30;
 - DiPlay's last 8 runs, 16:59:21 to 17:26:26;
 - `logcat.txt`, 17:29:48 to 17:31:05.
@@ -13,14 +13,14 @@ All times are device local time (IST). This is an analysis only: no code was cha
 
 **Conventions.** In this report:
 
-- **TTFF** is CarLink's `start …` line to its `… connected on …` line. For both engines, "connected" is the first rendered video frame. This was checked against the engines' own first-frame lines: they agree within 7 ms (for example, 17:25:46.701 DiPlay `first-frame` and 17:25:46.708 CarLink `connected`).
+- **TTFF** is MobileCarConnect's `start …` line to its `… connected on …` line. For both engines, "connected" is the first rendered video frame. This was checked against the engines' own first-frame lines: they agree within 7 ms (for example, 17:25:46.701 DiPlay `first-frame` and 17:25:46.708 MobileCarConnect `connected`).
 - **"Inference"** marks every conclusion the logs do not prove directly.
 
 ---
 
 ## 0. Build timeline (derived from the logs)
 
-Each install gets a new `/data/app/~~…` path, which DiAuto's `App.onCreate | native library dir …` line records. Logcat confirms the last install: 17:29:48 `Package [com.carlink.app.hudtest] reported as REPLACED`. The installs since 16:00 were:
+Each install gets a new `/data/app/~~…` path, which DiAuto's `App.onCreate | native library dir …` line records. Logcat confirms the last install: 17:29:48 `Package [com.mobilecarconnect.app.hudtest] reported as REPLACED`. The installs since 16:00 were:
 
 | Build | Installed | Notes |
 |---|---|---|
@@ -28,7 +28,7 @@ Each install gets a new `/data/app/~~…` path, which DiAuto's `App.onCreate | n
 | b3 | 16:05:17 | |
 | b4, b5 | 16:11:02, 16:15:12 | |
 | b6 | 16:23:04 | |
-| b7–b9 | 16:34:01, 16:34:33, 16:37:50 | `Switcher` lines start in carlink.log |
+| b7–b9 | 16:34:01, 16:34:33, 16:37:50 | `Switcher` lines start in mobilecarconnect.log |
 | b10 | 16:42:58 | |
 | b11 | 16:46:55 | |
 | b12 | 16:52:59 | first build where wired CarPlay reaches "connected" |
@@ -40,7 +40,7 @@ Each install gets a new `/data/app/~~…` path, which DiAuto's `App.onCreate | n
 
 There were 18 installs, not the 8 recalled. Three things follow from this:
 
-- **Installs explain some events.** Every install killed a running session, and several of the "USB attach at app start" events are CarLink enumerating the devices already plugged in, not a user plugging something in. These times are 16:05:16, 16:11:01, 16:15:11, 16:46:54, 16:52:58, 16:59:18, 17:28:20 and 17:29:49.
+- **Installs explain some events.** Every install killed a running session, and several of the "USB attach at app start" events are MobileCarConnect enumerating the devices already plugged in, not a user plugging something in. These times are 16:05:16, 16:11:01, 16:15:11, 16:46:54, 16:52:58, 16:59:18, 17:28:20 and 17:29:49.
 - **Two of those killed sessions left the S25 in stale accessory mode** (see K2).
 - **The "17:4x" build is not covered.** The logs were pulled at 17:31:05.
 
@@ -66,7 +66,7 @@ All of these went through the dock where the dock was enumerated: it is present 
 | U10 | 16:48:04.2 | b11 | `Retrying` at 16:48:30, re-enumeration at 16:48:32.9, `Retrying` at 16:48:40, unplugged at 16:48:44 | – | 40 s; failed (K12) |
 | U11 | 16:48:44.7 | b11 | `Retrying` at 16:48:57; unplugged at 16:49:01 | – | 16 s; failed (K12) |
 | U12 | 16:59:03.2 | b12 | **connected** at 16:59:08.77 | 5.5 s | 2.1 s stopping the wireless CarPlay attempt; no DiPlay log kept |
-| U13 | 16:59:20.9 | b13 | **connected** at 16:59:24.58 | 3.7 s | 1.9 s CarLink start to controller start (0.5 s debounce, K11); then plug+1677 ms to the frame, with no re-enumeration because the configuration was already 6 |
+| U13 | 16:59:20.9 | b13 | **connected** at 16:59:24.58 | 3.7 s | 1.9 s MobileCarConnect start to controller start (0.5 s debounce, K11); then plug+1677 ms to the frame, with no re-enumeration because the configuration was already 6 |
 | U14 | 17:08:16.8 | b13 | **connected** at 17:08:22.13 | 5.3 s | 2.1 s stopping the wireless attempt, 0.88 s host start, then plug+2245 ms (re-enumeration 657 ms) |
 | U15 | 17:19:15.1 | b16 | **connected** at 17:19:19.50 | 4.4 s | 1.7 s host start, then plug+2598 ms (re-enumeration 779 ms) |
 | U16 | 17:19:51.3 | b16 | **connected** at 17:19:55.22 | 3.9 s | 0.5 s AA stop, 0.9 s host start, then plug+2412 ms (re-enumeration 753 ms) |
@@ -88,11 +88,11 @@ Every wired session that did connect ended by unplug (the DiPlay `USBMUX read re
 | C9 | 17:21:50.3 | b16 | **connected** at 17:22:12.74 | **22.4 s** | see the timed split below |
 | C10 | 17:25:33.9 | b16 | **connected** at 17:25:46.70 | **12.8 s** | see the timed split below |
 
-Timed split for the two `WIRELESS_TIMING` runs. Values are milliseconds from DiPlay's controller start; CarLink's own overhead comes before that.
+Timed split for the two `WIRELESS_TIMING` runs. Values are milliseconds from DiPlay's controller start; MobileCarConnect's own overhead comes before that.
 
 | Phase | C9 (17:21:52) | C10 (17:25:36) |
 |---|---|---|
-| CarLink start → controller start (AA stop + host + 0.5 s debounce) | 2.46 s (AA stop 1.56 s) | 2.51 s (AA stop 1.54 s) |
+| MobileCarConnect start → controller start (AA stop + host + 0.5 s debounce) | 2.46 s (AA stop 1.56 s) | 2.51 s (AA stop 1.54 s) |
 | RFCOMM dial → connected (paging the iPhone) | **6650** | **5846** |
 | iAP2 identified → MFi auth → `0x5703` Wi-Fi config sent | 253 + 481 + 9 | 392 + 422 + 7 |
 | `start-session` sent | +7658 | +6884 |
@@ -150,7 +150,7 @@ At 13:34, a first plug raised **two** permission requests: one for the MTP devic
 
 Same Wi-Fi does not appear in the retained logs. The only trace is DiAuto arming `SoftApCredentials … 'wlan0'` at 13:34, during a USB session.
 
-### 1e. Totals in the CarLink window (16:02 to 17:31)
+### 1e. Totals in the MobileCarConnect window (16:02 to 17:31)
 
 | Engine and path | Attempts | Connected | Failed | Hung or stuck ≥ 10 s | Cancelled or replaced |
 |---|---|---|---|---|---|
@@ -199,7 +199,7 @@ Impact is the seconds lost today multiplied by how often the killer happened, we
 
 - From 16:03 to 16:49 (b2–b11), all 11 CarPlay USB starts have **no** `CARPLAY connected on USB` line, even though sessions ran for up to 377 s.
   - U7 is the clearest: `16:15:11.343 CARPLAY starting on USB` … `16:21:28.779 USB phone for CARPLAY unplugged`.
-  - While stuck, the Switcher shows the CarPlay host in front and CarLink still connecting: `16:45:27.396 phase=Progress projections=[CARPLAY]` … until `16:46:54`.
+  - While stuck, the Switcher shows the CarPlay host in front and MobileCarConnect still connecting: `16:45:27.396 phase=Progress projections=[CARPLAY]` … until `16:46:54`.
 - Wireless CarPlay in the same builds did report "connected" (16:26:09, 16:35:24, 16:38:15, 16:43:47).
 - From b12 on, every wired start reports "connected": 16:59:08.768, 16:59:24.584, 17:08:22.129, 17:19:19.500 and 17:19:55.219. Each matches DiPlay's `WIRED_TIMING first-frame`.
 
@@ -218,24 +218,24 @@ Impact is the seconds lost today multiplied by how often the killer happened, we
 **Evidence.** This is the 17:28 case. The other occurrences have the same shape: 16:52:58 → 16:54:10.98 (72.6 s), 15:49:55 → 15:50:59 (64 s), and 16:05:17, 16:59:18, 17:29:43 and 17:29:49.
 
 ```
-17:26:33.355 [CarLink] ANDROID_AUTO connected on USB
+17:26:33.355 [MobileCarConnect] ANDROID_AUTO connected on USB
 ~17:28:20    b17 install kills the session; the S25 stays at 18d1:2d00
-17:28:20.491 [CarLink] start ANDROID_AUTO USB known=false              (app start found 18d1:2d00)
+17:28:20.491 [MobileCarConnect] start ANDROID_AUTO USB known=false              (app start found 18d1:2d00)
 17:28:21.810 DiAuto checkAlreadyConnectedUsb | Found device already in accessory mode … 18D1 PID: 2D00
 17:28:21.883 DiAuto AapService.onConnected                              (CommManager busy at once)
 17:28:22.953 DiAuto Handshake: Drained 549115 bytes of stale USB data before version request
 17:28:23.242 DiAuto Handshake failed with exception                     (SSL; 1.4 s after open)
 17:28:23.260 DiAuto onHandshakeFailed … (failure #1)
 17:28:25.527 [Switcher] phase=Retrying
-17:29:25.989 [CarLink] ANDROID_AUTO failed: PHONE_DID_NOT_ANSWER (… unlock it and accept the prompt)
+17:29:25.989 [MobileCarConnect] ANDROID_AUTO failed: PHONE_DID_NOT_ANSWER (… unlock it and accept the prompt)
 ```
 
-The engine knew the session was dead 2.8 s after start. CarLink then waited another 60 s, showed the wrong advice ("unlock it and accept the prompt"), and the user still had to re-plug (A22).
+The engine knew the session was dead 2.8 s after start. MobileCarConnect then waited another 60 s, showed the wrong advice ("unlock it and accept the prompt"), and the user still had to re-plug (A22).
 
 **Root cause** (from the code)
 
 1. **How the phone gets stuck.** The S25 stays in AOA accessory mode after the host side of a session dies without a USB reset: a process death, a reinstall, or a driver Disconnect. The next open reads the old session's stream: "Drained 549115 bytes of stale USB data". The SSL handshake then fails.
-2. **CarLink's probe cannot see it.** `AaCommandHandler.kt:114-126` only checks that `isBusy()` becomes true within 10 s (`STALE_ACCESSORY_MILLIS`). DiAuto turns busy as soon as it opens the accessory, 0.07–0.5 s after start (`onConnected` at 17:28:21.883). So `KIND_AOA_STALE` never fires for a phone that opens and then fails the handshake. The comment at `:120-121` names this exact case ("71 s on the tablet").
+2. **MobileCarConnect's probe cannot see it.** `AaCommandHandler.kt:114-126` only checks that `isBusy()` becomes true within 10 s (`STALE_ACCESSORY_MILLIS`). DiAuto turns busy as soon as it opens the accessory, 0.07–0.5 s after start (`onConnected` at 17:28:21.883). So `KIND_AOA_STALE` never fires for a phone that opens and then fails the handshake. The comment at `:120-121` names this exact case ("71 s on the tablet").
 3. **The tracker turns the failure into a 60 s wait.**
    - The failed handshake reaches `AaSessionTracker` as a `Connecting` state followed by `Disconnected` (`:87-99`).
    - After the 2 s end debounce, `endSession` counts it as a USB "loss" with `losses < maxLosses` (`:239-255`) and goes back to waiting with `Retrying`.
@@ -255,7 +255,7 @@ The engine knew the session was dead 2.8 s after start. CarLink then waited anot
 
 **Risk:** low to medium. Some phones do not re-enumerate on an AOA start while in accessory mode; the message is the fallback.
 
-**Verify on the device:** connect AA over USB, kill CarLink from Recents or reinstall, reopen it with the phone still plugged in, and expect a picture or the re-plug message within 5 s.
+**Verify on the device:** connect AA over USB, kill MobileCarConnect from Recents or reinstall, reopen it with the phone still plugged in, and expect a picture or the re-plug message within 5 s.
 
 ### K3. Bluetooth RFCOMM paging time to the iPhone (open)
 
@@ -280,12 +280,12 @@ The engine knew the session was dead 2.8 s after start. CarLink then waited anot
 
 - **Slow successful dials (inference).** `createRfcommSocketToServiceRecord().connect()` must page the iPhone, run SDP, then open RFCOMM. Dials of 5.8–6.7 s mean the page itself took most of the 5.12 s page window. The likely reasons are that the iPhone had no ACL link to the tablet (the tablet is not a hands-free car kit, DIPLAY.md §4) and that the iPhone page-scans slowly.
 - **Failed dials (inference).** The iPhone was not page-reachable at 17:08–17:09: it had just been on wired CarPlay or was not near. The exact 5.15 s value is the controller's page timeout, not DiPlay's 15 s RFCOMM timeout (`CarPlayController.kt:2906`).
-- **The loops.** DiPlay retries without limit, and CarLink accepts up to 5 "unbounded" retries (`CarPlaySessionEvents.kt:158`, `:244-245`; `WirelessStartupPolicy.kt:10`).
+- **The loops.** DiPlay retries without limit, and MobileCarConnect accepts up to 5 "unbounded" retries (`CarPlaySessionEvents.kt:158`, `:244-245`; `WirelessStartupPolicy.kt:10`).
 - **Dial start.** Before b16 the dial started only after hotspot + listener + Bonjour, about 0.44 s in. In b16 it starts at `start+21–28ms`, in parallel. That saved about 0.4 s, which the logs confirm.
 
 **Proposed fixes**
 
-- **Dial earlier (plan item 7).** Start the dial when CarLink decides on wireless CarPlay, in parallel with the AA stop (1.5 s) and the host launch (1–2 s). This hides 1.5–2.5 s of the page time. Risk: medium, because the controller must adopt an already-open socket.
+- **Dial earlier (plan item 7).** Start the dial when MobileCarConnect decides on wireless CarPlay, in parallel with the AA stop (1.5 s) and the host launch (1–2 s). This hides 1.5–2.5 s of the page time. Risk: medium, because the controller must adopt an already-open socket.
 - **Cap hopeless loops (plan item 3).** After 2 consecutive page timeouts (elapsed ≈ 5.1–5.2 s with `IOException` while `ConnectingBluetooth`), fail as `BLUETOOTH`, with "iPhone not reachable over Bluetooth: unlock it, turn on Bluetooth, or plug in a cable". This saves up to about 23 s per hopeless attempt. Risk: low.
 
 ### K4. The progress UI does not tell the truth (open)
@@ -295,7 +295,7 @@ The engine knew the session was dead 2.8 s after start. CarLink then waited anot
 1. **`Retrying` is always drawn as step 2, "Phone answered" ("Identified" in older builds).** `LinkStateMapping.kt:21-22` hard-codes step `2` with `detail = "retrying"` and drops the reason.
    - In C8, the dial alternated `Progress` (step 1, "Reaching phone") and `Retrying` (step 2) every 7.7 s: 17:09:08.24 / 14.71 / 16.87 / 22.40 / 24.50 / 30.04 / 32.21. That told the driver the iPhone **had** answered when every dial had failed.
    - In K2 it shows step 2 · retrying for 60 s.
-2. **"Phone not answering" can never appear during a retry loop.** `SessionManager.kt:380-384` cancels the 10 s `notAnswering` timer on every `Progress` and re-arms it. `CarPlaySessionTracker.onRetrying` clears `lastProgress` (`CarPlaySessionEvents.kt:236`), so each cycle re-emits `WAITING_FOR_PHONE`. A 7.7 s cycle never reaches 10 s. `has not answered` appears 0 times in carlink.log.
+2. **"Phone not answering" can never appear during a retry loop.** `SessionManager.kt:380-384` cancels the 10 s `notAnswering` timer on every `Progress` and re-arms it. `CarPlaySessionTracker.onRetrying` clears `lastProgress` (`CarPlaySessionEvents.kt:236`), so each cycle re-emits `WAITING_FOR_PHONE`. A 7.7 s cycle never reaches 10 s. `has not answered` appears 0 times in mobilecarconnect.log.
 3. **Wireless CarPlay never shows "Linking" or "Picture" before the picture.**
    - `RunningWireless` maps to `HANDSHAKE` (step 2) (`CarPlaySessionEvents.kt:63`).
    - Nothing maps to `JOINING_WIFI`.
@@ -335,7 +335,7 @@ Each of these led into K3 loops (C6–C8), and two of them led to a "switch?" pr
 **Evidence**
 
 - On every fresh plug the S25 attaches 2–3 times within about 1.5 s: 16:49:02.84 / 03.51 / 05.04, 16:57:18.45 / 19.01 and 17:07:39.94 / 40.37 / 41.74.
-- The AOA switch then fails with DiAuto `UsbAccessoryMode.connectAndSwitch | Cannot open device` (16:49:08.283, 16:57:22.8, 17:07:44.342). CarLink reports "the phone did not switch to Android Auto over USB".
+- The AOA switch then fails with DiAuto `UsbAccessoryMode.connectAndSwitch | Cannot open device` (16:49:08.283, 16:57:22.8, 17:07:44.342). MobileCarConnect reports "the phone did not switch to Android Auto over USB".
 - "Try again" failed in 0.1 s three times, at 17:07:47.8, 17:07:51.9 and 17:07:53.5. `SessionManager.retry` re-sends the same request, including the stale `UsbDevice`, so the retry reused it.
 
 **Root cause:** the switch and the permission act on a `UsbDevice` handle that the re-enumeration invalidated. Android permission is per device instance, so this is a permission loss on the new instance (inference).
@@ -346,7 +346,7 @@ Each of these led into K3 loops (C6–C8), and two of them led to a "switch?" pr
 
 ### K7. CarPlay stop time when switching engines (open; regressed in b16)
 
-**Evidence.** CarLink `start <next>` → `<next> settings written` (CarLink starts the next engine only after the stop completes):
+**Evidence.** MobileCarConnect `start <next>` → `<next> settings written` (MobileCarConnect starts the next engine only after the stop completes):
 
 | Switch | Build | CarPlay stop |
 |---|---|---|
@@ -415,7 +415,7 @@ The other 4.06 s of W7 is the CarPlay stop (K7). In b8/b9 (W3/W4) the join was f
 
 **Root cause** (inference; there is one timed sample and logcat does not cover 17:22):
 
-- The S25 left `DIRECT-Y1-CarLink` 34 s earlier, when AA stopped at 17:21:50.
+- The S25 left `DIRECT-Y1-MobileCarConnect` 34 s earlier, when AA stopped at 17:21:50.
 - The same SSID came back on a new group, very likely with a new GO address, since Android randomizes the P2P interface per group.
 - The phone's network selection either treated it as a new BSSID or deprioritized a network it had just left. It associated only after a scan, about 5 s later.
 
@@ -454,7 +454,7 @@ The radio swap from CarPlay's `DIRECT-dp…` group to AA's group happens on the 
 - 17:21:52.232 → 52.737
 - 17:25:35.937 → 36.437
 
-The controller starts 10–75 ms later. CarLink `starting on …` → controller start is 1.0–1.9 s in total (activity launch 0.2–0.7 s, host init 0.2–0.3 s, surface 0.15–0.3 s, then the debounce).
+The controller starts 10–75 ms later. MobileCarConnect `starting on …` → controller start is 1.0–1.9 s in total (activity launch 0.2–0.7 s, host init 0.2–0.3 s, surface 0.15–0.3 s, then the debounce).
 
 **Root cause:** `scheduleDisplaySize` debounces even the **first** size by `DISPLAY_CHANGE_DEBOUNCE_MILLIS = 500` (`CarPlayHostActivity.kt:4393-4394`, `:5233`). The debounce is for later size changes; the first one has nothing to settle.
 
@@ -470,9 +470,9 @@ The controller starts 10–75 ms later. CarLink `starting on …` → controller
 
 ### K13. Hidden DiPlay restarts during a wired session (b4/b5; inference)
 
-**Evidence:** during U6 and U7, iPhone re-attach pairs appeared at 16:13:35.7 / 36.6, 16:13:47.8 / 48.4, 16:18:57.5 / 58.4 and 16:19:09.5 / 10.2. CarLink logged each as "left to the engine". K12 shows that a pair is what DiPlay's wired restart looks like.
+**Evidence:** during U6 and U7, iPhone re-attach pairs appeared at 16:13:35.7 / 36.6, 16:13:47.8 / 48.4, 16:18:57.5 / 58.4 and 16:19:09.5 / 10.2. MobileCarConnect logged each as "left to the engine". K12 shows that a pair is what DiPlay's wired restart looks like.
 
-**Interpretation (inference):** two drop-and-reconnect cycles, 12 s apart, in each session. The CarLink UI could not show them (K1).
+**Interpretation (inference):** two drop-and-reconnect cycles, 12 s apart, in each session. The MobileCarConnect UI could not show them (K1).
 
 **Status:** no pairs in the shorter b13 and b16 wired sessions (24–45 s long). Not proven either way. Needs a session of 10 minutes or more on the current build.
 
@@ -494,8 +494,8 @@ Each was followed by a 2.1 s wireless stop.
 ### K15. Smaller items
 
 - **`:aa` cold start on USB at app start.** `ANDROID_AUTO settings written in 752 / 823 / 860 / 915 / 776 ms` when the engine process was not warm (16:05:17, 16:52:59, 16:59:19, 17:28:21, 17:29:50). Warm writes take 7–50 ms.
-- **Unplug detection while `Retrying`.** At 17:19:57.9 DiPlay saw the iPhone unplug and went into `Retrying`. CarLink then used the 3.5 s not-connected grace instead of the 1.2 s connected grace (`SessionManager.kt:238`), and ended the session at 17:20:02.4, 4.5 s later. Fix: use the short grace once the session has ever been connected.
-- **DiPlay keeps retrying after an unplug.** It logs `AirPlay session ended; retrying in 2000ms` (17:09:06.682, 17:19:27.023, 17:19:57.940) and showed `WaitingForIphone` until CarLink stopped it.
+- **Unplug detection while `Retrying`.** At 17:19:57.9 DiPlay saw the iPhone unplug and went into `Retrying`. MobileCarConnect then used the 3.5 s not-connected grace instead of the 1.2 s connected grace (`SessionManager.kt:238`), and ended the session at 17:20:02.4, 4.5 s later. Fix: use the short grace once the session has ever been connected.
+- **DiPlay keeps retrying after an unplug.** It logs `AirPlay session ended; retrying in 2000ms` (17:09:06.682, 17:19:27.023, 17:19:57.940) and showed `WaitingForIphone` until MobileCarConnect stopped it.
 - **USB permission prompts.** Only in the 13:34 first-use case: two requests, one for MTP and one for the accessory. DiPlay reports `USB permission already granted` in every wired run, and no `UsbPermissionActivity` appears in the logcat window. Not a killer today.
 - **A re-plug is needed after "Disconnect" on a USB session.** The re-enumeration after the stop is ignored by design (`USB CARPLAY attach right after the driver stopped; not restarting` at 16:05:44.9, 16:08:21.6 and 16:47:51.7), and the driver re-plugged 7.7–12.5 s later. Inference: Home offers no "Connect over USB" for a phone that is still plugged in.
 
@@ -537,14 +537,14 @@ Each item is small enough to build, install and verify on the tablet in one sitt
 
 | # | Fix | Where | Expected effect | Risk | Verify on the device |
 |---|---|---|---|---|---|
-| 1 | **Stale accessory: recover or fail within 5 s.** Re-send the AOA start on the first handshake failure of a pre-existing `18d1:2d00` (`MAX_STALE_ACCESSORY_RETRIES` 1 → 0, or a CarLink `switchToAccessory` on an accessory it did not create). In the tracker, a USB session that ends before any frame with no re-attach within about 5 s fails with `KIND_AOA_STALE` ("unplug and plug in again"), never the 60 s "unlock" wait. | `vendor/diauto/.../AapService.kt:2192,3433`; `AaCommandHandler.kt:114-126`; `AaSessionTracker.kt:239-255,170-173` | Removes H3–H6: 60–72 s becomes about 3–5 s, and stops the misleading advice | Low–medium | AA USB connected → force-stop or reinstall CarLink with the phone plugged in → reopen: a picture or the re-plug message within 5 s, 3 out of 3 |
+| 1 | **Stale accessory: recover or fail within 5 s.** Re-send the AOA start on the first handshake failure of a pre-existing `18d1:2d00` (`MAX_STALE_ACCESSORY_RETRIES` 1 → 0, or a MobileCarConnect `switchToAccessory` on an accessory it did not create). In the tracker, a USB session that ends before any frame with no re-attach within about 5 s fails with `KIND_AOA_STALE` ("unplug and plug in again"), never the 60 s "unlock" wait. | `vendor/diauto/.../AapService.kt:2192,3433`; `AaCommandHandler.kt:114-126`; `AaSessionTracker.kt:239-255,170-173` | Removes H3–H6: 60–72 s becomes about 3–5 s, and stops the misleading advice | Low–medium | AA USB connected → force-stop or reinstall MobileCarConnect with the phone plugged in → reopen: a picture or the re-plug message within 5 s, 3 out of 3 |
 | 2 | **Truthful progress.** Show `Retrying` at its real step, with the reason. Arm `notAnswering` once per attempt, for USB too. Map CarPlay `wifi-config` to "Linking" and `tcp-accepted` to "Picture". Add a 20 s "Picture without a frame" watchdog. | `LinkStateMapping.kt:21-22`; `SessionManager.kt:380-384`; `CarPlaySessionEvents.kt:60-68,236`; a DiPlay status hook next to the `WirelessTimeline` marks | Ends the "Identified stall" (H9) and "phone answered" during a dead dial (H7); any future K1-type bug becomes a visible retry | Low | Wireless CarPlay with the iPhone's Bluetooth off: "iPhone not answering" within 10 s. Normal start: the steps advance in about 6 s, 7 s, 9 s and 10 s |
 | 3 | **Cap hopeless RFCOMM loops.** Two consecutive page timeouts (about 5.1 s `IOException` in `ConnectingBluetooth`) → `Failed(BLUETOOTH)` with "iPhone not reachable over Bluetooth: unlock it, check Bluetooth, or plug in a cable". | `CarPlaySessionEvents.kt:158,234-250` (a per-reason cap) | C8 goes from 28.6 s (and up to about 38 s) to about 13 s with a clear next action | Low | iPhone Bluetooth off → fails at about 13 s with that message. iPhone on → unchanged |
 | 4 | **Non-blocking CarPlay teardown.** Remove the P2P hotspot before Bonjour. Close the JmDNS instances in parallel on a daemon thread, without joining. Log the teardown end before the log closes. | `vendor/diplay/.../CarPlayBonjour.kt:329-357`; `CarPlayController.kt:2476-2482` | CarPlay stop drops from 2.1–4.1 s to 0.5 s or less (W7 −3.5 s, A18 −3.5 s); each K3 cycle −0.6 s | Low–medium | 5 CarPlay → AA switches: the `start` → `settings written` gap is under 1 s; CarPlay is still discovered on the next start |
 | 5 | **Drop DiPlay's first-size debounce.** Apply the first display size at once. | `CarPlayHostActivity.kt:4380-4394` (`activeDisplaySize == null` → delay 0) | −0.5 s on every CarPlay start (26 today) | Very low | `Texture surface created` → `Display detected` under 50 ms; picture correct, with no rotation regressions |
-| 6 | **Instrument what the logs could not answer.** Log each AirPlay request arrival in `WIRELESS_TIMING` (K8). Log the GO BSSID per AA group and the join timing (K9). Keep DiPlay runs by size (for example 5 MB), not 8 runs. Add a session id plus the phase and Retrying reason to carlink.log. | DiPlay AirPlay server and `DiPlayLog` rotation; DiAuto `WirelessTiming`; `SessionManager.note` | Turns K8, K9, K12 and K13 from inference into fixes; nothing lost after 1 hour | None | One day of tests leaves every run on disk; the K8 gap can be attributed to one request |
-| 7 | **Dial the iPhone earlier.** Start the RFCOMM dial, or at least an SDP page, when CarLink commits to wireless CarPlay, in parallel with the previous engine's stop and the host launch; hand the socket to the controller. | `CarPlayAdapter.start` → a DiPlay hook before `startCarPlay`; `CarPlayController.kt:~1209` | Hides 1.5–2.5 s of the 5.8–6.7 s page (more after a switch); C10 drops to about 10.5 s | Medium | 5 wireless starts: `rfcomm-connected` at controller start + 3–4 s instead of +5.9–6.7 s |
-| 8 | **USB-only Android Auto sessions.** No P2P group, HFP poke or wireless server when CarLink starts AA over USB. Fold in K14 here: a same-engine USB plug during a not-yet-connected wireless attempt starts USB without asking. | DiAuto `AapService.onCreate` / `initWifiMode` behind a `HostIntegration` flag; `SessionManager.kt:204-207` | No wireless race while plugged in (A20); −2.5–3 s and one tap per plug-during-wireless | Medium (DiAuto) / low (SessionManager) | AA USB start: no `group-create` or `poke-start` lines. iPhone plugged in during a wireless dial: USB starts at once |
+| 6 | **Instrument what the logs could not answer.** Log each AirPlay request arrival in `WIRELESS_TIMING` (K8). Log the GO BSSID per AA group and the join timing (K9). Keep DiPlay runs by size (for example 5 MB), not 8 runs. Add a session id plus the phase and Retrying reason to mobilecarconnect.log. | DiPlay AirPlay server and `DiPlayLog` rotation; DiAuto `WirelessTiming`; `SessionManager.note` | Turns K8, K9, K12 and K13 from inference into fixes; nothing lost after 1 hour | None | One day of tests leaves every run on disk; the K8 gap can be attributed to one request |
+| 7 | **Dial the iPhone earlier.** Start the RFCOMM dial, or at least an SDP page, when MobileCarConnect commits to wireless CarPlay, in parallel with the previous engine's stop and the host launch; hand the socket to the controller. | `CarPlayAdapter.start` → a DiPlay hook before `startCarPlay`; `CarPlayController.kt:~1209` | Hides 1.5–2.5 s of the 5.8–6.7 s page (more after a switch); C10 drops to about 10.5 s | Medium | 5 wireless starts: `rfcomm-connected` at controller start + 3–4 s instead of +5.9–6.7 s |
+| 8 | **USB-only Android Auto sessions.** No P2P group, HFP poke or wireless server when MobileCarConnect starts AA over USB. Fold in K14 here: a same-engine USB plug during a not-yet-connected wireless attempt starts USB without asking. | DiAuto `AapService.onCreate` / `initWifiMode` behind a `HostIntegration` flag; `SessionManager.kt:204-207` | No wireless race while plugged in (A20); −2.5–3 s and one tap per plug-during-wireless | Medium (DiAuto) / low (SessionManager) | AA USB start: no `group-create` or `poke-start` lines. iPhone plugged in during a wireless dial: USB starts at once |
 
 **Next after these:**
 

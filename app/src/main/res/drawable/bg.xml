@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Overrides DiAuto's blue window background (AppTheme, also the Android Auto projection's first
-     frame) with CarLink's graphite canvas and its soft top-start light. -->
+     frame) with MobileCarConnect's graphite canvas and its soft top-start light. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">

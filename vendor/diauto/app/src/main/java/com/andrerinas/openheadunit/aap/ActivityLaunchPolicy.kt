@@ -16,8 +16,8 @@ object ActivityLaunchPolicy {
      */
     fun chooseLaunchStrategy(apiLevel: Int, canDrawOverlays: Boolean, appVisible: Boolean = false): LaunchStrategy = when {
         apiLevel < Build.VERSION_CODES.Q -> LaunchStrategy.DIRECT
-        // CarLink: an app with a visible activity may start activities from any of its processes
-        // (Android's background-launch rules), so a session the driver started on CarLink's
+        // MobileCarConnect: an app with a visible activity may start activities from any of its processes
+        // (Android's background-launch rules), so a session the driver started on MobileCarConnect's
         // screen opens the projection without "display over other apps".
         appVisible -> LaunchStrategy.DIRECT
         canDrawOverlays -> LaunchStrategy.OVERLAY

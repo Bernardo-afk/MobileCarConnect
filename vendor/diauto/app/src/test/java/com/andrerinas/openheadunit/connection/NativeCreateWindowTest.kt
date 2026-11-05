@@ -6,7 +6,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// CarLink: a refresh during a create must wait for it, not start a second bring-up.
+// MobileCarConnect: a refresh during a create must wait for it, not start a second bring-up.
 class NativeCreateWindowTest {
     @Test fun aCreateIsInFlightForItsGraceOnly() {
         assertFalse(NativeCreateWindow.inFlight(0L, 10_000L))

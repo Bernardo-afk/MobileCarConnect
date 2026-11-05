@@ -356,7 +356,7 @@ class WppHandshakeSessionTest {
         assertNull("a finished handshake has no deadline", s.currentStageTimeoutMs())
     }
 
-    // --- CarLink: holding the channel for the session (ported from open-headunit PR #1029) ---
+    // --- MobileCarConnect: holding the channel for the session (ported from open-headunit PR #1029) ---
 
     /** A Bluetooth session that has handed over and landed, holding its channel. */
     private fun heldSession(): WppHandshakeSession {

@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit c86332be (AGPL-3.0), HfpSlcInitiatorTest.kt.
+// MobileCarConnect: ported from open-headunit c86332be (AGPL-3.0), HfpSlcInitiatorTest.kt.
 package com.andrerinas.openheadunit.connection
 
 import com.andrerinas.openheadunit.connection.HfpSlcInitiator.Stage

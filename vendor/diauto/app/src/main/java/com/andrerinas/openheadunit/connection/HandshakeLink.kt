@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/
+// MobileCarConnect: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/
 // HandshakeLink.kt and ExternalModuleCarrier.kt (see docs/VENDOR_CHANGES.md). The fields this
 // DiAuto's handshake does not read (radioLabel, peerReportedPresent) are left out.
 package com.andrerinas.openheadunit.connection

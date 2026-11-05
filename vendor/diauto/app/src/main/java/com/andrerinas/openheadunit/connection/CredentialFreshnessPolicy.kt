@@ -1,6 +1,6 @@
 package com.andrerinas.openheadunit.connection
 
-// CarLink: ported from open-headunit cc195e12 with the 2192c2e0/7e126682 rules (an incomplete
+// MobileCarConnect: ported from open-headunit cc195e12 with the 2192c2e0/7e126682 rules (an incomplete
 // replacement, or one at another endpoint, is never sent).
 
 /**

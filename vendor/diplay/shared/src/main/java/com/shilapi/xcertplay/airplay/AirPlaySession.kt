@@ -96,7 +96,7 @@ class AirPlaySession(
 
     private val closed = AtomicBoolean(false)
     internal val isClosed: Boolean get() = closed.get()
-    // CarLink: AIRPLAY_TIMING, counted from the TCP accept (this session's creation).
+    // MobileCarConnect: AIRPLAY_TIMING, counted from the TCP accept (this session's creation).
     private val createdNanos = System.nanoTime()
     private var lastResponseNanos = createdNanos
     private val notified = AtomicBoolean(false)
@@ -496,7 +496,7 @@ class AirPlaySession(
                         "airplay control rx headers=${request.headers} " +
                             "bodyHex=${request.body.toHex()}",
                     )
-                    val requestNanos = System.nanoTime() // CarLink
+                    val requestNanos = System.nanoTime() // MobileCarConnect
                     val response = try {
                         handle(request)
                     } catch (error: Exception) {
@@ -515,7 +515,7 @@ class AirPlaySession(
                         "airplay control response status=${response.status ?: 200} contentBytes=${response.body.size}",
                         false,
                     )
-                    if (showInDebugOverlay) { // CarLink: always-on request timing (RELIABILITY_AUDIT K8)
+                    if (showInDebugOverlay) { // MobileCarConnect: always-on request timing (RELIABILITY_AUDIT K8)
                         val now = System.nanoTime()
                         debugLog(
                             "AIRPLAY_TIMING ${request.method} ${request.path.substringBefore('?')} " +

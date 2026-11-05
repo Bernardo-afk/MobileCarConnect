@@ -203,7 +203,7 @@ class VideoFragmentAssembler {
         const val FLAG_LAST = 10
 
         /**
-         * CarLink (open-headunit d88b28d4): whether a message of [type] may carry its payload at
+         * MobileCarConnect (open-headunit d88b28d4): whether a message of [type] may carry its payload at
          * [offset]. A whole or first message's type is real: DATA (0) has its timestamp, so offset
          * 10; CSD (1) has none, so offset 2. A second NAL at 10 must not hide a CSD's NAL at 2, and
          * timestamp bytes must not pass for CSD. A continuation carries no type (its first two bytes

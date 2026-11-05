@@ -45,7 +45,7 @@ import com.shilapi.xcertplay.mfi.RemoteMfiAuthenticationClient
 import com.shilapi.xcertplay.mfi.LocalMfiAuthenticationClient
 import com.shilapi.xcertplay.network.CarPlayBonjour
 import com.shilapi.xcertplay.network.CarPlayBonjourEvent
-import com.shilapi.xcertplay.network.WirelessAddressFamilyPlan // CarLink
+import com.shilapi.xcertplay.network.WirelessAddressFamilyPlan // MobileCarConnect
 import com.shilapi.xcertplay.network.diagnosticSummary
 import com.shilapi.xcertplay.network.CarPlayVpnService
 import com.shilapi.xcertplay.network.LocalOnlyHotspotManager
@@ -352,7 +352,7 @@ class CarPlayController(
     private val sessionListener = object : AirPlaySessionListener {
         override fun onVideoFrameRendered(session: AirPlaySession) {
             if (!closed && !session.isClosed && activeSession === session) {
-                // CarLink: WIRED_TIMING first-frame (marked once); wireless wraps this listener.
+                // MobileCarConnect: WIRED_TIMING first-frame (marked once); wireless wraps this listener.
                 if (config.transport == CarPlayTransport.WIRED) wiredTimeline.mark(WiredStartupTimeline.Milestone.FIRST_FRAME)
                 uiListener?.onVideoFrameRendered(session)
             }
@@ -390,7 +390,7 @@ class CarPlayController(
                 }
             }
             if (replacement) restoreDashboardContent(session)
-            if (config.transport == CarPlayTransport.WIRED) wiredTimeline.mark(WiredStartupTimeline.Milestone.SESSION_ACTIVE) // CarLink
+            if (config.transport == CarPlayTransport.WIRED) wiredTimeline.mark(WiredStartupTimeline.Milestone.SESSION_ACTIVE) // MobileCarConnect
             debugLog(
                 "AirPlay session active controller=${session.controllerId ?: "unknown"} " +
                     "peer=${session.host}",
@@ -437,7 +437,7 @@ class CarPlayController(
         override fun onHostUiRequested(session: AirPlaySession) {
             debugLog("CarPlay requested the car UI; opening the head-unit home screen")
             runCatching {
-                val carScreen = openCarScreen // CarLink: a host shows its own screen instead
+                val carScreen = openCarScreen // MobileCarConnect: a host shows its own screen instead
                 if (carScreen != null) carScreen() else appContext.startActivity(
                     Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
@@ -478,16 +478,16 @@ class CarPlayController(
 
         override fun onDebugLog(message: String) {
             debugLog(message)
-            // CarLink: CarPlayVpnService reports a wired accept only as this log line.
+            // MobileCarConnect: CarPlayVpnService reports a wired accept only as this log line.
             if (config.transport == CarPlayTransport.WIRED && message.startsWith("airplay TCP accepted")) {
                 wiredTimeline.mark(WiredStartupTimeline.Milestone.TCP_ACCEPTED)
             }
         }
     }
 
-    // CarLink: always-on wired bring-up timing, in diplay.log and logcat.
+    // MobileCarConnect: always-on wired bring-up timing, in diplay.log and logcat.
     private val wiredTimeline = WiredStartupTimeline { line -> debugLog(line) }
-    // CarLink: always-on wireless bring-up timing, in diplay.log and logcat.
+    // MobileCarConnect: always-on wireless bring-up timing, in diplay.log and logcat.
     private val wirelessTimeline = WirelessStartupTimeline { line -> debugLog(line) }
 
     fun attachUi(
@@ -520,7 +520,7 @@ class CarPlayController(
             if (closed) return
         }
         connectionDiagnostic("start transport=${config.transport}")
-        if (config.transport == CarPlayTransport.WIRELESS) wirelessTimeline.mark(WirelessStartupTimeline.Phase.CONTROLLER_START) // CarLink
+        if (config.transport == CarPlayTransport.WIRELESS) wirelessTimeline.mark(WirelessStartupTimeline.Phase.CONTROLLER_START) // MobileCarConnect
         if (!hasRequiredUsbService()) return
         videoListener?.let { listener ->
             videoGate = VideoInCarGate(
@@ -709,7 +709,7 @@ class CarPlayController(
         BydNavigationOutputs.endNow()
         com.shilapi.xcertplay.glance.CarPlayGlance.setConnected(false)
         BydNavigationOutputs.clearClusterStreamControl(::applyClusterUi)
-        CarPlayStatusBus.publish(null) // CarLink
+        CarPlayStatusBus.publish(null) // MobileCarConnect
         closeReceivers()
         availabilityPollGeneration.incrementAndGet()
         permissionPollGeneration += 1
@@ -1239,7 +1239,7 @@ class CarPlayController(
             debugLog("location provider prewarmed=$started")
         }
         if (config.transport == CarPlayTransport.WIRELESS) {
-            wirelessTimeline.mark(WirelessStartupTimeline.Phase.MFI_READY) // CarLink
+            wirelessTimeline.mark(WirelessStartupTimeline.Phase.MFI_READY) // MobileCarConnect
             startWireless()
         } else {
             startIphone()
@@ -1284,8 +1284,8 @@ class CarPlayController(
     private fun runWireless(generation: Int) {
         try {
             debugLog("wireless bring-up generation=$generation starting")
-            if (generation > 1) wirelessTimeline.restart() // CarLink
-            wirelessTimeline.mark(WirelessStartupTimeline.Phase.BRING_UP, "generation=$generation") // CarLink
+            if (generation > 1) wirelessTimeline.restart() // MobileCarConnect
+            wirelessTimeline.mark(WirelessStartupTimeline.Phase.BRING_UP, "generation=$generation") // MobileCarConnect
             closeWirelessStack(generation = generation)
             if (
                 closed ||
@@ -1305,7 +1305,7 @@ class CarPlayController(
                 },
                 onTimeout = {
                     if (!closed && generation == wirelessGeneration.get()) {
-                        wirelessTimeline.mark(WirelessStartupTimeline.Phase.FIRST_TCP_TIMEOUT) // CarLink
+                        wirelessTimeline.mark(WirelessStartupTimeline.Phase.FIRST_TCP_TIMEOUT) // MobileCarConnect
                         flipWirelessAddressFamily(generation)
                         fail(WirelessStartupException(WirelessStartupFailure.FIRST_TCP_TIMEOUT,
                             "No AirPlay TCP after CarPlay StartSession"), generation)
@@ -1329,12 +1329,12 @@ class CarPlayController(
                 state = activeAdapter?.state,
                 pausedByDiPlay = BydBluetoothSuspend.isSuspendedByUs(appContext),
             )?.let { throw BluetoothRadioCheck.failure(it) }
-            // CarLink: dial the iPhone first. The RFCOMM dial (6.6 s when the iPhone's Bluetooth
+            // MobileCarConnect: dial the iPhone first. The RFCOMM dial (6.6 s when the iPhone's Bluetooth
             // was idle) needs nothing from the access point, listener or Bonjour, which now start
             // while it runs; the iAP2 link opens once both are ready, as before.
             val adapter = currentBluetoothAdapter()
                 ?: throw BluetoothRadioCheck.failure(BluetoothRadioCheck.NO_ADAPTER)
-            // CarLink: DiPlay 0.2.16's recovery of its own BYD Bluetooth pause, before the early dial
+            // MobileCarConnect: DiPlay 0.2.16's recovery of its own BYD Bluetooth pause, before the early dial
             // (it returns at once when DiPlay paused nothing).
             val bluetoothRecoveryComplete = BydBluetoothSuspend.resumeAndWait(appContext, adapter)
             if (adapter.state == BluetoothAdapter.STATE_TURNING_ON) {
@@ -1364,7 +1364,7 @@ class CarPlayController(
             wirelessConnectionProof.begin(generation) {
                 if (!isStaleWirelessRun(generation)) startedHotspot?.onCarPlayConfirmed()
             }
-            // CarLink: Wi-Fi Direct tries the IPv6 link-local endpoint first (WirelessAddressFamilyPlan).
+            // MobileCarConnect: Wi-Fi Direct tries the IPv6 link-local endpoint first (WirelessAddressFamilyPlan).
             val familyChoice = WirelessAddressFamilyPlan.choose(
                 hotspotInfo.backend,
                 HotspotAddressPolicy.parseFamily(
@@ -1374,7 +1374,7 @@ class CarPlayController(
                 Build.VERSION.SDK_INT,
             )
             val preferredFamily = familyChoice.preferredFamily
-            startedHotspot?.observeClients { count -> // CarLink
+            startedHotspot?.observeClients { count -> // MobileCarConnect
                 if (count > 0 && !isStaleWirelessRun(generation)) {
                     wirelessTimeline.mark(WirelessStartupTimeline.Phase.PEER_ASSOCIATED,
                         listOfNotNull("clients=$count", hotspotInfo.identityDetail).joinToString(" "))
@@ -1390,7 +1390,7 @@ class CarPlayController(
                 hotspotCandidates(hotspotInfo),
                 preferredFamily,
                 if (familyChoice.guessed) WirelessAddressFamilyPlan.GUESS_ADDRESS_WAIT_MILLIS
-                else WirelessStartupPolicy.HOTSPOT_READY_MILLIS, // CarLink
+                else WirelessStartupPolicy.HOTSPOT_READY_MILLIS, // MobileCarConnect
             )
             val hostAddress = HotspotAddressPolicy.select(candidates, preferredFamily)
                 ?: hotspotInfo.hostAddress
@@ -1412,7 +1412,7 @@ class CarPlayController(
                 )
             }
             val hostAddressText = hostAddressText(hostAddress)
-            // CarLink: an unproven guess gets a short first-TCP deadline; see WirelessAddressFamilyPlan.
+            // MobileCarConnect: an unproven guess gets a short first-TCP deadline; see WirelessAddressFamilyPlan.
             val publishedFamily = if (hostAddress is Inet6Address) HotspotAddressPolicy.FAMILY_IPV6
                 else HotspotAddressPolicy.FAMILY_IPV4
             watchdog.timeoutMillis = WirelessAddressFamilyPlan.firstTcpTimeoutMillis(familyChoice, publishedFamily)
@@ -1424,7 +1424,7 @@ class CarPlayController(
                     "iface=${hotspotInfo.interfaceName ?: "unknown"} " +
                     "family=${if (hostAddress is Inet6Address) "IPv6" else "IPv4"} " +
                     "preference=${preferredFamily ?: "default"} " +
-                    "guess=${familyChoice.guessed} firstTcpMs=${watchdog.timeoutMillis} " + // CarLink
+                    "guess=${familyChoice.guessed} firstTcpMs=${watchdog.timeoutMillis} " + // MobileCarConnect
                     "alternate=${wirelessAlternateAddress != null} " +
                     "identitySource=${if (deviceIdentifier == hotspotInfo.bssid) "interface" else "saved"} " +
                     "host=$hostAddressText " +
@@ -1443,11 +1443,11 @@ class CarPlayController(
                 log = { message -> if (!isStaleWirelessRun(generation)) debugLog(message) },
             )
             wirelessDiagnostics = diagnostics
-            wirelessTimeline.mark( // CarLink
+            wirelessTimeline.mark( // MobileCarConnect
                 WirelessStartupTimeline.Phase.HOTSPOT_READY,
                 "backend=${hotspotInfo.backend.name} family=$publishedFamily guess=${familyChoice.guessed} " +
                     "firstTcpMs=${watchdog.timeoutMillis} alternate=${wirelessAlternateAddress != null}" +
-                    // CarLink: whether the Wi-Fi Direct identity was reused, and a short hash of the
+                    // MobileCarConnect: whether the Wi-Fi Direct identity was reused, and a short hash of the
                     // group owner's address, to compare join times and see whether the BSSID changed.
                     (hotspotInfo.identityDetail?.let { " $it bssid=${WirelessStartupTimeline.shortHash(hotspotInfo.bssid)}" } ?: ""),
             )
@@ -1502,7 +1502,7 @@ class CarPlayController(
                 }
             }
             val listenerPort = service.boundPort() ?: wirelessAirPlayConfig.port
-            wirelessTimeline.mark(WirelessStartupTimeline.Phase.LISTENER_READY, "port=$listenerPort") // CarLink
+            wirelessTimeline.mark(WirelessStartupTimeline.Phase.LISTENER_READY, "port=$listenerPort") // MobileCarConnect
             val advertisedAirPlayConfig = wirelessAirPlayConfig.copy(port = listenerPort)
             debugLog(
                 "wireless AirPlay listener attached bind=$hostAddressText " +
@@ -1524,7 +1524,7 @@ class CarPlayController(
                 useInterfaceMdns = true,
                 onEvent = { event ->
                     debugLog("wireless bonjour: ${event.diagnosticSummary()}")
-                    // CarLink: the iPhone's own mDNS reached us, so it is on the link.
+                    // MobileCarConnect: the iPhone's own mDNS reached us, so it is on the link.
                     if (event is CarPlayBonjourEvent.Discovery && event.stage == CarPlayBonjourEvent.Discovery.Stage.ADDED &&
                         !isStaleWirelessRun(generation)) {
                         wirelessTimeline.mark(
@@ -1533,7 +1533,7 @@ class CarPlayController(
                         )
                     }
                 },
-                // CarLink: plus the group's IPv6 link-local, which appears ~0.3 s after the group.
+                // MobileCarConnect: plus the group's IPv6 link-local, which appears ~0.3 s after the group.
                 // Without it Bonjour ran on IPv4 only and never heard the iPhone's _carplay-ctrl
                 // (bonjourAdded=0 on every start, tablet 2026-10-20), so no invite ever went out.
                 additionalAddresses = (hotspotInfo.hostAddresses + addressRecovery.awaitCandidates(
@@ -1550,7 +1550,7 @@ class CarPlayController(
             startedBonjour = bonjourClient
             diagnostics.start()
             debugLog("wireless Bonjour services started mode=interface iface=${hotspotInfo.interfaceName ?: "unknown"}")
-            wirelessTimeline.mark(WirelessStartupTimeline.Phase.BONJOUR_STARTED) // CarLink
+            wirelessTimeline.mark(WirelessStartupTimeline.Phase.BONJOUR_STARTED) // MobileCarConnect
             if (isStaleWirelessRun(generation)) {
                 return
             }
@@ -1561,7 +1561,7 @@ class CarPlayController(
             val bluetoothConnectMillis: Long
             try {
                 awaitBluetoothDial(dial, socket, device.address)
-                // CarLink: the dial's own duration (it started early), for upstream's link check.
+                // MobileCarConnect: the dial's own duration (it started early), for upstream's link check.
                 bluetoothConnectMillis = ((dial.finishedNanos ?: System.nanoTime()) - bluetoothStarted) / 1_000_000L
                 connectionDiagnostic("Bluetooth connect completed elapsedMs=${elapsedMillis(bluetoothStarted)} " +
                     "socketReportedConnected=${runCatching { socket.isConnected }.getOrNull() ?: "unknown"}")
@@ -1573,7 +1573,7 @@ class CarPlayController(
                 logBluetoothConnectionSnapshot(device, "after-failure")
                 throw error
             }
-            wirelessTimeline.mark( // CarLink
+            wirelessTimeline.mark( // MobileCarConnect
                 WirelessStartupTimeline.Phase.RFCOMM_CONNECTED,
                 "dialMs=${((dial.finishedNanos ?: System.nanoTime()) - bluetoothStarted) / 1_000_000L} " +
                     "waitedMs=${elapsedMillis(waitStarted)}",
@@ -1666,7 +1666,7 @@ class CarPlayController(
                 onProgress = { message ->
                     diagnostics.controlProgress(message)
                     debugLog(message)
-                    wirelessTimeline.onIap2Progress(message) // CarLink
+                    wirelessTimeline.onIap2Progress(message) // MobileCarConnect
                 },
             )
             if (isStaleWirelessRun(generation)) {
@@ -1799,12 +1799,12 @@ class CarPlayController(
     private fun wirelessSessionListener(
         generation: Int,
         watchdog: FirstTcpWatchdog,
-        familyChoice: WirelessAddressFamilyPlan.Choice, // CarLink
-        publishedFamily: String, // CarLink
+        familyChoice: WirelessAddressFamilyPlan.Choice, // MobileCarConnect
+        publishedFamily: String, // MobileCarConnect
     ): AirPlaySessionListener =
         object : AirPlaySessionListener by sessionListener {
             private var reportedFrameSession: AirPlaySession? = null
-            // CarLink: the accept's family arrives in the debug line right after onTcpAccepted.
+            // MobileCarConnect: the accept's family arrives in the debug line right after onTcpAccepted.
             @Volatile private var externalAcceptPending = false
 
             override fun onTcpAccepted(event: AirPlayTcpAccepted) {
@@ -1823,7 +1823,7 @@ class CarPlayController(
 
             override fun onSessionActive(session: AirPlaySession) {
                 if (isStaleWirelessRun(generation) || !watchdog.sessionEstablished()) return
-                wirelessTimeline.mark(WirelessStartupTimeline.Phase.SESSION_ACTIVE) // CarLink
+                wirelessTimeline.mark(WirelessStartupTimeline.Phase.SESSION_ACTIVE) // MobileCarConnect
                 wirelessDiagnostics?.let {
                     it.sessionActive()
                     it.close()
@@ -1850,14 +1850,14 @@ class CarPlayController(
                         true
                     }
                 }
-                if (firstFrame) wirelessTimeline.mark(WirelessStartupTimeline.Phase.FIRST_FRAME) // CarLink
+                if (firstFrame) wirelessTimeline.mark(WirelessStartupTimeline.Phase.FIRST_FRAME) // MobileCarConnect
                 if (firstFrame) uiListener?.onVideoFrameRendered(session)
             }
 
             override fun onDebugLog(message: String) {
                 if (isStaleWirelessRun(generation)) return
                 sessionListener.onDebugLog(message)
-                // CarLink: time the first external TCP and remember a guessed family that worked.
+                // MobileCarConnect: time the first external TCP and remember a guessed family that worked.
                 if (externalAcceptPending && message.startsWith("airplay TCP accepted")) {
                     externalAcceptPending = false
                     val accepted = message.substringAfter("family=", "").substringBefore(' ').ifEmpty { null }
@@ -2044,12 +2044,12 @@ class CarPlayController(
     }
 
     private fun requestIphonePermission(device: UsbDevice) {
-        wiredTimeline.mark(WiredStartupTimeline.Milestone.IPHONE_FOUND) // CarLink
+        wiredTimeline.mark(WiredStartupTimeline.Milestone.IPHONE_FOUND) // MobileCarConnect
         mainHandler.post { awaitDefaultGrantThenRequest(device, waitedMs = 0L) }
     }
 
     /**
-     * CarLink: after the CarPlay configuration switch the iPhone re-enumerates as a new device.
+     * MobileCarConnect: after the CarPlay configuration switch the iPhone re-enumerates as a new device.
      * When the driver made this app the default for the iPhone, Android grants access on its own
      * as it dispatches the attach, about half a second later; asking at once raised the system
      * permission prompt on every wired start. Wait briefly for that grant, then ask as before.
@@ -2291,7 +2291,7 @@ class CarPlayController(
 
     private fun openDataPaths(device: UsbDevice) {
         phase = Phase.DATAPATHS
-        wiredTimeline.mark(WiredStartupTimeline.Milestone.DATA_PATHS) // CarLink
+        wiredTimeline.mark(WiredStartupTimeline.Milestone.DATA_PATHS) // MobileCarConnect
         wiredDeviceName = device.deviceName
         debugLog("wired opening iPhone USB data paths")
         onStatus(CarPlayStatus.SelectingConfiguration)
@@ -2312,7 +2312,7 @@ class CarPlayController(
         }
     }
 
-    // CarLink: NCM link events become timing lines and session-log lines (both INFO, always on).
+    // MobileCarConnect: NCM link events become timing lines and session-log lines (both INFO, always on).
     private fun onNcmLinkEvent(event: NcmLinkEvent) {
         when (event) {
             is NcmLinkEvent.NetworkConnection -> {
@@ -2351,7 +2351,7 @@ class CarPlayController(
             connection,
             function,
             onDiagnostic = ::connectionDiagnostic,
-            onLinkEvent = ::onNcmLinkEvent, // CarLink
+            onLinkEvent = ::onNcmLinkEvent, // MobileCarConnect
         )
     }
 
@@ -2377,7 +2377,7 @@ class CarPlayController(
             onStatus(CarPlayStatus.ConnectingControl)
             val carKitClient = LockdownCarKitClient(mux)
             // Temporary lab capture, limited to accessory/authentication messages and two minutes.
-            // CarLink: off unless asked for. It streams the iPhone's whole system log over the
+            // MobileCarConnect: off unless asked for. It streams the iPhone's whole system log over the
             // same USBMUX link as CarPlay for two minutes on every wired start, competing with the
             // control stream (user's tablet, 2026-10-09: wired starts slow and stuck at "Picture").
             if (PhoneSyslogCapture.enabled) try {
@@ -2483,7 +2483,7 @@ class CarPlayController(
             }
             ncmOwnedLocally = false
             debugLog("wired NCM/VPN AirPlay transport attached")
-            wiredTimeline.mark(WiredStartupTimeline.Milestone.NCM_ATTACHED) // CarLink
+            wiredTimeline.mark(WiredStartupTimeline.Milestone.NCM_ATTACHED) // MobileCarConnect
             if (closed) {
                 vpnService?.detach()
                 return
@@ -2566,7 +2566,7 @@ class CarPlayController(
                         startWatchdog.startSessionSent()
                     }
                     debugLog("wired $message")
-                    wiredTimeline.onIap2Progress(message) // CarLink
+                    wiredTimeline.onIap2Progress(message) // MobileCarConnect
                 },
                 startSessionAgain = ::startAgain,
             )
@@ -2656,7 +2656,7 @@ class CarPlayController(
         val manager: WirelessHotspotManager = when (hotspotMode) {
             WirelessHotspotMode.WIFI_P2P -> WifiP2pGroupManager(appContext, ::debugLog,
                 preferredChannel = config.wifiP2pPreferredChannel,
-                stableIdentity = config.wifiP2pStableIdentity, carName = config.label) // CarLink
+                stableIdentity = config.wifiP2pStableIdentity, carName = config.label) // MobileCarConnect
             WirelessHotspotMode.LOCAL_ONLY_HOTSPOT -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 LocalOnlyHotspotManager(appContext, ::debugLog)
             } else {
@@ -2876,7 +2876,7 @@ class CarPlayController(
         throw BluetoothLinkCheck.connectFailure(failure, address)
     }
 
-    // CarLink: the dial now starts early (BackgroundDial); this waits for it with the same 15 s
+    // MobileCarConnect: the dial now starts early (BackgroundDial); this waits for it with the same 15 s
     // budget from the dial's start, the same timeout handling and the same exception wrapping.
     private fun awaitBluetoothDial(dial: BackgroundDial, socket: BluetoothSocket, address: String) {
         val completed = try {
@@ -2886,7 +2886,7 @@ class CarPlayController(
             runCatching { socket.close() }
             throw IOException("Interrupted while connecting RFCOMM to $address", error)
         } catch (error: Throwable) {
-            // CarLink: reported as upstream's connectBluetoothSocket reports it (a missing socket
+            // MobileCarConnect: reported as upstream's connectBluetoothSocket reports it (a missing socket
             // manager stops with BLUETOOTH_UNUSABLE; an IOException stays itself).
             if (BluetoothLinkCheck.socketServiceMissing(error)) {
                 connectionDiagnostic("Bluetooth socket manager missing failureClass=${error.javaClass.simpleName}")
@@ -2952,7 +2952,7 @@ class CarPlayController(
 
             closeBluetoothBootstrapTransport()
 
-            // CarLink: the radio first (the next engine waits for it), then mDNS, which no longer blocks.
+            // MobileCarConnect: the radio first (the next engine waits for it), then mDNS, which no longer blocks.
             val activeHotspot = hotspot
             hotspot = null
             if (activeHotspot != null) closeBestEffort("wireless hotspot") { activeHotspot.close() }
@@ -3321,7 +3321,7 @@ class CarPlayController(
                 connectionDiagnostic("stage=${status.javaClass.simpleName}")
                 uiListener?.onDebugLog(status.debugLogMessage())
                 uiStatusReporter?.invoke(status)
-                CarPlayStatusBus.publish(status) // CarLink
+                CarPlayStatusBus.publish(status) // MobileCarConnect
             }
         }
     }
@@ -3380,14 +3380,14 @@ class CarPlayController(
     }
 
     companion object {
-        /** CarLink: opens the host's own screen when the iPhone's car tile asks for the car UI; null opens the launcher. */
+        /** MobileCarConnect: opens the host's own screen when the iPhone's car tile asks for the car UI; null opens the launcher. */
         @Volatile
         @JvmStatic
         var openCarScreen: (() -> Unit)? = null
-        /** CarLink: how long Bonjour waits for the group's IPv6 link-local before starting without it. */
+        /** MobileCarConnect: how long Bonjour waits for the group's IPv6 link-local before starting without it. */
         private const val BONJOUR_LINK_LOCAL_WAIT_MILLIS = 600L
 
-        // CarLink: see awaitDefaultGrantThenRequest.
+        // MobileCarConnect: see awaitDefaultGrantThenRequest.
         private const val DEFAULT_GRANT_WAIT_MS = 2_000L
         private const val DEFAULT_GRANT_POLL_MS = 100L
         const val CONNECTION_DIAGNOSTIC_PREFIX = "CONNECTION_DIAGNOSTIC"

@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/zbt/ZbtByteChannel.kt
+// MobileCarConnect: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/zbt/ZbtByteChannel.kt
 // (see docs/VENDOR_CHANGES.md).
 package com.andrerinas.openheadunit.connection.zbt
 
@@ -140,7 +140,7 @@ class ZbtByteChannel(
         /**
          * Open a session: connect, then send `RequestInit` for [enableType].
          *
-         * @throws IOException if the port could not be opened. CarLink: upstream's NotConnected
+         * @throws IOException if the port could not be opened. MobileCarConnect: upstream's NotConnected
          *   verdict (refused vs. held) is left out; the carrier retries either way.
          */
         fun open(

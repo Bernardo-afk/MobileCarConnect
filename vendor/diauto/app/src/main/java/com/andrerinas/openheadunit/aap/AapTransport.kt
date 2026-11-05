@@ -617,9 +617,9 @@ class AapTransport(
         lastHandshakeFailure = HandshakeFailure.OTHER
         try {
             val isUsb = connection !is SocketAccessoryConnection && !connection.isSingleMessage
-            // CarLink: no pre-handshake sleep (upstream: 500 ms "for AA 16.4+ stability"). The drain
+            // MobileCarConnect: no pre-handshake sleep (upstream: 500 ms "for AA 16.4+ stability"). The drain
             // below clears stale bytes, the version request is retried, and a phone left in an old
-            // session is reset by CarLink before this runs (S25/AA 17.8 measured).
+            // session is reset by MobileCarConnect before this runs (S25/AA 17.8 measured).
 
             val version = Messages.versionRequest
             var ret = -1
@@ -631,13 +631,13 @@ class AapTransport(
             var transportError = false
             var draining = isUsb
             var drained = 0
-            // CarLink (open-headunit 67bcae27): read whole envelopes by their declared length.
+            // MobileCarConnect (open-headunit 67bcae27): read whole envelopes by their declared length.
             // Bounded reads leave the following TLS frame in the socket/USB receive buffer, and
             // one reader across retries keeps a partial response a timeout cut in two.
-            // CarLink (open-headunit fbe128d0): a dongle or a phone left in an old session can still
+            // MobileCarConnect (open-headunit fbe128d0): a dongle or a phone left in an old session can still
             // send that session's encrypted envelopes after the drain goes quiet. Consume them by
             // their wire length here; TLS negotiation stays strict.
-            // CarLink (open-headunit 754e257e): the same reader drains before the request, so an
+            // MobileCarConnect (open-headunit 754e257e): the same reader drains before the request, so an
             // idle gap cannot discard a partial header or body.
             val frames = HandshakeFrameReader(SystemClock::elapsedRealtime, if (isUsb) 100 else 1,
                 skipEncryptedFrames = true) { bytes, length, timeout ->
@@ -654,7 +654,7 @@ class AapTransport(
             if (isUsb) {
                 // Drain stale data left in the USB pipe from a previous session. MUST ONLY be run
                 // on USB; on TCP sockets, draining discards initial response bytes!
-                // CarLink (open-headunit 754e257e): complete old frames are discarded until the
+                // MobileCarConnect (open-headunit 754e257e): complete old frames are discarded until the
                 // first idle read, within 500 ms; a partial one stays with the reader.
                 val drainDeadline = SystemClock.elapsedRealtime() + 500
                 try {
@@ -682,12 +682,12 @@ class AapTransport(
 
             AppLog.d("Handshake: Starting version request. TS: ${SystemClock.elapsedRealtime()}")
             // Outer deadline prevents the loop from running for minutes on an unresponsive device.
-            // CarLink (open-headunit 67bcae27): the first two receive windows allow 2 s each; the
+            // MobileCarConnect (open-headunit 67bcae27): the first two receive windows allow 2 s each; the
             // last uses the remaining budget. Partial frames retain their bytes, but never extend
             // this deadline.
             val versionDeadline = SystemClock.elapsedRealtime() + HANDSHAKE_TIMEOUT_MS
             var versionFrameSize = 0
-            val versionRequests = HandshakeMessagePolicy.versionRequests(isUsb) // CarLink (open-headunit 68c2bbb5)
+            val versionRequests = HandshakeMessagePolicy.versionRequests(isUsb) // MobileCarConnect (open-headunit 68c2bbb5)
             while (attempt < versionRequests && connection.isConnected) {
                 if (SystemClock.elapsedRealtime() >= versionDeadline) {
                     AppLog.e("Handshake: Version exchange timed out after $attempt attempt(s).")
@@ -700,9 +700,9 @@ class AapTransport(
                 if (ret != version.size) {
                     AppLog.w("Handshake: Version request send failed (ret=$ret), attempt $attempt")
                     transportError = true
-                    // CarLink (open-headunit 67bcae27): re-sending after a partial write would put
+                    // MobileCarConnect (open-headunit 67bcae27): re-sending after a partial write would put
                     // a second header inside the first frame. Start a fresh connection instead.
-                    // CarLink (open-headunit 754e257e): except on USB when the whole request fits
+                    // MobileCarConnect (open-headunit 754e257e): except on USB when the whole request fits
                     // one packet of the OUT endpoint: the phone got all of it or none, and a late
                     // duplicate answer is skipped by the TLS reader.
                     if (ret < 0 && isUsb && connection.isConnected && version.size <= connection.outMaxPacketSize &&

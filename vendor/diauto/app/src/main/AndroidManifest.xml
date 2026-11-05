@@ -78,7 +78,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-    <!-- CarLink: AapService's microphone type (Assistant and calls behind another app) -->
+    <!-- MobileCarConnect: AapService's microphone type (Assistant and calls behind another app) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
@@ -208,7 +208,7 @@
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppTheme" />
 
-        <!-- CarLink: + microphone (AapService.startForegroundWithTypes) -->
+        <!-- MobileCarConnect: + microphone (AapService.startForegroundWithTypes) -->
         <service
             android:name=".aap.AapService"
             android:exported="false"

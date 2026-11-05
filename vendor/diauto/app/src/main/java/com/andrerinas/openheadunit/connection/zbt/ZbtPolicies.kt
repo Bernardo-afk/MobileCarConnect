@@ -1,4 +1,4 @@
-// CarLink: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/zbt/
+// MobileCarConnect: ported from open-headunit 1c1b5b72 (v.3.5.0, AGPL-3.0), connection/wifi/modes/nativeaa/zbt/
 // ZbtAttemptPolicy.kt, ZbtWakePolicy.kt, ZbtReopenPolicy.kt and ZbtRetransmitPolicy.kt, in one file
 // (see docs/VENDOR_CHANGES.md).
 package com.andrerinas.openheadunit.connection.zbt
@@ -235,7 +235,7 @@ object ZbtReopenPolicy {
     fun warnsNoDaemon(sinceFirstRefusalMs: Long): Boolean =
         sinceFirstRefusalMs >= REFUSAL_WINDOW_MS
 
-    /** CarLink: upstream's ZbtReachabilityPolicy.REFUSAL_WINDOW_MS (that file is not ported). */
+    /** MobileCarConnect: upstream's ZbtReachabilityPolicy.REFUSAL_WINDOW_MS (that file is not ported). */
     const val REFUSAL_WINDOW_MS = 30_000L
 }
 
