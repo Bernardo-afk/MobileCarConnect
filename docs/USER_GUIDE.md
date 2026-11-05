@@ -1,6 +1,6 @@
 # MobileCarConnect user guide
 
-Everything a driver may want to know beyond the [README](../README.md): first-time setup, how
+Everything a driver may want to know beyond the [README](../README.en.md): first-time setup, how
 MobileCarConnect picks and connects a phone, updates, the screens and settings, connection times and the
 known limits. Problems and their fixes are in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
@@ -8,7 +8,7 @@ known limits. Problems and their fixes are in [TROUBLESHOOTING.md](TROUBLESHOOTI
 
 Install MobileCarConnect on the display (the car stereo, tablet or phone used as the car's screen), not
 on your phone. The steps, and how to check the download, are in the
-[README](../README.md#install). To check the signing certificate on a computer with the Android
+[README](../README.en.md#install). To check the signing certificate on a computer with the Android
 SDK's build-tools:
 
 ```sh

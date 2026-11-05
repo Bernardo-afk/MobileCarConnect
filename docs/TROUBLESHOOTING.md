@@ -146,7 +146,7 @@ Changing Resolution, Frame rate or Direct video output sets Picture to **Custom*
 processor, and the picture MobileCarConnect asked for.
 
 **CarPlay stopped working after an iOS update.** Possible, and not something MobileCarConnect can promise
-against: see the CarPlay notice in the [README](../README.md#carplay-notice). Android Auto is not
+against: see the CarPlay notice in the [README](../README.en.md#carplay-notice). Android Auto is not
 affected. Please report it with the iOS version.
 
 ## Other

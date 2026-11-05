@@ -1,13 +1,13 @@
 # MobileCarConnect documentation
 
 The index of MobileCarConnect's documentation: what each page covers and who it is for. Start with the
-[project README](../README.md) for what MobileCarConnect is and how to install it.
+[project README](../README.en.md) for what MobileCarConnect is and how to install it.
 
 ## For users
 
 | Page | What it covers |
 |---|---|
-| [README › Install](../README.md#install) | Download, install and verify the APK |
+| [README › Install](../README.en.md#install) | Download, install and verify the APK |
 | [USER_GUIDE.md](USER_GUIDE.md) | First-time setup, how a phone is detected and connected, updates, the screens and settings, car brand, slower head units, connection times, known limits |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Every "why it's waiting" and failure message on Home and what to do, plus how to report a problem with Diagnostics › Share log |
 | [screenshots/README.md](screenshots/README.md) | Every screen and state, on tablet, car-display and phone sizes, light and dark |

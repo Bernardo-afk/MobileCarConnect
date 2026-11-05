@@ -22,7 +22,7 @@ FENCE = re.compile(r"^\s*(```|~~~)")
 
 
 def default_files():
-    files = ["README.md", "CONTRIBUTING.md", "SECURITY.md", "CHANGELOG.md"]
+    files = ["README.md", "README.en.md", "CONTRIBUTING.md", "SECURITY.md", "CHANGELOG.md"]
     files += sorted(glob.glob("docs/*.md", root_dir=ROOT))
     files += sorted(glob.glob("docs/dissection/*.md", root_dir=ROOT))
     files += sorted(glob.glob("design/**/*.md", root_dir=ROOT, recursive=True))
