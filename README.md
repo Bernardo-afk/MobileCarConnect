@@ -19,6 +19,8 @@
 [Install](#install) · [User guide](docs/USER_GUIDE.md) ·
 [Troubleshooting](docs/TROUBLESHOOTING.md) · [Docs](docs/README.md)
 
+**English** · [Português](README.pt-BR.md)
+
 </div>
 
 Install MobileCarConnect on an Android car stereo, or on an Android tablet or phone used as the car's
@@ -57,6 +59,33 @@ off unless you pick BYD as the car brand.
 Tablet screenshots above, car-display sizes in the last row. They are rendered from the app's
 screens with sample data, not captured from a phone. Every screen and state, on every size:
 [screenshot gallery](docs/screenshots/README.md).
+
+## In a real car
+
+A simple way to get a big CarPlay screen in a car whose stereo doesn't have it: mount an Android
+tablet over the stock screen with two magnetic holders and run MobileCarConnect on the tablet.
+
+<table>
+  <tr>
+    <td width="50%"><a href="docs/assets/real-world/stock-screen-with-magnetic-holders.jpg"><img src="docs/assets/real-world/stock-screen-with-magnetic-holders.jpg" alt="The car's stock screen with two magnetic holders stuck on it"></a><br><sub>Before: two magnetic holders on the stock screen</sub></td>
+    <td width="50%"><a href="docs/assets/real-world/tablet-running-carplay.jpg"><img src="docs/assets/real-world/tablet-running-carplay.jpg" alt="A tablet on the holders running CarPlay with Waze and Spotify"></a><br><sub>After: the tablet running CarPlay with Waze and Spotify</sub></td>
+  </tr>
+</table>
+
+1. Stick the two magnetic holders on the stock screen, as far apart as the tablet is wide.
+2. Stick the kit's metal plates on the back of the tablet (or its case) at the same spots, and
+   place the tablet on the holders. The car's buttons below stay within reach.
+3. Install MobileCarConnect on the tablet, pair your phone once from its Bluetooth settings and
+   connect. With an iPhone only, turn on **Settings › Connection › CarPlay only** to save memory.
+
+Make sure the tablet doesn't cover an airbag, a vent you need or your view of the road.
+
+**Parts used in this setup** (Mercado Livre, Brazil):
+
+- [Tablet Samsung Galaxy Tab S10 Lite 5G (8 GB RAM, 256 GB)](https://meli.la/2PcTBAV)
+- [Kit of 2 magnetic dashboard holders](https://meli.la/2KhYqVd)
+
+<sub>These are affiliate links: buying through them supports the author of this setup.</sub>
 
 ## Features
 
